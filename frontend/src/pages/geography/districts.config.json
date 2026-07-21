@@ -1,0 +1,48 @@
+{
+  "viewPermission":   "geography.districts.view",
+  "createPermission": "geography.districts.create",
+  "apiList":   "/api/admin/geography/districts",
+  "apiCreate": "/api/admin/geography/districts",
+  "apiUpdate": "/api/admin/geography/area-regions",
+  "apiDelete": "/api/admin/geography/area-regions",
+  "deletePermission": "geography.districts.delete",
+
+  "fields": {
+    "id":                 { "label": "ID",         "type": "integer",  "editable": false },
+    "country_id":         { "label": "Країна",     "type": "select",   "editable": true,  "required": true, "createPermissions": ["geography.districts.create"], "editPermissions": ["geography.districts.edit"] },
+    "region_in_area_id":  { "label": "Регіон",     "type": "select",   "editable": true,  "default": null,  "createPermissions": ["geography.districts.create"], "editPermissions": ["geography.districts.edit"] },
+    "name_uk":            { "label": "Назва [UA]", "type": "text",     "editable": true,  "required": true, "createPermissions": ["geography.districts.create"], "editPermissions": ["geography.districts.edit.names", "geography.districts.edit"] },
+    "name_en":            { "label": "Назва [EN]", "type": "text",     "editable": true,  "default": "",    "createPermissions": ["geography.districts.create"], "editPermissions": ["geography.districts.edit.names", "geography.districts.edit"] },
+    "name_ru":            { "label": "Назва [RU]", "type": "text",     "editable": true,  "default": "",    "createPermissions": ["geography.districts.create"], "editPermissions": ["geography.districts.edit.names", "geography.districts.edit"] },
+    "region_code":        { "label": "Код",              "type": "text",   "editable": true,  "default": null,  "createPermissions": ["geography.districts.create"], "editPermissions": ["geography.districts.edit"] },
+    "center_city_id":     { "label": "Центр (місто)", "type": "select", "editable": true,  "default": null,  "createPermissions": ["geography.districts.create"], "editPermissions": ["geography.districts.edit"] },
+    "is_active":          { "label": "Статус",         "type": "status", "editable": true,  "default": true,  "createPermissions": ["geography.districts.create"], "editPermissions": ["geography.districts.edit.status", "geography.districts.edit"] },
+    "created_at":         { "label": "Створено",   "type": "datetime", "editable": false },
+    "updated_at":         { "label": "Оновлено",   "type": "datetime", "editable": false }
+  },
+
+  "table": [
+    { "key": "id",                "width": 50,  "align": "end", "inlineEditable": false, "sortable": false },
+    { "key": "country_id",        "width": 110,                 "inlineEditable": false, "sortable": true, "displayKey": "country_name" },
+    { "key": "region_in_area_id", "width": 150,                 "inlineEditable": false, "sortable": true, "displayKey": "area_name" },
+    { "key": "name_uk",                                         "inlineEditable": true,  "sortable": true  },
+    { "key": "name_en",                                         "inlineEditable": true,  "sortable": true  },
+    { "key": "name_ru",                                         "inlineEditable": true,  "sortable": true  },
+    { "key": "region_code",       "width": 80,                  "inlineEditable": false, "sortable": true  },
+    { "key": "is_active",         "width": 100,                 "inlineEditable": false, "sortable": false }
+  ],
+
+  "modal": [
+    { "key": "id",                "col": 2  },
+    { "key": "country_id",        "col": 5  },
+    { "key": "region_in_area_id", "col": 5  },
+    { "key": "center_city_id",    "col": 12 },
+    { "key": "is_active",         "col": 12 },
+    { "key": "name_uk",           "col": 12 },
+    { "key": "name_en",           "col": 12 },
+    { "key": "name_ru",           "col": 12 },
+    { "key": "region_code",       "col": 4  },
+    { "key": "created_at",        "col": 4  },
+    { "key": "updated_at",        "col": 4  }
+  ]
+}

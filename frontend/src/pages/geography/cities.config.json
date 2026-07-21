@@ -1,0 +1,54 @@
+{
+  "viewPermission":   "geography.cities.view",
+  "createPermission": "geography.cities.create",
+  "apiList":   "/api/admin/geography/cities",
+  "apiCreate": "/api/admin/geography/cities",
+  "apiUpdate": "/api/admin/geography/cities",
+  "apiDelete": "/api/admin/geography/cities",
+  "deletePermission": "geography.cities.delete",
+
+  "fields": {
+    "id":               { "label": "ID",           "type": "integer",  "editable": false },
+    "city_type_id":     { "label": "Тип",          "type": "select",   "editable": true,  "default": null,  "createPermissions": ["geography.cities.create"], "editPermissions": ["geography.cities.edit"] },
+    "country_id":       { "label": "Країна",       "type": "select",   "editable": true,  "required": true, "createPermissions": ["geography.cities.create"], "editPermissions": ["geography.cities.edit"] },
+    "area_region_id":   { "label": "Регіон/Район", "type": "select",   "editable": true,  "default": null,  "createPermissions": ["geography.cities.create"], "editPermissions": ["geography.cities.edit"] },
+    "name_uk":          { "label": "Назва [UA]",   "type": "text",     "editable": true,  "required": true, "createPermissions": ["geography.cities.create"], "editPermissions": ["geography.cities.edit.names", "geography.cities.edit"] },
+    "name_en":          { "label": "Назва [EN]",   "type": "text",     "editable": true,  "default": "",    "createPermissions": ["geography.cities.create"], "editPermissions": ["geography.cities.edit.names", "geography.cities.edit"] },
+    "name_ru":          { "label": "Назва [RU]",   "type": "text",     "editable": true,  "default": "",    "createPermissions": ["geography.cities.create"], "editPermissions": ["geography.cities.edit.names", "geography.cities.edit"] },
+    "latitude":         { "label": "Широта",       "type": "number",   "editable": true,  "default": null,  "createPermissions": ["geography.cities.create"], "editPermissions": ["geography.cities.edit"] },
+    "longitude":        { "label": "Довгота",      "type": "number",   "editable": true,  "default": null,  "createPermissions": ["geography.cities.create"], "editPermissions": ["geography.cities.edit"] },
+    "is_capital":       { "label": "Столиця",      "type": "boolean",  "editable": true,  "default": false, "createPermissions": ["geography.cities.create"], "editPermissions": ["geography.cities.edit"] },
+    "is_active":        { "label": "Статус",       "type": "status",   "editable": true,  "default": false, "createPermissions": [],                          "editPermissions": ["geography.cities.edit.status", "geography.cities.edit"] },
+    "created_at":       { "label": "Створено",     "type": "datetime", "editable": false },
+    "updated_at":       { "label": "Оновлено",     "type": "datetime", "editable": false }
+  },
+
+  "table": [
+    { "key": "id",             "width": 50,  "align": "end", "inlineEditable": false, "sortable": false },
+    { "key": "city_type_id",   "width": 80,                  "inlineEditable": false, "sortable": true,  "displayKey": "city_type_name" },
+    { "key": "country_id",     "width": 100,                 "inlineEditable": false, "sortable": true,  "displayKey": "country_name" },
+    { "key": "area_region_id", "width": 150,                 "inlineEditable": false, "sortable": true,  "displayKey": "area_region_name" },
+    { "key": "name_uk",                                      "inlineEditable": true,  "sortable": true  },
+    { "key": "name_en",                                      "inlineEditable": true,  "sortable": true  },
+    { "key": "name_ru",                                      "inlineEditable": true,  "sortable": true  },
+    { "key": "is_capital",     "width": 80,                  "inlineEditable": false, "sortable": true  },
+    { "key": "is_active",      "width": 100,                 "inlineEditable": false, "sortable": false }
+  ],
+
+  "modal": [
+    { "key": "id",             "col": 2  },
+    { "key": "city_type_id",   "col": 5  },
+    { "key": "is_capital",     "col": 5  },
+    { "key": "country_id",     "col": 6  },
+    { "key": "is_active",      "col": 6  },
+    { "key": "area_region_id", "col": 12 },
+    { "key": "name_uk",        "col": 6  },
+    { "key": "name_en",        "col": 6  },
+    { "key": "name_ru",        "col": 6  },
+    { "key": "_spacer",        "col": 6  },
+    { "key": "latitude",       "col": 6  },
+    { "key": "longitude",      "col": 6  },
+    { "key": "created_at",     "col": 6  },
+    { "key": "updated_at",     "col": 6  }
+  ]
+}

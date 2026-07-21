@@ -1,0 +1,43 @@
+{
+  "viewPermission":   "geography.city_types.view",
+  "createPermission": "geography.city_types.create",
+  "deletePermission": "geography.city_types.delete",
+  "apiList":   "/api/admin/geography/city-types",
+  "apiCreate": "/api/admin/geography/city-types",
+  "apiUpdate": "/api/admin/geography/city-types",
+  "apiDelete": "/api/admin/geography/city-types",
+
+  "fields": {
+    "id":            { "label": "ID",         "type": "integer",  "editable": false },
+    "short_name_uk": { "label": "Скор. [UA]", "type": "text",     "editable": true,  "required": true, "createPermissions": ["geography.city_types.create"], "editPermissions": ["geography.city_types.edit"] },
+    "short_name_en": { "label": "Скор. [EN]", "type": "text",     "editable": true,  "default": "",    "createPermissions": ["geography.city_types.create"], "editPermissions": ["geography.city_types.edit"] },
+    "short_name_ru": { "label": "Скор. [RU]", "type": "text",     "editable": true,  "default": "",    "createPermissions": ["geography.city_types.create"], "editPermissions": ["geography.city_types.edit"] },
+    "long_name_uk":  { "label": "Повна [UA]", "type": "text",     "editable": true,  "required": true, "createPermissions": ["geography.city_types.create"], "editPermissions": ["geography.city_types.edit"] },
+    "long_name_en":  { "label": "Повна [EN]", "type": "text",     "editable": true,  "default": "",    "createPermissions": ["geography.city_types.create"], "editPermissions": ["geography.city_types.edit"] },
+    "long_name_ru":  { "label": "Повна [RU]", "type": "text",     "editable": true,  "default": "",    "createPermissions": ["geography.city_types.create"], "editPermissions": ["geography.city_types.edit"] },
+    "created_at":    { "label": "Створено",   "type": "datetime", "editable": false },
+    "updated_at":    { "label": "Оновлено",   "type": "datetime", "editable": false }
+  },
+
+  "table": [
+    { "key": "id",            "width": 50,  "align": "end", "sortable": false },
+    { "key": "short_name_uk", "width": 90,                  "sortable": true,  "inlineEditable": true },
+    { "key": "short_name_en", "width": 90,                  "sortable": true,  "inlineEditable": true },
+    { "key": "short_name_ru", "width": 90,                  "sortable": true,  "inlineEditable": true },
+    { "key": "long_name_uk",                                "sortable": true,  "inlineEditable": true },
+    { "key": "long_name_en",                                "sortable": true,  "inlineEditable": true },
+    { "key": "long_name_ru",                                "sortable": true,  "inlineEditable": true }
+  ],
+
+  "modal": [
+    { "key": "id",            "col": 2  },
+    { "key": "short_name_uk", "col": 3  },
+    { "key": "short_name_en", "col": 3  },
+    { "key": "short_name_ru", "col": 4  },
+    { "key": "long_name_uk",  "col": 12 },
+    { "key": "long_name_en",  "col": 12 },
+    { "key": "long_name_ru",  "col": 12 },
+    { "key": "created_at",    "col": 6  },
+    { "key": "updated_at",    "col": 6  }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "viewPermission":   "catalog.car-brands.view",
+  "createPermission": "catalog.car-brands.create",
+  "deletePermission": "catalog.car-brands.edit",
+  "apiList":   "/api/admin/catalog/car-brands",
+  "apiCreate": "/api/admin/catalog/car-brands",
+  "apiUpdate": "/api/admin/catalog/car-brands",
+  "apiDelete": "/api/admin/catalog/car-brands"
+}

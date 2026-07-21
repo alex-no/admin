@@ -1,0 +1,47 @@
+{
+  "viewPermission":   "geography.countries.view",
+  "createPermission": "geography.countries.create",
+  "deletePermission": "geography.countries.delete",
+  "apiCreate": "/api/admin/geography/countries",
+  "apiUpdate": "/api/admin/geography/countries",
+  "apiDelete": "/api/admin/geography/countries",
+
+  "fields": {
+    "id":            { "label": "ID",         "type": "integer",  "editable": false },
+    "order_num":     { "label": "#",          "type": "number",   "editable": true,  "default": null,  "createPermissions": ["geography.countries.create"], "editPermissions": ["geography.countries.edit"] },
+    "name_uk":       { "label": "Назва [UA]", "type": "text",     "editable": true,  "required": true, "createPermissions": ["geography.countries.create"], "editPermissions": ["geography.countries.edit.names", "geography.countries.edit"] },
+    "name_en":       { "label": "Назва [EN]", "type": "text",     "editable": true,  "default": "",    "createPermissions": ["geography.countries.create"], "editPermissions": ["geography.countries.edit.names", "geography.countries.edit"] },
+    "name_ru":       { "label": "Назва [RU]", "type": "text",     "editable": true,  "default": "",    "createPermissions": ["geography.countries.create"], "editPermissions": ["geography.countries.edit.names", "geography.countries.edit"] },
+    "iso2":          { "label": "ISO2",        "type": "text",     "editable": true,  "default": null,  "createPermissions": ["geography.countries.create"], "editPermissions": ["geography.countries.edit"], "maxlength": 2 },
+    "iso3":          { "label": "ISO3",        "type": "text",     "editable": true,  "default": null,  "createPermissions": ["geography.countries.create"], "editPermissions": ["geography.countries.edit"], "maxlength": 3 },
+    "currency_code": { "label": "Валюта",      "type": "text",     "editable": true,  "default": null,  "createPermissions": ["geography.countries.create"], "editPermissions": ["geography.countries.edit"], "maxlength": 3 },
+    "is_active":     { "label": "Статус",      "type": "status",   "editable": true,  "default": true,  "createPermissions": ["geography.countries.create"], "editPermissions": ["geography.countries.edit.status", "geography.countries.edit"] },
+    "created_at":    { "label": "Створено",    "type": "datetime", "editable": false },
+    "updated_at":    { "label": "Оновлено",    "type": "datetime", "editable": false }
+  },
+
+  "table": [
+    { "key": "id",        "width": 50,  "align": "end", "inlineEditable": false, "sortable": false },
+    { "key": "order_num", "width": 60,  "align": "end", "inlineEditable": true,  "sortable": true  },
+    { "key": "name_uk",                                  "inlineEditable": true,  "sortable": true  },
+    { "key": "name_en",                                  "inlineEditable": true,  "sortable": true  },
+    { "key": "name_ru",                                  "inlineEditable": true,  "sortable": true  },
+    { "key": "iso3",      "width": 70,                   "inlineEditable": false, "sortable": true  },
+    { "key": "is_active", "width": 100,                  "inlineEditable": false, "sortable": false }
+  ],
+
+  "modal": [
+    { "key": "id",            "col": 3  },
+    { "key": "order_num",     "col": 3  },
+    { "key": "is_active",     "col": 6  },
+    { "key": "name_uk",       "col": 6 },
+    { "key": "name_en",       "col": 6 },
+    { "key": "name_ru",       "col": 6 },
+    { "key": "_spacer",       "col": 6  },
+    { "key": "iso2",          "col": 4  },
+    { "key": "iso3",          "col": 4  },
+    { "key": "currency_code", "col": 4  },
+    { "key": "created_at",    "col": 6  },
+    { "key": "updated_at",    "col": 6  }
+  ]
+}
