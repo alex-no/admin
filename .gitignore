@@ -1,6 +1,7 @@
 node_modules/
 dist/
 *.bak
+DEPLOY.md
 .env
 .env.local
 *.log
