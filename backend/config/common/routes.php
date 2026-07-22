@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Admin\Controller\AdminAuthController;
 use App\Admin\Controller\AdminGeographyController;
 use App\Admin\Controller\AdminStoController;
+use App\Admin\Controller\AdminSystemController;
 use App\Admin\Controller\ApiDocController;
 use App\Web;
 use Yiisoft\Router\Group;
@@ -31,6 +32,9 @@ return [
 
             Route::get('/api/admin/geography/countries')
                 ->action([AdminGeographyController::class, 'list']),
+
+            Route::get('/api/admin/system/metrics')
+                ->action([AdminSystemController::class, 'metrics']),
 
             Route::get('/api/admin/doc')
                 ->action([ApiDocController::class, 'ui']),
