@@ -77,7 +77,7 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
-import menu from '@/config/menu'
+import menu from '@/config/menu.json'
 
 const auth   = useAuth()
 const route  = useRoute()

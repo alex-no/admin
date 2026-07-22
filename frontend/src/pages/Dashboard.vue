@@ -30,7 +30,7 @@ import { computed } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 import BaseLayout from '@/layouts/BaseLayout.vue'
 import SystemHealthWidget from '@/components/SystemHealthWidget.vue'
-import menu from '@/config/menu'
+import menu from '@/config/menu.json'
 import P from '@/config/permissions'
 
 const auth = useAuth()
