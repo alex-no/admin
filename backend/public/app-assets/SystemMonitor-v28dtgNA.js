@@ -1,0 +1,1 @@
+import{D as e,N as t,g as n,h as r,x as i}from"./index-Bjkq9CHh.js";import{t as a}from"./BaseLayout-DF1Wqn9Q.js";import{t as o}from"./SystemHealthWidget-BQ_r0up1.js";var s={__name:`SystemMonitor`,setup(s){return(s,c)=>(e(),n(a,null,{default:t(()=>[c[0]||=r(`h5`,{class:`mb-4`},`Моніторинг системи`,-1),i(o)]),_:1}))}};export{s as default};

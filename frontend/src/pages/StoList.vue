@@ -1533,7 +1533,7 @@ import { useAuth } from '@/composables/useAuth'
 import { usePageLayout } from '@/composables/usePageLayout'
 import { useUnsavedChanges } from '@/composables/useUnsavedChanges'
 import { useUrlFilters } from '@/composables/useUrlFilters'
-import { AMENITY_ICONS } from '../../../src/utils/amenityIcons.js'
+import { AMENITY_ICONS } from '@/utils/amenityIcons.js'
 
 // ── TimeInput Component ───────────────────────────────────────────────────────
 const TimeInput = defineComponent({

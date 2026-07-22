@@ -1,0 +1,14 @@
+services:
+  backend:
+    build:
+      context: ./docker
+      dockerfile: backend-prod.Dockerfile
+    container_name: admin_backend
+    working_dir: /var/www/html
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8082:80"
+    environment:
+      - COMPOSER_ALLOW_SUPERUSER=1
+    volumes:
+      - ./backend:/var/www/html

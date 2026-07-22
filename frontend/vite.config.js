@@ -11,6 +11,9 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    // Yii3-стартер вже має public/assets/ зі своїм .gitignore (динамічні ассети
+    // фреймворку) — використовуємо іншу назву, щоб зібраний фронтенд туди не потрапляв.
+    assetsDir: 'app-assets',
   },
   server: {
     host: true,

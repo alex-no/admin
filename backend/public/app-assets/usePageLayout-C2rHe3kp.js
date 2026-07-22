@@ -1,0 +1,1 @@
+import{E as e,I as t,T as n,m as r}from"./index-Bjkq9CHh.js";function i(){let i=t({}),a=r(()=>({...i.value,transition:`margin 0.2s ease-out`}));function o(e){e.detail&&(i.value=e.detail)}return n(()=>{window.addEventListener(`modal-content-margin-change`,o)}),e(()=>{window.removeEventListener(`modal-content-margin-change`,o)}),{contentMargin:a}}export{i as t};
