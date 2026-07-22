@@ -9,6 +9,7 @@ const routes = [
   { path: '/change-password', name: 'ChangePassword', component: () => import('../pages/ChangePassword.vue') },
   { path: '/dashboard', name: 'Dashboard', component: () => import('../pages/Dashboard.vue') },
   { path: '/sto',          name: 'StoList',     component: () => import('../pages/StoList.vue')     },
+  { path: '/data-registry', name: 'DataRegistry', component: () => import('../pages/StoRegistry.vue') },
   { path: '/sto/import',        name: 'StoImport',        component: () => import('../pages/StoImport.vue')        },
   { path: '/sto/outreach',      name: 'StoOutreach',      component: () => import('../pages/StoOutreach.vue')      },
   { path: '/sto/applications', name: 'StoApplications', component: () => import('../pages/StoApplications.vue') },

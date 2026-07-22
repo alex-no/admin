@@ -7,8 +7,8 @@
     "roles": ["admin", "superadmin"],
     "items": [
       {
-        "label": "Реєстр СТО",
-        "to": "/sto",
+        "label": "Реєстр даних",
+        "to": "/data-registry",
         "icon": "bi-list-ul",
         "permission": "sto.view",
         "roles": ["admin", "superadmin"],

@@ -1,0 +1,33 @@
+[
+  { "key": "search", "type": "text", "label": "Пошук", "placeholder": "Пошук за назвою..." },
+  {
+    "key": "sto_type",
+    "type": "select",
+    "label": "Тип",
+    "options": [
+      { "value": "", "label": "Всі типи" },
+      { "value": "service", "label": "СТО" },
+      { "value": "tire", "label": "Шиномонтаж" },
+      { "value": "wash", "label": "Автомийка" }
+    ]
+  },
+  {
+    "key": "status",
+    "type": "select",
+    "label": "Статус",
+    "options": [
+      { "value": "", "label": "Всі статуси" },
+      { "value": "active", "label": "Активні" },
+      { "value": "inactive", "label": "Неактивні" }
+    ]
+  },
+  {
+    "key": "country_id",
+    "type": "select",
+    "label": "Країна",
+    "optionsUrl": "/api/admin/geography/countries",
+    "optionsValueKey": "id",
+    "optionsLabelKey": "name_uk",
+    "placeholderOption": { "value": "", "label": "Всі країни" }
+  }
+]

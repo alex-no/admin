@@ -7,9 +7,27 @@ services:
     working_dir: /app
     ports:
       - "5173:5173"
+    environment:
+      - VITE_API_PROXY_TARGET=http://backend
+      - VITE_MOCK_AUTH=false
     volumes:
       - ./frontend:/app
       - node_modules:/app/node_modules
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./docker
+      dockerfile: backend.Dockerfile
+    container_name: admin_backend
+    working_dir: /var/www/html
+    ports:
+      - "8080:80"
+    environment:
+      - COMPOSER_ALLOW_SUPERUSER=1
+    volumes:
+      - ./backend:/var/www/html
 
 volumes:
   node_modules:

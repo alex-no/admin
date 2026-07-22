@@ -1,0 +1,26 @@
+[
+  { "key": "id", "label": "ID", "type": "text", "align": "end", "width": "60px", "sortable": true },
+  { "key": "name_uk", "label": "Назва", "type": "text", "sortable": true, "editable": true },
+  {
+    "key": "sto_type",
+    "label": "Тип",
+    "type": "select",
+    "editable": true,
+    "options": [
+      { "value": "service", "label": "СТО" },
+      { "value": "tire", "label": "Шиномонтаж" },
+      { "value": "wash", "label": "Автомийка" }
+    ]
+  },
+  { "key": "address", "label": "Адреса", "type": "text" },
+  { "key": "main_phone", "label": "Телефон", "type": "text" },
+  { "key": "rating", "label": "Рейтинг", "type": "number", "align": "end", "width": "90px" },
+  {
+    "key": "is_active",
+    "label": "Статус",
+    "type": "boolean",
+    "editable": true,
+    "trueLabel": "Активне",
+    "falseLabel": "Неактивне"
+  }
+]

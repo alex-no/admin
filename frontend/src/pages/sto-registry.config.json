@@ -1,0 +1,11 @@
+{
+  "apiList": "/api/admin/sto",
+  "apiUpdate": "/api/admin/sto",
+  "apiDelete": "/api/admin/sto",
+  "viewPermission": "sto.view",
+  "deletePermission": "sto.delete",
+  "actions": [
+    { "type": "detail", "icon": "bi-eye", "label": "Деталі" },
+    { "type": "delete", "icon": "bi-trash", "label": "Видалити", "permission": "sto.delete" }
+  ]
+}
