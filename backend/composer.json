@@ -1,12 +1,17 @@
 {
-    "name": "yiisoft/app",
+    "name": "alex-no/admin-backend",
     "type": "project",
-    "description": "Yii3 web application template",
+    "description": "Fake demo backend (Yii3 + SQLite from CSV) for the Admin reusable admin-panel framework",
     "keywords": [
         "yii3",
         "app"
     ],
-    "license": "BSD-3-Clause",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Oleksandr Nosov"
+        }
+    ],
     "support": {
         "issues": "https://github.com/yiisoft/app/issues?state=open",
         "source": "https://github.com/yiisoft/app",

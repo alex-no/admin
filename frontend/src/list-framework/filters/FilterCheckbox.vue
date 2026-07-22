@@ -1,3 +1,4 @@
+<!-- Copyright (c) 2026 Oleksandr Nosov. MIT License. -->
 <template>
   <div class="form-check form-check-inline mb-0">
     <input

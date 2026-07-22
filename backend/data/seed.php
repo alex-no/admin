@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+// Copyright (c) 2026 Oleksandr Nosov. MIT License.
+
 /**
  * Перестворює фейкову SQLite "БД" з CSV-файлів у data/csv/.
  * Запускається при кожному старті контейнера (docker/backend-entrypoint.sh) —

@@ -1,3 +1,4 @@
+<!-- Copyright (c) 2026 Oleksandr Nosov. MIT License. -->
 <template>
   <div>
     <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">

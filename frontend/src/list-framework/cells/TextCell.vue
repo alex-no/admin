@@ -1,3 +1,4 @@
+<!-- Copyright (c) 2026 Oleksandr Nosov. MIT License. -->
 <template>
   <span v-if="readonly">{{ modelValue ?? '—' }}</span>
   <input

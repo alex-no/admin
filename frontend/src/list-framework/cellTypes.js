@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Oleksandr Nosov. MIT License.
 import TextCell from './cells/TextCell.vue'
 import SelectCell from './cells/SelectCell.vue'
 import BooleanCell from './cells/BooleanCell.vue'

@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+// Copyright (c) 2026 Oleksandr Nosov. MIT License.
+
 namespace App\Admin\Support;
 
 use Psr\Http\Message\ResponseInterface;

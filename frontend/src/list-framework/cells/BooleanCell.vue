@@ -1,3 +1,4 @@
+<!-- Copyright (c) 2026 Oleksandr Nosov. MIT License. -->
 <template>
   <span v-if="readonly" class="badge" :class="modelValue ? 'bg-success' : 'bg-danger'">
     {{ modelValue ? (field.trueLabel ?? 'Так') : (field.falseLabel ?? 'Ні') }}

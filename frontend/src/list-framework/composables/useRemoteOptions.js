@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Oleksandr Nosov. MIT License.
 import { ref, computed } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 

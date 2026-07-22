@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Oleksandr Nosov. MIT License.
 import FilterText from './filters/FilterText.vue'
 import FilterSelect from './filters/FilterSelect.vue'
 import FilterCheckbox from './filters/FilterCheckbox.vue'
