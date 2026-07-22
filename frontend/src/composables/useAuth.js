@@ -3,6 +3,10 @@ import { ref } from 'vue'
 const TOKEN_KEY = 'admin_token'
 const user = ref(null)
 
+// No backend yet: accept any credentials and skip server-side session checks.
+// Set VITE_MOCK_AUTH=false once a real /api/admin/auth backend is wired up.
+const MOCK_AUTH = import.meta.env.VITE_MOCK_AUTH !== 'false'
+
 export function useAuth() {
   function getToken() {
     return localStorage.getItem(TOKEN_KEY)
@@ -13,6 +17,11 @@ export function useAuth() {
   }
 
   async function login(username, password) {
+    if (MOCK_AUTH) {
+      localStorage.setItem(TOKEN_KEY, 'mock-token')
+      user.value = { username, name: username, permissions: ['*'] }
+      return user.value
+    }
     try {
       const res = await fetch('/api/admin/auth/login', {
         method: 'POST',
@@ -46,6 +55,12 @@ export function useAuth() {
   async function fetchMe() {
     const token = getToken()
     if (!token) return null
+    if (MOCK_AUTH) {
+      if (!user.value) {
+        user.value = { username: 'admin', name: 'admin', permissions: ['*'] }
+      }
+      return user.value
+    }
     try {
       const res  = await fetch('/api/admin/auth/me', {
         headers: { Authorization: `Bearer ${token}` },

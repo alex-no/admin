@@ -112,7 +112,7 @@ const loading = ref(false);
 
 // Set page title
 onMounted(() => {
-  document.title = 'Зміна пароля адміністратора - AllSTO Admin';
+  document.title = 'Зміна пароля адміністратора - Oleksandr Nosov Admin';
 
   // Check if user is authenticated as admin
   if (!auth.isAuthenticated()) {

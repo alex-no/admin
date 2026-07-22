@@ -3,7 +3,7 @@
     <div class="card shadow" style="width: 360px;">
       <div class="card-body p-4">
         <h5 class="card-title text-center mb-4">
-          <span class="fw-bold">AllSTO</span>
+          <span class="fw-bold">Oleksandr Nosov</span>
           <span class="text-muted ms-1">Admin</span>
         </h5>
 
@@ -86,44 +86,17 @@ async function doLogin() {
   error.value   = null
   successMessage.value = ''
 
-  // Direct fetch to avoid composable issues
   try {
-    const res = await fetch('/api/admin/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: username.value, password: password.value })
-    })
-    const json = await res.json()
+    const result = await auth.login(username.value, password.value)
 
-    console.log('Direct response:', json)
-
-    // Check for password setup required
-    if (json.status === 'password_setup_required') {
-      console.log('Switching to password setup!')
+    if (result?.needsPasswordSetup) {
       needsPasswordSetup.value = true
       loading.value = false
       return
     }
 
-    // Check for errors
-    if (json.status === 'error') {
-      error.value = json.message
-      loading.value = false
-      return
-    }
-
-    // Success - use auth composable to save token
-    if (json.status === 'success') {
-      localStorage.setItem('admin_token', json.token)
-      await router.push('/dashboard')
-      return
-    }
-
-    // Unknown status
-    error.value = 'Unknown response from server'
-    loading.value = false
+    await router.push('/dashboard')
   } catch (e) {
-    console.error('Login error:', e)
     error.value = e.message || 'Network error'
     loading.value = false
   }

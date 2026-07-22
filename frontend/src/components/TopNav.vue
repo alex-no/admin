@@ -2,7 +2,7 @@
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3 py-0">
     <!-- Brand -->
     <router-link class="navbar-brand fw-bold me-4" to="/">
-      AllSTO <span class="text-secondary fw-normal small">Admin</span>
+      Oleksandr Nosov <span class="text-secondary fw-normal small">Admin</span>
     </router-link>
 
     <!-- Top-level menu items -->

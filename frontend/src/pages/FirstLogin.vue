@@ -3,7 +3,7 @@
     <div class="card shadow" style="width: 420px; max-width: 90vw;">
       <div class="card-body p-4">
         <h5 class="card-title text-center mb-4">
-          <span class="fw-bold">AllSTO</span>
+          <span class="fw-bold">Oleksandr Nosov</span>
           <span class="text-muted ms-1">Admin</span>
         </h5>
 

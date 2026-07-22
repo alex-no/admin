@@ -3,7 +3,7 @@
     <div class="card shadow" style="width: 360px;">
       <div class="card-body p-4">
         <h5 class="card-title text-center mb-4">
-          <span class="fw-bold">AllSTO</span>
+          <span class="fw-bold">Oleksandr Nosov</span>
           <span class="text-muted ms-1">Admin</span>
           <span class="badge bg-danger ms-2">Admin</span>
         </h5>
@@ -53,7 +53,7 @@ const loading    = ref(false)
 const sent       = ref(false)
 
 onMounted(() => {
-  document.title = 'Відновлення паролю адміністратора - AllSTO Admin'
+  document.title = 'Відновлення паролю адміністратора - Oleksandr Nosov Admin'
 })
 
 async function handleSubmit() {
