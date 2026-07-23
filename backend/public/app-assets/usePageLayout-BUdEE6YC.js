@@ -1,0 +1,1 @@
+import{D as e,E as t,L as n,m as r}from"./index-Df7icLlr.js";function i(){let i=n({}),a=r(()=>({...i.value,transition:`margin 0.2s ease-out`}));function o(e){e.detail&&(i.value=e.detail)}return t(()=>{window.addEventListener(`modal-content-margin-change`,o)}),e(()=>{window.removeEventListener(`modal-content-margin-change`,o)}),{contentMargin:a}}export{i as t};
