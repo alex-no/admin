@@ -2,6 +2,7 @@ node_modules/
 dist/
 *.bak
 DEPLOY.md
+deploy-staging.ps1
 .env
 .env.local
 *.log
