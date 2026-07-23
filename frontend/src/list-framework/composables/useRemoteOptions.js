@@ -38,7 +38,13 @@ export function useRemoteOptions(url, opts = {}) {
           label: row[labelKey],
         }))
       })
-      .catch((e) => { error.value = e.message })
+      .catch((e) => {
+        error.value = e.message
+        // Не залишаємо URL "назавжди зіпсованим" — прибираємо з кешу, щоб наступний
+        // виклик (напр. після повторного логіну через 401-редирект в тій самій SPA-сесії)
+        // спробував заново, а не мовчки повертав порожній список.
+        cache.delete(url)
+      })
       .finally(() => { loading.value = false })
   }
 

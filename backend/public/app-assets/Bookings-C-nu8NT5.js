@@ -1,1 +1,0 @@
-import{D as e,N as t,g as n,h as r}from"./index-M7PBA01N.js";import{t as i}from"./BaseLayout-CyBc3IO6.js";var a={__name:`Bookings`,setup(a){return(a,o)=>(e(),n(i,null,{default:t(()=>[...o[0]||=[r(`h5`,{class:`mb-3`},`Записи`,-1),r(`p`,{class:`text-muted`},`В розробці…`,-1)]]),_:1}))}};export{a as default};
