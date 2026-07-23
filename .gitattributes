@@ -1,0 +1,4 @@
+# Згенеровані білд-артефакти (Vite) — не займатись LF/CRLF конвертацією.
+# Це прибирає купу "warning: ... LF will be replaced by CRLF" при кожному
+# деплої (deploy-staging.ps1 перезаписує ці файли щоразу заново).
+backend/public/app-assets/* -text
