@@ -29,6 +29,13 @@
         class="resize-handle resize-handle--top"
         @mousedown="startResize"
       ></div>
+      <!-- Resize handle для floating режиму (за кут, знизу-справа) -->
+      <div
+        v-if="mode === 'floating'"
+        class="resize-handle resize-handle--corner"
+        title="Змінити розмір"
+        @mousedown="startResize($event, modalRef)"
+      ></div>
 
       <div class="card shadow h-100 d-flex flex-column" style="overflow:hidden; border-radius: 0;">
         <div
@@ -268,6 +275,26 @@ function getModeSwitchTitle() {
   cursor: ns-resize;
 }
 
+.resize-handle--corner {
+  right: 0;
+  bottom: 0;
+  width: 20px;
+  height: 20px;
+  cursor: nwse-resize;
+  border-bottom-right-radius: 4px;
+  /* Видима "ручка" — три діагональні риски, як у нативних resize-грипів ОС */
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.35) 0px,
+    rgba(0, 0, 0, 0.35) 1.5px,
+    transparent 1.5px,
+    transparent 5px
+  );
+  background-position: bottom right;
+  background-size: 12px 12px;
+  background-repeat: no-repeat;
+}
+
 .resize-handle:hover {
   background: rgba(13, 110, 253, 0.3);
 }
@@ -297,6 +324,12 @@ function getModeSwitchTitle() {
 .cursor-resizing-y,
 .cursor-resizing-y * {
   cursor: ns-resize !important;
+  user-select: none;
+}
+
+.cursor-resizing-both,
+.cursor-resizing-both * {
+  cursor: nwse-resize !important;
   user-select: none;
 }
 

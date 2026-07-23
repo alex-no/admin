@@ -35,6 +35,12 @@ export function useModalWindow(options = {}) {
   const dockedWidth = ref(settings.dockedWidth || options.defaultWidth || 600)
   const dockedHeight = ref(settings.dockedHeight || options.defaultHeight || 400)
 
+  // Размеры для floating режиму (за замовчуванням — як і раніше, по 90vw/88vh
+  // рахує сам браузер через CSS; тут — тільки якщо користувач явно змінив розмір)
+  const floatingWidth = ref(settings.floatingWidth || options.defaultWidth || 700)
+  const floatingHeight = ref(settings.floatingHeight || options.defaultHeight || 500)
+  const floatingResized = ref(Boolean(settings.floatingResized))
+
   const minWidth = options.minWidth || 400
   const maxWidth = options.maxWidth || 1200
   const minHeight = options.minHeight || 300
@@ -45,20 +51,30 @@ export function useModalWindow(options = {}) {
   const resizeStartWidth = ref(0)
   const resizeStartHeight = ref(0)
 
-  // Стили для плавающего окна
+  // Стили для плавающого окна
   const floatingStyle = computed(() => {
     if (mode.value !== 'floating') {
       return null
     }
 
-    if (position.value.x !== null && position.value.y !== null) {
-      return {
-        left: `${position.value.x}px`,
-        top: `${position.value.y}px`,
-        transform: 'none',
-      }
+    const style = {}
+
+    // Поки користувач жодного разу не тягнув за ручку ресайзу — розмір
+    // задає CSS-клас (90vw/88vh), щоб не міняти звичну поведінку за замовчуванням.
+    if (floatingResized.value) {
+      style.width = `${floatingWidth.value}px`
+      style.height = `${floatingHeight.value}px`
+      style.maxWidth = `${maxWidth}px`
+      style.maxHeight = `${maxHeight}px`
     }
-    return null
+
+    if (position.value.x !== null && position.value.y !== null) {
+      style.left = `${position.value.x}px`
+      style.top = `${position.value.y}px`
+      style.transform = 'none'
+    }
+
+    return Object.keys(style).length ? style : null
   })
 
   // Стили для docked-right
@@ -106,6 +122,7 @@ export function useModalWindow(options = {}) {
     if (isResizing.value) {
       if (mode.value === 'docked-right') return 'cursor-resizing-x'
       if (mode.value === 'docked-bottom') return 'cursor-resizing-y'
+      if (mode.value === 'floating') return 'cursor-resizing-both'
     }
     return ''
   })
@@ -161,9 +178,10 @@ export function useModalWindow(options = {}) {
     document.removeEventListener('mouseup', stopDrag)
   }
 
-  // Начало изменения размера
-  function startResize(event) {
-    if (mode.value !== 'docked-right' && mode.value !== 'docked-bottom') return
+  // Начало изменения размера. elementOrRef потрібен лише для floating —
+  // щоб на перший ресайз відштовхнутися від реального (CSS 90vw/88vh) розміру.
+  function startResize(event, elementOrRef) {
+    if (!['docked-right', 'docked-bottom', 'floating'].includes(mode.value)) return
 
     event.preventDefault()
     event.stopPropagation()
@@ -176,6 +194,28 @@ export function useModalWindow(options = {}) {
     } else if (mode.value === 'docked-bottom') {
       resizeStartY.value = event.clientY
       resizeStartHeight.value = dockedHeight.value
+    } else if (mode.value === 'floating') {
+      resizeStartX.value = event.clientX
+      resizeStartY.value = event.clientY
+
+      const element = elementOrRef?.value || elementOrRef
+      if (!floatingResized.value && element) {
+        const rect = element.getBoundingClientRect()
+        // Реальний CSS-розмір (90vw/88vh, до maxWidth 1100px/88vh) може перевищувати
+        // minWidth/maxWidth-пропси компонента (напр. сторінка задала max-width:1000) —
+        // без цього clamp перший рух миші "губився" в різниці і нічого не відбувалося.
+        floatingWidth.value = Math.min(Math.max(rect.width, minWidth), maxWidth)
+        floatingHeight.value = Math.min(Math.max(rect.height, minHeight), maxHeight)
+        // Плаваюче вікно за замовчуванням центроване через transform: translate(-50%,-50%),
+        // тому першу зміну розміру починаємо з зафіксованої поточної позиції,
+        // інакше рамка "стрибне" в момент переходу з CSS-розміру на inline px.
+        if (position.value.x === null) {
+          position.value = { x: rect.left, y: rect.top }
+        }
+      }
+      resizeStartWidth.value = floatingWidth.value
+      resizeStartHeight.value = floatingHeight.value
+      floatingResized.value = true
     }
 
     document.addEventListener('mousemove', onResizeMove)
@@ -198,6 +238,16 @@ export function useModalWindow(options = {}) {
 
       if (newHeight >= minHeight && newHeight <= maxHeight) {
         dockedHeight.value = newHeight
+      }
+    } else if (mode.value === 'floating') {
+      const newWidth = resizeStartWidth.value + (event.clientX - resizeStartX.value)
+      const newHeight = resizeStartHeight.value + (event.clientY - resizeStartY.value)
+
+      if (newWidth >= minWidth && newWidth <= maxWidth) {
+        floatingWidth.value = newWidth
+      }
+      if (newHeight >= minHeight && newHeight <= maxHeight) {
+        floatingHeight.value = newHeight
       }
     }
   }
@@ -231,13 +281,16 @@ export function useModalWindow(options = {}) {
   }
 
   // Сохранение настроек при изменении
-  watch([mode, dockedWidth, dockedHeight], () => {
+  watch([mode, dockedWidth, dockedHeight, floatingWidth, floatingHeight, floatingResized], () => {
     localStorage.setItem(
       storageKey,
       JSON.stringify({
         mode: mode.value,
         dockedWidth: dockedWidth.value,
         dockedHeight: dockedHeight.value,
+        floatingWidth: floatingWidth.value,
+        floatingHeight: floatingHeight.value,
+        floatingResized: floatingResized.value,
       })
     )
   })

@@ -34,14 +34,15 @@ SQL);
 
 $pdo->exec(<<<SQL
     CREATE TABLE sto (
-        id         INTEGER PRIMARY KEY,
-        sto_type   TEXT NOT NULL,
-        name_uk    TEXT NOT NULL,
-        address    TEXT,
-        main_phone TEXT,
-        rating     REAL,
-        is_active  INTEGER NOT NULL DEFAULT 1,
-        country_id INTEGER REFERENCES countries(id)
+        id          INTEGER PRIMARY KEY,
+        sto_type    TEXT NOT NULL,
+        name_uk     TEXT NOT NULL,
+        address     TEXT,
+        main_phone  TEXT,
+        rating      REAL,
+        is_active   INTEGER NOT NULL DEFAULT 1,
+        country_id  INTEGER REFERENCES countries(id),
+        description TEXT
     )
 SQL);
 
@@ -83,8 +84,8 @@ foreach (loadCsv($csvDir . '/countries.csv') as $row) {
 
 foreach (loadCsv($csvDir . '/sto.csv') as $row) {
     $pdo->prepare(
-        'INSERT INTO sto (id, sto_type, name_uk, address, main_phone, rating, is_active, country_id)
-         VALUES (:id, :sto_type, :name_uk, :address, :main_phone, :rating, :is_active, :country_id)'
+        'INSERT INTO sto (id, sto_type, name_uk, address, main_phone, rating, is_active, country_id, description)
+         VALUES (:id, :sto_type, :name_uk, :address, :main_phone, :rating, :is_active, :country_id, :description)'
     )->execute($row);
 }
 

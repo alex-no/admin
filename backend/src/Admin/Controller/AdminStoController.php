@@ -24,7 +24,7 @@ final readonly class AdminStoController
 
     private const SORTABLE = ['id', 'name_uk', 'sto_type', 'rating', 'is_active'];
     private const TYPES    = ['service', 'tire', 'wash'];
-    private const EDITABLE = ['name_uk', 'sto_type', 'is_active', 'address', 'main_phone', 'rating'];
+    private const EDITABLE = ['name_uk', 'sto_type', 'is_active', 'address', 'main_phone', 'rating', 'description'];
 
     public function __construct(
         private AdminAuth $auth,
@@ -132,6 +132,7 @@ final readonly class AdminStoController
                     new OA\Property(property: 'address', type: 'string'),
                     new OA\Property(property: 'main_phone', type: 'string'),
                     new OA\Property(property: 'rating', type: 'number', format: 'float'),
+                    new OA\Property(property: 'description', type: 'string'),
                 ]
             )
         ),
@@ -244,6 +245,7 @@ final readonly class AdminStoController
             'rating'     => $row['rating'] !== null ? (float) $row['rating'] : null,
             'is_active'  => (bool) $row['is_active'],
             'country_id' => $row['country_id'] !== null ? (int) $row['country_id'] : null,
+            'description' => $row['description'],
         ];
     }
 }

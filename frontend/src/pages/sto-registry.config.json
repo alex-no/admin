@@ -6,6 +6,7 @@
   "deletePermission": "sto.delete",
   "actions": [
     { "type": "detail", "icon": "bi-eye", "label": "Деталі" },
+    { "type": "detail", "icon": "bi-card-text", "label": "Опис", "tab": "description" },
     { "type": "delete", "icon": "bi-trash", "label": "Видалити", "permission": "sto.delete" }
   ]
 }

@@ -230,7 +230,7 @@ async function handleDelete(row) {
 
 function handleAction(action, row) {
   if (action.type === 'delete') return handleDelete(row)
-  emit('row-action', { type: action.type, row })
+  emit('row-action', { type: action.type, row, tab: action.tab ?? null })
 }
 
 // ── Type resolution (registry + custom override) ────────────────────────
