@@ -16,11 +16,12 @@ use Psr\Http\Message\ServerRequestInterface;
 
 /**
  * Приклад read-only "службового" ендпоінту без наворотів —
- * під віджет SystemHealthWidget.vue (меню "Система > Моніторинг").
+ * під віджет SystemHealthWidget.vue (Dashboard).
  *
  * Тут немає ні MySQL, ні MinIO (фейковий бекенд на SQLite+CSV), тому
- * "database"/"storage" — правдоподобні, але не справжні метрики;
- * server.* (диск, load average, пам'ять) — реальні значення контейнера.
+ * "storage" — правдоподобні, але не справжні метрики; server.* (диск, load
+ * average, пам'ять) — реальні значення контейнера; errors.* — реальний
+ * підрахунок з фейкової таблиці error_logs (data/fake_analytics.php).
  */
 final readonly class AdminSystemController
 {
@@ -57,9 +58,23 @@ final readonly class AdminSystemController
                 'server'   => $this->serverStats(),
                 'database' => $this->databaseStats(),
                 'storage'  => ['reachable' => true, 'file_count' => 0, 'total_mb' => 0.0],
-                'errors'   => ['last_hour' => 0, 'last_24h' => 0],
+                'errors'   => $this->errorStats(),
             ],
         ]);
+    }
+
+    private function errorStats(): array
+    {
+        $hourAgo = (new \DateTimeImmutable('-1 hour'))->format('Y-m-d H:i:s');
+        $dayAgo  = (new \DateTimeImmutable('-24 hours'))->format('Y-m-d H:i:s');
+
+        $count = function (string $since): int {
+            $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM error_logs WHERE created_at >= :since');
+            $stmt->execute(['since' => $since]);
+            return (int) $stmt->fetchColumn();
+        };
+
+        return ['last_hour' => $count($hourAgo), 'last_24h' => $count($dayAgo)];
     }
 
     private function serverStats(): array

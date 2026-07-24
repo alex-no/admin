@@ -39,13 +39,11 @@ const routes = [
   // System / Error Logs
   { path: '/error-logs',       name: 'ErrorLogs',      component: () => import('../pages/ErrorLogs.vue')      },
   { path: '/error-logs/stats', name: 'ErrorLogStats',  component: () => import('../pages/ErrorLogStats.vue')  },
-  { path: '/system/monitor',   name: 'SystemMonitor',  component: () => import('../pages/SystemMonitor.vue')  },
 
   // Analytics
   { path: '/analytics',            name: 'Analytics',           component: () => import('../pages/Analytics.vue')           },
   { path: '/analytics/stats',      name: 'AnalyticsStats',      component: () => import('../pages/AnalyticsStats.vue')      },
   { path: '/analytics/charts',     name: 'AnalyticsCharts',     component: () => import('../pages/AnalyticsCharts.vue')     },
-  { path: '/analytics/banned-ips', name: 'AnalyticsBannedIps',  component: () => import('../pages/AnalyticsBannedIps.vue')  },
 
   // Feedback
   { path: '/feedback', name: 'Feedback', component: () => import('../pages/Feedback.vue') },

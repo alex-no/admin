@@ -9,8 +9,8 @@
         <router-link to="/analytics/stats" class="btn btn-sm btn-outline-primary">
           <i class="bi bi-bar-chart"></i> Статистика
         </router-link>
-        <router-link to="/analytics/banned-ips" class="btn btn-sm btn-outline-danger">
-          <i class="bi bi-shield-slash"></i> Заблоковані IP
+        <router-link to="/analytics/charts" class="btn btn-sm btn-outline-primary">
+          <i class="bi bi-graph-up-arrow"></i> Графіки
         </router-link>
       </div>
       <div class="d-flex gap-2 flex-wrap">

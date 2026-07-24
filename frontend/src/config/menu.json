@@ -25,8 +25,7 @@
     "items": [
       { "label": "Відвідування",   "to": "/analytics",           "icon": "bi-eye",            "permission": "analytics.view", "roles": ["admin", "superadmin"] },
       { "label": "Статистика",     "to": "/analytics/stats",     "icon": "bi-bar-chart",      "permission": "analytics.view", "roles": ["admin", "superadmin"] },
-      { "label": "Графіки",        "to": "/analytics/charts",    "icon": "bi-graph-up-arrow", "permission": "analytics.view", "roles": ["admin", "superadmin"] },
-      { "label": "Заблоковані IP", "to": "/analytics/banned-ips","icon": "bi-shield-slash",   "permission": "analytics.view", "roles": ["admin", "superadmin"] }
+      { "label": "Графіки",        "to": "/analytics/charts",    "icon": "bi-graph-up-arrow", "permission": "analytics.view", "roles": ["admin", "superadmin"] }
     ]
   },
   {
@@ -37,8 +36,7 @@
     "roles": ["superadmin"],
     "items": [
       { "label": "Логи помилок",       "to": "/error-logs",       "icon": "bi-bug",                 "permission": "logs.view",                "roles": ["superadmin"] },
-      { "label": "Статистика помилок", "to": "/error-logs/stats", "icon": "bi-exclamation-triangle","permission": "logs.view",                "roles": ["superadmin"] },
-      { "label": "Моніторинг",         "to": "/system/monitor",   "icon": "bi-hdd-network",         "permission": "system.monitoring.view",   "roles": ["superadmin"] }
+      { "label": "Статистика помилок", "to": "/error-logs/stats", "icon": "bi-exclamation-triangle","permission": "logs.view",                "roles": ["superadmin"] }
     ]
   },
   {

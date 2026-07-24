@@ -65,6 +65,63 @@ $pdo->exec(<<<SQL
     )
 SQL);
 
+$pdo->exec(<<<SQL
+    CREATE TABLE pageviews (
+        id                INTEGER PRIMARY KEY,
+        created_at        TEXT NOT NULL,
+        section           TEXT NOT NULL,
+        url               TEXT NOT NULL,
+        path              TEXT NOT NULL,
+        method            TEXT NOT NULL,
+        status_code       INTEGER NOT NULL,
+        response_time     INTEGER NOT NULL,
+        ip                TEXT NOT NULL,
+        referer           TEXT,
+        client_type       TEXT NOT NULL,
+        detection_method  TEXT,
+        is_bot            INTEGER NOT NULL DEFAULT 0,
+        device_type       TEXT,
+        browser           TEXT,
+        os                TEXT,
+        bot_name          TEXT,
+        bot_category      TEXT,
+        user_agent        TEXT,
+        user_id           INTEGER REFERENCES users(id),
+        session_id        TEXT
+    )
+SQL);
+$pdo->exec('CREATE INDEX idx_pageviews_created_at ON pageviews(created_at)');
+
+$pdo->exec(<<<SQL
+    CREATE TABLE error_logs (
+        id                INTEGER PRIMARY KEY,
+        created_at        TEXT NOT NULL,
+        level             TEXT NOT NULL,
+        category          TEXT,
+        message           TEXT NOT NULL,
+        exception_class   TEXT,
+        file              TEXT,
+        line              INTEGER,
+        stack_trace       TEXT,
+        context           TEXT,
+        url               TEXT,
+        method            TEXT,
+        ip                TEXT,
+        user_id           INTEGER REFERENCES users(id)
+    )
+SQL);
+$pdo->exec('CREATE INDEX idx_error_logs_created_at ON error_logs(created_at)');
+
+$pdo->exec(<<<SQL
+    CREATE TABLE banned_ips (
+        id         INTEGER PRIMARY KEY,
+        ip         TEXT NOT NULL UNIQUE,
+        reason     TEXT NOT NULL,
+        banned_at  TEXT NOT NULL,
+        expires_at TEXT
+    )
+SQL);
+
 function loadCsv(string $file): array
 {
     $rows   = [];
@@ -104,5 +161,11 @@ foreach (loadCsv($csvDir . '/users.csv') as $row) {
         'permissions'   => $row['permissions'],
     ]);
 }
+
+// ── Аналітика/логи помилок: не з CSV (тут природньо великий, часовий, випадковий
+// набір даних) — генеруються процедурно при кожному старті контейнера, тому дані
+// щоразу трохи інші (як і має бути для демо "живої" аналітики).
+require __DIR__ . '/fake_analytics.php';
+seedPageviewsAndErrorLogs($pdo);
 
 echo "Seed OK: " . $dbPath . "\n";
