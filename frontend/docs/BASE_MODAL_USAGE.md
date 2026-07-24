@@ -1,17 +1,17 @@
-# BaseModal - Универсальное модальное окно
+# BaseModal - Універсальне модальне вікно
 
-## Использование
+## Використання
 
-### Простой пример
+### Простий приклад
 
 ```vue
 <template>
   <BaseModal
     v-model:visible="isOpen"
-    title="Моё окно"
+    title="Моє вікно"
     storage-key="my-modal"
   >
-    <p>Контент модального окна</p>
+    <p>Контент модального вікна</p>
   </BaseModal>
 </template>
 
@@ -23,7 +23,7 @@ const isOpen = ref(false)
 </script>
 ```
 
-### С кастомным заголовком
+### З кастомним заголовком
 
 ```vue
 <template>
@@ -37,12 +37,12 @@ const isOpen = ref(false)
       </h5>
     </template>
 
-    <p>Контент модального окна</p>
+    <p>Контент модального вікна</p>
   </BaseModal>
 </template>
 ```
 
-### С футером
+### З футером
 
 ```vue
 <template>
@@ -70,7 +70,7 @@ const isOpen = ref(false)
 </template>
 ```
 
-### С кастомными размерами
+### З кастомними розмірами
 
 ```vue
 <template>
@@ -85,12 +85,12 @@ const isOpen = ref(false)
     :min-height="400"
     :max-height="900"
   >
-    <p>Большое окно с кастомными размерами</p>
+    <p>Велике вікно з кастомними розмірами</p>
   </BaseModal>
 </template>
 ```
 
-### С синим header (как ChangeClientTypeModal)
+### З синім header (як ChangeClientTypeModal)
 
 ```vue
 <template>
@@ -109,7 +109,7 @@ const isOpen = ref(false)
 </template>
 ```
 
-### Без backdrop close и без кнопки переключения режима
+### Без backdrop close і без кнопки перемикання режиму
 
 ```vue
 <template>
@@ -120,55 +120,57 @@ const isOpen = ref(false)
     :close-on-backdrop="false"
     :show-mode-switch="false"
   >
-    <p>Це окно можна закрити только кнопкою ✕</p>
+    <p>Це вікно можна закрити тільки кнопкою ✕</p>
   </BaseModal>
 </template>
 ```
 
 ## Props
 
-| Prop | Type | Default | Описание |
-|------|------|---------|----------|
-| `visible` | Boolean | false | v-model видимости окна |
-| `title` | String | '' | Заголовок окна (или используйте slot #title) |
-| `storageKey` | String | **required** | Уникальный ключ для localStorage |
-| `headerClass` | String | '' | Дополнительные классы для header (например 'bg-primary text-white') |
-| `defaultWidth` | Number | 700 | Ширина для docked-right по умолчанию |
-| `minWidth` | Number | 500 | Минимальная ширина |
-| `maxWidth` | Number | 1200 | Максимальная ширина |
-| `defaultHeight` | Number | 400 | Высота для docked-bottom по умолчанию |
-| `minHeight` | Number | 300 | Минимальная высота |
-| `maxHeight` | Number | 800 | Максимальная высота |
-| `closeOnBackdrop` | Boolean | true | Закрывать ли по клику на backdrop |
-| `showModeSwitch` | Boolean | true | Показывать ли кнопку переключения режимов |
+| Prop | Type | Default | Опис |
+|------|------|---------|------|
+| `visible` | Boolean | false | v-model видимості вікна |
+| `title` | String | '' | Заголовок вікна (або використовуйте slot #title) |
+| `storageKey` | String | **required** | Унікальний ключ для localStorage |
+| `headerClass` | String | '' | Додаткові класи для header (наприклад 'bg-primary text-white') |
+| `defaultWidth` | Number | 700 | Ширина для docked-right за замовчуванням |
+| `minWidth` | Number | 500 | Мінімальна ширина |
+| `maxWidth` | Number | 1200 | Максимальна ширина |
+| `defaultHeight` | Number | 400 | Висота для docked-bottom за замовчуванням |
+| `minHeight` | Number | 300 | Мінімальна висота |
+| `maxHeight` | Number | 800 | Максимальна висота |
+| `closeOnBackdrop` | Boolean | true | Чи закривати по кліку на backdrop |
+| `showModeSwitch` | Boolean | true | Чи показувати кнопку перемикання режимів |
+| `mode` | String | 'floating' | Початковий режим, поки для storageKey ще немає збереженого в localStorage вибору користувача (`'floating'` \| `'docked-right'` \| `'docked-bottom'`) |
 
 ## Slots
 
-| Slot | Описание |
-|------|----------|
-| `title` | Кастомный заголовок (альтернатива prop title) |
-| `default` | Основной контент |
-| `footer` | Футер окна (опционально) |
+| Slot | Опис |
+|------|------|
+| `title` | Кастомний заголовок (альтернатива prop title) |
+| `subheader` | Опціональний блок між заголовком і тілом (наприклад, панель вкладок) — рендериться лише якщо переданий контент |
+| `default` | Основний контент |
+| `footer` | Футер вікна (опціонально) |
 
 ## Events
 
-| Event | Payload | Описание |
-|-------|---------|----------|
-| `update:visible` | Boolean | Изменение видимости (для v-model) |
-| `close` | - | Закрытие окна |
+| Event | Payload | Опис |
+|-------|---------|------|
+| `update:visible` | Boolean | Зміна видимості (для v-model) |
+| `close` | - | Закриття вікна |
 
-## Автоматические функции
+## Автоматичні функції
 
-✅ **Drag & Drop** - перетаскивание в floating режиме  
-✅ **Docked modes** - закрепление справа/снизу  
-✅ **Resize** - изменение размера в docked режимах  
-✅ **Auto-save** - сохранение режима и размеров в localStorage  
-✅ **Content margin** - автоматическое сдвигание контента страницы  
-✅ **Keyboard** - закрытие по ESC (добавьте сами если нужно)
+✅ **Drag & Drop** - перетягування у floating режимі  
+✅ **Docked modes** - закріплення справа/знизу  
+✅ **Resize** - зміна розміру в docked режимах (і за кут — у floating)  
+✅ **Auto-save** - збереження режиму і розмірів у localStorage  
+✅ **Content margin** - автоматичне зсування контенту сторінки  
+✅ **Keyboard** - закриття по ESC працює з коробки (той самий handleClose(), що й у ✕/backdrop — тому на сторінках з підтвердженням незбережених змін ESC теж коректно проходить через їхній watch(visible) і може бути скасований)
 
-## Миграция с старых модальных окон
+## Міграція зі старих модальних вікон
 
-### Было (старый способ):
+### Було (старий спосіб):
 
 ```vue
 <div v-if="isOpen" class="modal-backdrop-simple" @click.self="close">
@@ -176,13 +178,13 @@ const isOpen = ref(false)
     <div class="card-header">Заголовок</div>
     <div class="card-body">Контент</div>
     <div class="card-footer">
-      <button @click="close">Закрыть</button>
+      <button @click="close">Закрити</button>
     </div>
   </div>
 </div>
 ```
 
-### Стало (с BaseModal):
+### Стало (з BaseModal):
 
 ```vue
 <BaseModal
@@ -194,15 +196,15 @@ const isOpen = ref(false)
   Контент
 
   <template #footer>
-    <button @click="isOpen = false">Закрыть</button>
+    <button @click="isOpen = false">Закрити</button>
   </template>
 </BaseModal>
 ```
 
-## Преимущества
+## Переваги
 
-- 🎯 **Единообразие** - все окна выглядят и работают одинаково
-- 🔧 **Переиспользование** - один компонент для всех случаев
-- 💾 **Персистентность** - настройки сохраняются автоматически
-- 📱 **Гибкость** - три режима отображения
-- ⚡ **Простота** - меньше кода, меньше багов
+- 🎯 **Однорідність** - усі вікна виглядають і працюють однаково
+- 🔧 **Перевикористання** - один компонент для всіх випадків
+- 💾 **Персистентність** - налаштування зберігаються автоматично
+- 📱 **Гнучкість** - три режими відображення
+- ⚡ **Простота** - менше коду, менше багів

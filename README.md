@@ -87,7 +87,7 @@ reverse-proxy (у проді — хостовий Apache з Let's Encrypt).
 
 | Механізм | Де лежить | Що робить |
 |---|---|---|
-| Універсальне вікно деталей | `frontend/src/components/BaseModal.vue` + `frontend/src/composables/useModalWindow.js` | Три режими (floating / docked-right / docked-bottom), drag & resize, автозбереження режиму в localStorage. Контент — через slots (`#title`, default, `#footer`) |
+| Універсальне вікно деталей | `frontend/src/components/BaseModal.vue` + `frontend/src/composables/useModalWindow.js` | Три режими (floating / docked-right / docked-bottom), drag & resize, автозбереження режиму в localStorage, закриття по Escape — вбудовано, окремо додавати не потрібно. Контент — через slots (`#title`, `#subheader`, default, `#footer`), детальніше — 4.4. Це буквально **один і той самий** компонент у всій адмінці — жодна картка/форма (каталог, геодовідники, аналітика тощо) не тримає власної копії розмітки вікна |
 | Каркас списку (список+фільтр+пейджинг+масові операції) | `frontend/src/list-framework/` | `DataListPage.vue` + реєстри типів (`filterTypes.js`, `cellTypes.js`) + `useRemoteOptions.js`. Колонки та фільтри задаються JSON-конфігом, а не хардкодяться в шаблоні. Вибір кількості рядків на сторінці та масові операції (чекбокси, bulk-редагування/видалення) — теж без додаткового конфігу, див. 4.2 |
 | Зсув контенту при відкритому докері | `frontend/src/components/ListPageWrapper.vue` + `usePageLayout.js` | Докнуте вікно не перекриває список, а зсуває його |
 | Синхронізація фільтрів/сортування/відкритої картки з URL | `frontend/src/composables/useUrlFilters.js` | Фільтри, сортування (зокрема мульти-колоночне) і відкрита детальна картка (id + активна вкладка) переживають перезавантаження сторінки і передаються в посиланні — див. 4.2 |
@@ -262,6 +262,72 @@ registerCellType('my-rating', MyRatingCell)
 ### 4.4. Детальна картка (вікно)
 
 Будь-яка кількість вкладок/полів — звичайна розмітка всередині `<BaseModal>`. Три режими
-відображення, drag/resize, збереження розмірів — вже працюють без додаткового коду.
-Дивіться `frontend/docs/BASE_MODAL_USAGE.md` і `frontend/docs/MODAL_WINDOWS.md` — там детальний опис
-усіх props і слотів з прикладами.
+відображення, drag/resize, збереження розмірів у localStorage, закриття по хрестику/бекдропу/
+Escape — вже працюють без додаткового коду. Головне правило: **у проекті немає жодної іншої
+модалки, крім `BaseModal.vue`** — навіть для найпростішого вікна не копіюйте розмітку
+`modal-window`/`resize-handle`/тощо, а обгортайте `<BaseModal>` і передавайте свій контент
+через slots.
+
+Мінімальний приклад:
+
+```vue
+<BaseModal
+  v-model:visible="visible"
+  storage-key="my-entity-modal"
+  :default-width="700"
+  :min-width="500"
+  :max-width="1200"
+>
+  <template #title>
+    <h5 class="mb-0">{{ mode === 'create' ? 'Новий запис' : 'Редагування' }}</h5>
+  </template>
+
+  <!-- звичайний контент — форма, деталі тощо -->
+  <div v-if="saveError" class="alert alert-danger small mb-3">{{ saveError }}</div>
+  <div class="row g-3">...</div>
+
+  <template #footer>
+    <div></div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-sm btn-secondary" @click="visible = false">Скасувати</button>
+      <button class="btn btn-sm btn-primary" @click="save">Зберегти</button>
+    </div>
+  </template>
+</BaseModal>
+```
+
+Ключові props (повний список — `frontend/docs/BASE_MODAL_USAGE.md`):
+`storageKey` (обов'язковий, унікальний ключ localStorage), `mode` (початковий режим,
+за замовчуванням `'floating'` — довідник країн, наприклад, задає `'docked-right'`),
+`defaultWidth`/`minWidth`/`maxWidth`/`defaultHeight`/`minHeight`/`maxHeight`,
+`closeOnBackdrop` (вимкніть, якщо картка має власну логіку підтвердження закриття —
+див. нижче), `headerClass` (напр. `"bg-primary text-white"` для акцентного заголовка).
+
+Слот `#footer`: обгортка вже має `d-flex justify-content-between` — якщо кнопок лише
+одна група (праворуч), перший елемент слота лишайте порожнім `<div></div>`, як у прикладі
+вище. Слот `#subheader` — для панелі вкладок чи будь-чого іншого, що має сидіти між
+заголовком і тілом на всю ширину (без відступів тіла); рендериться, лише якщо в нього
+щось передано.
+
+**Важливий нюанс при закритті.** Хрестик, клік по бекдропу і Escape закривають вікно
+*всередині* `BaseModal` — вони не викликають жодну функцію вашої сторінки. Якщо при
+закритті потрібно щось прибрати (скинути вибраний рядок, відхилити проміс, надіслати
+подію `*-closed`) — не кладіть цю логіку у власну функцію `close()` (вона спрацює тільки
+коли її викликають вручну, напр. кнопка "Скасувати"), а слідкуйте за переходом `v-model`
+через `watch`:
+
+```js
+watch(visible, (val, wasVisible) => {
+  if (wasVisible && !val) {
+    // спрацює незалежно від того, як саме закрили вікно
+    selectedRow.value = null
+  }
+})
+```
+
+Так само не потрібно вручну надсилати `modal-content-margin-change` (щоб сторінка
+зсувалася при докнутому вікні) — `BaseModal` вже робить це сам.
+
+Детальніше про всі props/слоти з прикладами — `frontend/docs/BASE_MODAL_USAGE.md`;
+про сам композабл `useModalWindow.js` (якщо потрібно щось нестандартне поза `BaseModal`) —
+`frontend/docs/MODAL_WINDOWS.md`.

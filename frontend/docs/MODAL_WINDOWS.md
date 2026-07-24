@@ -321,7 +321,7 @@ function getModeIcon() {
 - Event listeners автоматично додаються/видаляються
 - Міжкомпонентна комунікація через CustomEvent
 - Плавні CSS transitions (0.2s ease-out)
-- Підтримка keyboard shortcuts (можна додати ESC окремо)
+- Підтримка keyboard shortcuts (закриття по ESC вбудоване в `BaseModal.vue` — окремо додавати не потрібно)
 
 ## Різниця з попередньою версією
 
