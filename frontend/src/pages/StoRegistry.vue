@@ -10,7 +10,6 @@
       :filter-config="filterConfig"
       :columns-config="columnsConfig"
       :actions="cfg.actions"
-      :per-page="10"
       @row-action="onRowAction"
     />
   </ListPageWrapper>

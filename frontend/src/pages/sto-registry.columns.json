@@ -15,7 +15,7 @@
   },
   { "key": "address", "label": "Адреса", "type": "text" },
   { "key": "phones", "label": "Телефони", "type": "phone-list", "sortable": true },
-  { "key": "rating", "label": "Рейтинг", "type": "number", "align": "end", "width": "90px", "sortable": true },
+  { "key": "rating", "label": "Рейтинг", "type": "number", "align": "end", "width": "90px", "sortable": true, "editable": true, "min": 0, "max": 5, "step": 0.05 },
   {
     "key": "is_active",
     "label": "Статус",

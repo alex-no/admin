@@ -50,7 +50,7 @@ final readonly class AdminStoController
         tags: ['Admin - STO'],
         parameters: [
             new OA\Parameter(name: 'page', in: 'query', schema: new OA\Schema(type: 'integer', default: 1)),
-            new OA\Parameter(name: 'per_page', in: 'query', schema: new OA\Schema(type: 'integer', default: 20)),
+            new OA\Parameter(name: 'per_page', in: 'query', schema: new OA\Schema(type: 'integer', default: 50)),
             new OA\Parameter(name: 'search', in: 'query', schema: new OA\Schema(type: 'string')),
             new OA\Parameter(name: 'sto_type', in: 'query', schema: new OA\Schema(type: 'string', enum: self::TYPES)),
             new OA\Parameter(name: 'status', in: 'query', schema: new OA\Schema(type: 'string', enum: ['active', 'inactive'])),
@@ -82,7 +82,7 @@ final readonly class AdminStoController
 
         $params  = $request->getQueryParams();
         $page    = max(1, (int) ($params['page'] ?? 1));
-        $perPage = min(200, max(1, (int) ($params['per_page'] ?? 20)));
+        $perPage = min(250, max(1, (int) ($params['per_page'] ?? 50)));
         $search  = trim((string) ($params['search'] ?? ''));
 
         $order = $this->buildOrderClause((string) ($params['sort_by'] ?? ''), (string) ($params['sort_dir'] ?? ''));
