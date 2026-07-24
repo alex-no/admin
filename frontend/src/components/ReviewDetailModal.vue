@@ -1,206 +1,179 @@
+<!-- Copyright (c) 2026 Oleksandr Nosov. MIT License. -->
 <template>
-  <Teleport to="body">
-    <!-- Backdrop -->
-    <div
-      v-if="visible && mode === 'floating'"
-      class="modal-backdrop-simple"
-      @click="close"
-    ></div>
+  <BaseModal
+    v-model:visible="visible"
+    storage-key="review-detail-modal"
+    :default-width="900"
+    :min-width="650"
+    :max-width="1200"
+    :default-height="700"
+    :min-height="500"
+  >
+    <template #title>
+      <h6 class="mb-0">Відгук #{{ reviewId }}</h6>
+    </template>
 
-    <!-- Modal window -->
-    <div
-      v-if="visible"
-      ref="modalRef"
-      class="modal-window"
-      :class="[`modal-window--${mode}`, cursorClass]"
-      :style="mode === 'floating' ? floatingStyle : mode === 'docked-right' ? dockedRightStyle : dockedBottomStyle"
-    >
-      <!-- Resize handles -->
-      <div v-if="mode === 'docked-right'" class="resize-handle resize-handle--left" @mousedown="startResize"></div>
-      <div v-if="mode === 'docked-bottom'" class="resize-handle resize-handle--top" @mousedown="startResize"></div>
-
-      <div class="card shadow h-100 d-flex flex-column" style="overflow:hidden; border-radius: 0;">
-        <div
-          class="card-header d-flex justify-content-between align-items-center px-4 py-3"
-          :class="isDraggable ? 'cursor-grab' : ''"
-          @mousedown="isDraggable && modalRef ? startDrag($event, modalRef) : null"
-        >
-          <h6 class="mb-0">Відгук #{{ reviewId }}</h6>
-          <div class="d-flex gap-2 align-items-center">
-            <button class="btn btn-sm btn-outline-secondary" @mousedown.stop @click="cycleMode" :title="getModeSwitchTitle()">
-              <i :class="getModeIcon()"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-secondary" @mousedown.stop @click="close">✕</button>
-          </div>
+    <div v-if="loading" class="text-center py-4">
+      <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+    </div>
+    <div v-else-if="error" class="alert alert-danger small">{{ error }}</div>
+    <div v-else-if="item">
+      <div class="row g-3">
+        <!-- СТО -->
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold text-muted">СТО</label>
+          <div class="fw-semibold">{{ item.sto_name }}</div>
+          <div class="text-muted small">#{{ item.sto_id }}</div>
         </div>
 
-        <div class="card-body px-4 py-3" style="flex:1; overflow-y:auto;">
-          <div v-if="loading" class="text-center py-4">
-            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+        <!-- Статус -->
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold text-muted">Статус</label>
+          <div><span :class="statusBadge(item.status)">{{ statusLabel(item.status) }}</span></div>
+        </div>
+
+        <!-- Автор -->
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold text-muted">Автор</label>
+          <div class="d-flex align-items-center gap-2">
+            <span class="fw-semibold">{{ item.author_name }}</span>
+            <span v-if="item.is_guest" class="badge bg-info text-dark">Гість</span>
+            <span v-if="item.is_verified_purchase" class="badge bg-success">Підтверджена покупка</span>
           </div>
-          <div v-else-if="error" class="alert alert-danger small">{{ error }}</div>
-          <div v-else-if="item">
-            <div class="row g-3">
-              <!-- СТО -->
-              <div class="col-md-6">
-                <label class="form-label small fw-semibold text-muted">СТО</label>
-                <div class="fw-semibold">{{ item.sto_name }}</div>
-                <div class="text-muted small">#{{ item.sto_id }}</div>
-              </div>
+          <div v-if="item.guest_email" class="text-muted small">{{ item.guest_email }}</div>
+          <div v-if="item.user_id" class="text-muted small">User ID: {{ item.user_id }}</div>
+        </div>
 
-              <!-- Статус -->
-              <div class="col-md-6">
-                <label class="form-label small fw-semibold text-muted">Статус</label>
-                <div><span :class="statusBadge(item.status)">{{ statusLabel(item.status) }}</span></div>
-              </div>
+        <!-- Рейтинг -->
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold text-muted">Загальний рейтинг</label>
+          <div class="d-flex align-items-center gap-2">
+            <span class="h4 mb-0 fw-bold text-warning">{{ item.rating_overall.toFixed(1) }}</span>
+            <div class="text-warning">
+              <i v-for="n in 5" :key="n"
+                 :class="n <= Math.round(item.rating_overall) ? 'bi-star-fill' : 'bi-star'"
+                 class="bi"></i>
+            </div>
+          </div>
+          <div v-if="!item.rating_moderated" class="badge bg-warning text-dark mt-2">Оцінка не модерована</div>
+          <div v-else class="badge bg-success mt-2">Оцінка модерована</div>
+        </div>
 
-              <!-- Автор -->
-              <div class="col-md-6">
-                <label class="form-label small fw-semibold text-muted">Автор</label>
-                <div class="d-flex align-items-center gap-2">
-                  <span class="fw-semibold">{{ item.author_name }}</span>
-                  <span v-if="item.is_guest" class="badge bg-info text-dark">Гість</span>
-                  <span v-if="item.is_verified_purchase" class="badge bg-success">Підтверджена покупка</span>
-                </div>
-                <div v-if="item.guest_email" class="text-muted small">{{ item.guest_email }}</div>
-                <div v-if="item.user_id" class="text-muted small">User ID: {{ item.user_id }}</div>
+        <!-- Детальные оценки -->
+        <div class="col-12">
+          <label class="form-label small fw-semibold text-muted">Детальні оцінки</label>
+          <div class="row g-2">
+            <div class="col-6 col-md-3">
+              <div class="border rounded p-2 text-center">
+                <div class="small text-muted">Якість</div>
+                <div class="fw-bold">{{ item.rating_quality }} / 5</div>
               </div>
-
-              <!-- Рейтинг -->
-              <div class="col-md-6">
-                <label class="form-label small fw-semibold text-muted">Загальний рейтинг</label>
-                <div class="d-flex align-items-center gap-2">
-                  <span class="h4 mb-0 fw-bold text-warning">{{ item.rating_overall.toFixed(1) }}</span>
-                  <div class="text-warning">
-                    <i v-for="n in 5" :key="n"
-                       :class="n <= Math.round(item.rating_overall) ? 'bi-star-fill' : 'bi-star'"
-                       class="bi"></i>
-                  </div>
-                </div>
-                <div v-if="!item.rating_moderated" class="badge bg-warning text-dark mt-2">Оцінка не модерована</div>
-                <div v-else class="badge bg-success mt-2">Оцінка модерована</div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="border rounded p-2 text-center">
+                <div class="small text-muted">Швидкість</div>
+                <div class="fw-bold">{{ item.rating_speed }} / 5</div>
               </div>
-
-              <!-- Детальные оценки -->
-              <div class="col-12">
-                <label class="form-label small fw-semibold text-muted">Детальні оцінки</label>
-                <div class="row g-2">
-                  <div class="col-6 col-md-3">
-                    <div class="border rounded p-2 text-center">
-                      <div class="small text-muted">Якість</div>
-                      <div class="fw-bold">{{ item.rating_quality }} / 5</div>
-                    </div>
-                  </div>
-                  <div class="col-6 col-md-3">
-                    <div class="border rounded p-2 text-center">
-                      <div class="small text-muted">Швидкість</div>
-                      <div class="fw-bold">{{ item.rating_speed }} / 5</div>
-                    </div>
-                  </div>
-                  <div class="col-6 col-md-3">
-                    <div class="border rounded p-2 text-center">
-                      <div class="small text-muted">Ціна</div>
-                      <div class="fw-bold">{{ item.rating_price }} / 5</div>
-                    </div>
-                  </div>
-                  <div class="col-6 col-md-3">
-                    <div class="border rounded p-2 text-center">
-                      <div class="small text-muted">Сервіс</div>
-                      <div class="fw-bold">{{ item.rating_service }} / 5</div>
-                    </div>
-                  </div>
-                </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="border rounded p-2 text-center">
+                <div class="small text-muted">Ціна</div>
+                <div class="fw-bold">{{ item.rating_price }} / 5</div>
               </div>
-
-              <!-- Заголовок -->
-              <div v-if="item.title" class="col-12">
-                <label class="form-label small fw-semibold text-muted">Заголовок</label>
-                <div class="fw-semibold">{{ item.title }}</div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="border rounded p-2 text-center">
+                <div class="small text-muted">Сервіс</div>
+                <div class="fw-bold">{{ item.rating_service }} / 5</div>
               </div>
-
-              <!-- Текст отзыва -->
-              <div class="col-12">
-                <label class="form-label small fw-semibold text-muted">Текст відгуку</label>
-                <div class="border rounded p-3 bg-light" style="white-space: pre-wrap">{{ item.text }}</div>
-              </div>
-
-              <hr class="my-2" />
-
-              <!-- Даты -->
-              <div class="col-md-4">
-                <label class="form-label small fw-semibold text-muted">Дата створення</label>
-                <div class="text-muted small">{{ formatDate(item.created_at) }}</div>
-              </div>
-              <div class="col-md-4">
-                <label class="form-label small fw-semibold text-muted">Дата оновлення</label>
-                <div class="text-muted small">{{ formatDate(item.updated_at) }}</div>
-              </div>
-              <div class="col-md-4">
-                <label class="form-label small fw-semibold text-muted">Дата публікації</label>
-                <div class="text-muted small">{{ formatDate(item.published_at) }}</div>
-              </div>
-
-              <!-- Booking ID -->
-              <div v-if="item.booking_id" class="col-md-6">
-                <label class="form-label small fw-semibold text-muted">Бронювання</label>
-                <div class="text-muted small">Booking ID: {{ item.booking_id }}</div>
-              </div>
-
-              <!-- Helpful count -->
-              <div class="col-md-6">
-                <label class="form-label small fw-semibold text-muted">Корисність</label>
-                <div class="text-muted small">{{ item.helpful_count }} користувачів вважають корисним</div>
-              </div>
-
-              <div v-if="actionError" class="alert alert-danger small mb-0 mt-3">{{ actionError }}</div>
-              <div v-if="actionSuccess" class="alert alert-success small mb-0 mt-3">{{ actionSuccess }}</div>
             </div>
           </div>
         </div>
 
-        <div class="card-footer px-4 py-3 bg-light text-end">
-          <div class="d-flex justify-content-between">
-            <div>
-              <button
-                v-if="item && item.status === 'published'"
-                class="btn btn-sm btn-warning me-2"
-                @click="markAsSpam"
-                :disabled="acting"
-              >
-                Позначити як спам
-              </button>
-            </div>
-            <div>
-              <button class="btn btn-sm btn-secondary me-2" @click="close">Закрити</button>
-              <button
-                v-if="item && item.status === 'pending'"
-                class="btn btn-sm btn-danger me-2"
-                @click="reject"
-                :disabled="acting"
-              >
-                <span v-if="acting === 'reject'" class="spinner-border spinner-border-sm me-1"></span>
-                Відхилити
-              </button>
-              <button
-                v-if="item && item.status === 'pending'"
-                class="btn btn-sm btn-success"
-                @click="approve"
-                :disabled="acting"
-              >
-                <span v-if="acting === 'approve'" class="spinner-border spinner-border-sm me-1"></span>
-                Схвалити та опублікувати
-              </button>
-            </div>
-          </div>
+        <!-- Заголовок -->
+        <div v-if="item.title" class="col-12">
+          <label class="form-label small fw-semibold text-muted">Заголовок</label>
+          <div class="fw-semibold">{{ item.title }}</div>
         </div>
+
+        <!-- Текст отзыва -->
+        <div class="col-12">
+          <label class="form-label small fw-semibold text-muted">Текст відгуку</label>
+          <div class="border rounded p-3 bg-light" style="white-space: pre-wrap">{{ item.text }}</div>
+        </div>
+
+        <hr class="my-2" />
+
+        <!-- Даты -->
+        <div class="col-md-4">
+          <label class="form-label small fw-semibold text-muted">Дата створення</label>
+          <div class="text-muted small">{{ formatDate(item.created_at) }}</div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small fw-semibold text-muted">Дата оновлення</label>
+          <div class="text-muted small">{{ formatDate(item.updated_at) }}</div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small fw-semibold text-muted">Дата публікації</label>
+          <div class="text-muted small">{{ formatDate(item.published_at) }}</div>
+        </div>
+
+        <!-- Booking ID -->
+        <div v-if="item.booking_id" class="col-md-6">
+          <label class="form-label small fw-semibold text-muted">Бронювання</label>
+          <div class="text-muted small">Booking ID: {{ item.booking_id }}</div>
+        </div>
+
+        <!-- Helpful count -->
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold text-muted">Корисність</label>
+          <div class="text-muted small">{{ item.helpful_count }} користувачів вважають корисним</div>
+        </div>
+
+        <div v-if="actionError" class="alert alert-danger small mb-0 mt-3">{{ actionError }}</div>
+        <div v-if="actionSuccess" class="alert alert-success small mb-0 mt-3">{{ actionSuccess }}</div>
       </div>
     </div>
-  </Teleport>
+
+    <template #footer>
+      <div>
+        <button
+          v-if="item && item.status === 'published'"
+          class="btn btn-sm btn-warning"
+          @click="markAsSpam"
+          :disabled="acting"
+        >
+          Позначити як спам
+        </button>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-secondary" @click="close">Закрити</button>
+        <button
+          v-if="item && item.status === 'pending'"
+          class="btn btn-sm btn-danger"
+          @click="reject"
+          :disabled="acting"
+        >
+          <span v-if="acting === 'reject'" class="spinner-border spinner-border-sm me-1"></span>
+          Відхилити
+        </button>
+        <button
+          v-if="item && item.status === 'pending'"
+          class="btn btn-sm btn-success"
+          @click="approve"
+          :disabled="acting"
+        >
+          <span v-if="acting === 'approve'" class="spinner-border spinner-border-sm me-1"></span>
+          Схвалити та опублікувати
+        </button>
+      </div>
+    </template>
+  </BaseModal>
 </template>
 
 <script setup>
 import { ref, watch, onMounted, onUnmounted } from 'vue'
-import { useModalWindow } from '../composables/useModalWindow'
+import BaseModal from './BaseModal.vue'
 import { apiGet, apiPost } from '../utils/api'
 
 const visible = ref(false)
@@ -211,26 +184,21 @@ const item = ref(null)
 const acting = ref(false)
 const actionError = ref(null)
 const actionSuccess = ref(null)
-const modalRef = ref(null)
 
-const {
-  mode,
-  floatingStyle,
-  dockedRightStyle,
-  dockedBottomStyle,
-  cursorClass,
-  isDraggable,
-  startDrag,
-  startResize,
-  cycleMode,
-} = useModalWindow({
-  storageKey: 'review-detail-modal',
-  mode: 'floating',
-  defaultWidth: 900,
-  minWidth: 650,
-  maxWidth: 1200,
-  defaultHeight: 700,
-  minHeight: 500,
+// Закриття через хрестик/бекдроп/Escape всередині BaseModal минає close() нижче —
+// тому прибирання стану й query-параметра винесені сюди, в один watcher на будь-яке
+// закриття (а не дублюються по кожному тригеру закриття окремо).
+watch(visible, (val, wasVisible) => {
+  if (wasVisible && !val) {
+    reviewId.value = null
+    item.value = null
+    actionError.value = null
+    actionSuccess.value = null
+
+    const url = new URL(window.location.href)
+    url.searchParams.delete('detail')
+    window.history.pushState({}, '', url.toString())
+  }
 })
 
 async function load() {
@@ -332,14 +300,6 @@ async function markAsSpam() {
 
 function close() {
   visible.value = false
-  reviewId.value = null
-  item.value = null
-  actionError.value = null
-  actionSuccess.value = null
-
-  const url = new URL(window.location.href)
-  url.searchParams.delete('detail')
-  window.history.pushState({}, '', url.toString())
 }
 
 function formatDate(dateStr) {
@@ -374,18 +334,6 @@ function statusLabel(status) {
     spam: 'Спам'
   }
   return labels[status] || status
-}
-
-function getModeSwitchTitle() {
-  if (mode.value === 'floating') return 'Прикріпити справа'
-  if (mode.value === 'docked-right') return 'Прикріпити знизу'
-  return 'Відкріпити'
-}
-
-function getModeIcon() {
-  if (mode.value === 'floating') return 'bi bi-layout-sidebar-inset-reverse'
-  if (mode.value === 'docked-right') return 'bi bi-layout-split'
-  return 'bi bi-arrows-angle-expand'
 }
 
 function handleOpen(event) {

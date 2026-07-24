@@ -1,3 +1,4 @@
+<!-- Copyright (c) 2026 Oleksandr Nosov. MIT License. -->
 <template>
   <ListPageWrapper>
     <div>
@@ -157,167 +158,127 @@
   </ListPageWrapper>
 
   <!-- ── Edit Modal ──────────────────────────────────────────────────────── -->
-  <Teleport to="body">
-      <!-- Backdrop только для floating режима -->
-      <div
-        v-if="modalOpen && mode === 'floating'"
-        class="modal-backdrop-simple"
-        @click="closeModal"
-      ></div>
+  <BaseModal
+    v-model:visible="modalOpen"
+    storage-key="area-region-modal"
+    :default-width="750"
+    :min-width="600"
+    :max-width="1000"
+    :default-height="550"
+    :min-height="450"
+    :max-height="800"
+  >
+    <template #title>
+      <h5 class="mb-0">{{ modalMode === 'create' ? 'Новий запис' : 'Редагування' }}</h5>
+    </template>
 
-      <!-- Модальное окно -->
-      <div
-        v-if="modalOpen"
-        ref="modalRef"
-        class="modal-window"
-        :class="[
-          `modal-window--${mode}`,
-          cursorClass,
-        ]"
-        :style="mode === 'floating' ? floatingStyle : mode === 'docked-right' ? dockedRightStyle : dockedBottomStyle"
-      >
-        <!-- Resize handle для docked режимов -->
-        <div
-          v-if="mode === 'docked-right'"
-          class="resize-handle resize-handle--left"
-          @mousedown="startResize"
-        ></div>
-        <div
-          v-if="mode === 'docked-bottom'"
-          class="resize-handle resize-handle--top"
-          @mousedown="startResize"
-        ></div>
+    <div class="row g-3">
+      <template v-for="mf in cfg.modal" :key="mf.key">
+        <div :class="`col-sm-${mf.col}`">
+          <label class="form-label small mb-1">{{ cfg.fields[mf.key].label }}</label>
 
-        <div class="card shadow h-100 d-flex flex-column" style="overflow:hidden; border-radius: 0;">
-          <div
-            class="card-header d-flex justify-content-between align-items-center py-2 px-4"
-            :class="isDraggable ? 'cursor-grab' : ''"
-            @mousedown="isDraggable && modalRef ? startDrag($event, modalRef) : null"
-          >
-            <h5 class="mb-0">{{ modalMode === 'create' ? 'Новий запис' : 'Редагування' }}</h5>
-            <div class="d-flex gap-2 align-items-center">
-              <button
-                class="btn btn-sm btn-outline-secondary"
-                @mousedown.stop
-                @click="cycleMode"
-                :title="getModeSwitchTitle()"
-              >
-                <i :class="getModeIcon()"></i>
-              </button>
-              <button class="btn btn-sm btn-outline-secondary" @mousedown.stop @click="closeModal">✕</button>
+          <!-- ID – read only, hidden in create mode -->
+          <template v-if="mf.key === 'id'">
+            <div v-if="modalMode === 'edit'" class="readonly-field">{{ modalData.id }}</div>
+            <div v-else class="readonly-field text-muted">—</div>
+          </template>
+
+          <!-- country_id select -->
+          <template v-else-if="mf.key === 'country_id'">
+            <select v-if="canEditInModal('country_id')" v-model.number="modalForm.country_id" class="form-select form-select-sm">
+              <option v-for="c in countriesList" :key="c.id" :value="c.id">{{ c.name_uk }}</option>
+            </select>
+            <div v-else class="readonly-field">{{ modalData.country_name }}</div>
+          </template>
+
+          <!-- region_in_area_id select -->
+          <template v-else-if="mf.key === 'region_in_area_id'">
+            <select v-if="canEditInModal('region_in_area_id')" v-model.number="modalForm.region_in_area_id" class="form-select form-select-sm">
+              <option :value="null">— не вказано —</option>
+              <option v-for="a in areasList" :key="a.id" :value="a.id">{{ a.name_uk }}</option>
+            </select>
+            <div v-else class="readonly-field">{{ modalData.area_name ?? '—' }}</div>
+          </template>
+
+          <!-- center_city_id autocomplete -->
+          <template v-else-if="mf.key === 'center_city_id'">
+            <div v-if="canEditInModal('center_city_id')" class="city-autocomplete-wrap">
+              <div class="input-group input-group-sm">
+                <input
+                  type="text"
+                  class="form-control form-control-sm"
+                  :placeholder="citySearchPlaceholder"
+                  v-model="citySearch"
+                  @input="onCitySearchInput"
+                  @focus="cityDropdownOpen = true"
+                  @blur="onCitySearchBlur"
+                  autocomplete="off"
+                />
+                <button v-if="modalForm.center_city_id" type="button" class="btn btn-outline-secondary" @click="clearCenterCity" title="Очистити">×</button>
+              </div>
+              <ul v-if="cityDropdownOpen && cityResults.length" class="city-dropdown list-unstyled">
+                <li v-for="city in cityResults" :key="city.id" class="city-option" @mousedown.prevent="selectCenterCity(city)">
+                  {{ city.name_uk }}
+                  <span v-if="city.area_region_name" class="text-muted ms-1 small">{{ city.area_region_name }}</span>
+                </li>
+              </ul>
+              <div v-if="cityDropdownOpen && citySearchLoading" class="city-dropdown-info text-muted small px-2 py-1">Пошук...</div>
+              <div v-if="cityDropdownOpen && !citySearchLoading && citySearch.length >= 2 && !cityResults.length" class="city-dropdown-info text-muted small px-2 py-1">Нічого не знайдено</div>
             </div>
-          </div>
+            <div v-else class="readonly-field">{{ modalData.center_city_name ?? '—' }}</div>
+          </template>
 
-          <div class="card-body px-4 py-3" style="flex:1; overflow-y:auto">
-                <div class="row g-3">
-                  <template v-for="mf in cfg.modal" :key="mf.key">
-                    <div :class="`col-sm-${mf.col}`">
-                      <label class="form-label small mb-1">{{ cfg.fields[mf.key].label }}</label>
-
-                      <!-- ID – read only, hidden in create mode -->
-                      <template v-if="mf.key === 'id'">
-                        <div v-if="modalMode === 'edit'" class="readonly-field">{{ modalData.id }}</div>
-                        <div v-else class="readonly-field text-muted">—</div>
-                      </template>
-
-                      <!-- country_id select -->
-                      <template v-else-if="mf.key === 'country_id'">
-                        <select v-if="canEditInModal('country_id')" v-model.number="modalForm.country_id" class="form-select form-select-sm">
-                          <option v-for="c in countriesList" :key="c.id" :value="c.id">{{ c.name_uk }}</option>
-                        </select>
-                        <div v-else class="readonly-field">{{ modalData.country_name }}</div>
-                      </template>
-
-                      <!-- region_in_area_id select -->
-                      <template v-else-if="mf.key === 'region_in_area_id'">
-                        <select v-if="canEditInModal('region_in_area_id')" v-model.number="modalForm.region_in_area_id" class="form-select form-select-sm">
-                          <option :value="null">— не вказано —</option>
-                          <option v-for="a in areasList" :key="a.id" :value="a.id">{{ a.name_uk }}</option>
-                        </select>
-                        <div v-else class="readonly-field">{{ modalData.area_name ?? '—' }}</div>
-                      </template>
-
-                      <!-- center_city_id autocomplete -->
-                      <template v-else-if="mf.key === 'center_city_id'">
-                        <div v-if="canEditInModal('center_city_id')" class="city-autocomplete-wrap">
-                          <div class="input-group input-group-sm">
-                            <input
-                              type="text"
-                              class="form-control form-control-sm"
-                              :placeholder="citySearchPlaceholder"
-                              v-model="citySearch"
-                              @input="onCitySearchInput"
-                              @focus="cityDropdownOpen = true"
-                              @blur="onCitySearchBlur"
-                              autocomplete="off"
-                            />
-                            <button v-if="modalForm.center_city_id" type="button" class="btn btn-outline-secondary" @click="clearCenterCity" title="Очистити">×</button>
-                          </div>
-                          <ul v-if="cityDropdownOpen && cityResults.length" class="city-dropdown list-unstyled">
-                            <li v-for="city in cityResults" :key="city.id" class="city-option" @mousedown.prevent="selectCenterCity(city)">
-                              {{ city.name_uk }}
-                              <span v-if="city.area_region_name" class="text-muted ms-1 small">{{ city.area_region_name }}</span>
-                            </li>
-                          </ul>
-                          <div v-if="cityDropdownOpen && citySearchLoading" class="city-dropdown-info text-muted small px-2 py-1">Пошук...</div>
-                          <div v-if="cityDropdownOpen && !citySearchLoading && citySearch.length >= 2 && !cityResults.length" class="city-dropdown-info text-muted small px-2 py-1">Нічого не знайдено</div>
-                        </div>
-                        <div v-else class="readonly-field">{{ modalData.center_city_name ?? '—' }}</div>
-                      </template>
-
-                      <!-- is_active switch -->
-                      <template v-else-if="mf.key === 'is_active'">
-                        <div v-if="canEditInModal('is_active')" class="form-check form-switch mt-1 mb-0">
-                          <input v-model="modalForm.is_active" type="checkbox" class="form-check-input" :id="`modal-active-${modalData.id}`" role="switch" />
-                          <label class="form-check-label" :for="`modal-active-${modalData.id}`">
-                            {{ modalForm.is_active ? 'Активний' : 'Неактивний' }}
-                          </label>
-                        </div>
-                        <div v-else>
-                          <span class="badge" :class="modalData.is_active ? 'bg-success' : 'bg-danger'">
-                            {{ modalData.is_active ? 'Активний' : 'Неактивний' }}
-                          </span>
-                        </div>
-                      </template>
-
-                      <!-- timestamps – hidden in create mode -->
-                      <template v-else-if="cfg.fields[mf.key].type === 'datetime'">
-                        <div v-if="modalMode === 'edit'" class="readonly-field text-muted small">{{ modalData[mf.key] }}</div>
-                        <div v-else class="readonly-field text-muted">—</div>
-                      </template>
-
-                      <!-- regular text input -->
-                      <template v-else>
-                        <input v-if="canEditInModal(mf.key)" v-model="modalForm[mf.key]" class="form-control form-control-sm" />
-                        <div v-else class="readonly-field">{{ modalData[mf.key] ?? '—' }}</div>
-                      </template>
-
-                    </div>
-                  </template>
-                </div>
-
-          </div>
-
-          <div class="card-footer py-2 px-4" style="flex-shrink:0">
-            <div v-if="saveError" class="alert alert-danger small mb-2">{{ saveError }}</div>
-            <div class="d-flex gap-2 justify-content-end">
-              <button class="btn btn-secondary btn-sm" @click="closeModal">Скасувати</button>
-              <button class="btn btn-primary btn-sm" :disabled="saving" @click="saveModal">
-                <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-                Зберегти
-              </button>
+          <!-- is_active switch -->
+          <template v-else-if="mf.key === 'is_active'">
+            <div v-if="canEditInModal('is_active')" class="form-check form-switch mt-1 mb-0">
+              <input v-model="modalForm.is_active" type="checkbox" class="form-check-input" :id="`modal-active-${modalData.id}`" role="switch" />
+              <label class="form-check-label" :for="`modal-active-${modalData.id}`">
+                {{ modalForm.is_active ? 'Активний' : 'Неактивний' }}
+              </label>
             </div>
-          </div>
+            <div v-else>
+              <span class="badge" :class="modalData.is_active ? 'bg-success' : 'bg-danger'">
+                {{ modalData.is_active ? 'Активний' : 'Неактивний' }}
+              </span>
+            </div>
+          </template>
+
+          <!-- timestamps – hidden in create mode -->
+          <template v-else-if="cfg.fields[mf.key].type === 'datetime'">
+            <div v-if="modalMode === 'edit'" class="readonly-field text-muted small">{{ modalData[mf.key] }}</div>
+            <div v-else class="readonly-field text-muted">—</div>
+          </template>
+
+          <!-- regular text input -->
+          <template v-else>
+            <input v-if="canEditInModal(mf.key)" v-model="modalForm[mf.key]" class="form-control form-control-sm" />
+            <div v-else class="readonly-field">{{ modalData[mf.key] ?? '—' }}</div>
+          </template>
+
         </div>
+      </template>
+    </div>
+
+    <div v-if="saveError" class="alert alert-danger small mt-3 mb-0">{{ saveError }}</div>
+
+    <template #footer>
+      <div></div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-secondary btn-sm" @click="closeModal">Скасувати</button>
+        <button class="btn btn-primary btn-sm" :disabled="saving" @click="saveModal">
+          <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
+          Зберегти
+        </button>
       </div>
-  </Teleport>
+    </template>
+  </BaseModal>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import ListPageWrapper from '@/components/ListPageWrapper.vue'
+import BaseModal from '@/components/BaseModal.vue'
 import { useAuth } from '@/composables/useAuth'
-import { useModalWindow } from '@/composables/useModalWindow'
 
 const props = defineProps({
   cfg:           { type: Object, required: true },
@@ -326,31 +287,6 @@ const props = defineProps({
 })
 
 const { can, authHeaders } = useAuth()
-
-const modalRef = ref(null)
-
-// Modal window composable
-const {
-  mode,
-  floatingStyle,
-  dockedRightStyle,
-  dockedBottomStyle,
-  contentMargin: modalContentMargin,
-  isDraggable,
-  cursorClass,
-  startDrag,
-  startResize,
-  cycleMode,
-} = useModalWindow({
-  storageKey: 'area-region-modal',
-  mode: 'floating',
-  defaultWidth: 750,
-  minWidth: 600,
-  maxWidth: 1000,
-  defaultHeight: 550,
-  minHeight: 450,
-  maxHeight: 800,
-})
 
 // ── Config helpers ────────────────────────────────────────────────────────────
 function canEditField(key) {
@@ -653,38 +589,6 @@ async function saveModal() {
   }
 }
 
-function getModeIcon() {
-  if (mode.value === 'floating') return 'bi bi-layout-sidebar-reverse'
-  if (mode.value === 'docked-right') return 'bi bi-window-dock'
-  if (mode.value === 'docked-bottom') return 'bi bi-window'
-  return 'bi bi-window'
-}
-
-function getModeSwitchTitle() {
-  if (mode.value === 'floating') return 'Закріпити справа'
-  if (mode.value === 'docked-right') return 'Закріпити знизу'
-  if (mode.value === 'docked-bottom') return 'Відкріпити (плаваюче вікно)'
-  return 'Змінити режим'
-}
-
-// Отправляем событие об изменении margin для родительской страницы
-watch([modalOpen, modalContentMargin], () => {
-  if (modalOpen.value) {
-    window.dispatchEvent(
-      new CustomEvent('modal-content-margin-change', {
-        detail: modalContentMargin.value,
-      })
-    )
-  } else {
-    // Сбрасываем margin при закрытии
-    window.dispatchEvent(
-      new CustomEvent('modal-content-margin-change', {
-        detail: {},
-      })
-    )
-  }
-}, { deep: true })
-
 onMounted(async () => {
   await loadCountries()
   if (props.hasAreaFilter) await loadAreas()
@@ -737,77 +641,5 @@ onMounted(async () => {
 .city-dropdown-info {
   border: 1px solid #dee2e6; border-radius: 4px;
   margin-top: 2px; background: #fff;
-}
-
-.modal-backdrop-simple {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, .45);
-  z-index: 1049;
-}
-
-.modal-window {
-  z-index: 1050;
-}
-
-.modal-window--floating {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  max-width: 850px;
-  max-height: 88vh;
-  width: 90vw;
-  cursor: default;
-}
-
-.modal-window--docked-right {
-  position: fixed;
-  top: 0;
-  right: 0;
-  height: 100vh;
-  box-shadow: -2px 0 8px rgba(0,0,0,0.15);
-}
-
-.modal-window--docked-bottom {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.15);
-}
-
-.resize-handle {
-  position: absolute;
-  background: transparent;
-  z-index: 10;
-}
-
-.resize-handle--left {
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 8px;
-  cursor: ew-resize;
-}
-
-.resize-handle--top {
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 8px;
-  cursor: ns-resize;
-}
-
-.resize-handle:hover {
-  background: rgba(13, 110, 253, 0.1);
-}
-
-.cursor-grab {
-  cursor: grab;
-}
-
-.cursor-grabbing {
-  cursor: grabbing;
 }
 </style>

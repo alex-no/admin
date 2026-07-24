@@ -1,3 +1,4 @@
+<!-- Copyright (c) 2026 Oleksandr Nosov. MIT License. -->
 <template>
   <BaseLayout>
     <div :style="pageMargin" class="page-content-wrapper">
@@ -101,287 +102,223 @@
     </div>
 
     <!-- Modal for create/edit -->
-    <Teleport to="body">
-      <!-- Backdrop только для floating режима -->
-      <div
-        v-if="selectedRole && mode === 'floating'"
-        class="modal-backdrop-simple"
-        @click="closeModal"
-      ></div>
+    <BaseModal
+      v-model:visible="modalVisible"
+      storage-key="role-management-modal"
+      :default-width="700"
+      :min-width="500"
+      :max-width="1200"
+      :default-height="500"
+      :min-height="400"
+      :max-height="800"
+    >
+      <template #title>
+        <h5 class="mb-0">{{ modalMode === 'create' ? 'Нова роль' : 'Редагувати роль' }}</h5>
+      </template>
 
-      <!-- Модальное окно -->
-      <div
-        v-if="selectedRole"
-        ref="modalRef"
-        class="modal-window"
-        :class="[
-          `modal-window--${mode}`,
-          cursorClass,
-        ]"
-        :style="mode === 'floating' ? floatingStyle : mode === 'docked-right' ? dockedRightStyle : dockedBottomStyle"
-      >
-        <!-- Resize handle для docked режимов -->
-        <div
-          v-if="mode === 'docked-right'"
-          class="resize-handle resize-handle--left"
-          @mousedown="startResize"
-        ></div>
-        <div
-          v-if="mode === 'docked-bottom'"
-          class="resize-handle resize-handle--top"
-          @mousedown="startResize"
-        ></div>
+      <template #subheader>
+        <ul class="nav nav-tabs border-0">
+          <li class="nav-item">
+            <button
+              class="nav-link py-2 px-2 small text-nowrap"
+              :class="{ active: activeTab === 'general' }"
+              @click="activeTab = 'general'"
+            >
+              <i class="bi bi-info-circle me-1"></i>Загальна інформація
+            </button>
+          </li>
+          <li class="nav-item">
+            <button
+              class="nav-link py-2 px-2 small text-nowrap"
+              :class="{ active: activeTab === 'permissions' }"
+              @click="activeTab = 'permissions'"
+            >
+              <i class="bi bi-shield-check me-1"></i>Права доступу
+            </button>
+          </li>
+          <li class="nav-item">
+            <button
+              class="nav-link py-2 px-2 small text-nowrap"
+              :class="{ active: activeTab === 'hierarchy' }"
+              @click="activeTab = 'hierarchy'"
+            >
+              <i class="bi bi-diagram-3 me-1"></i>Ієрархія
+            </button>
+          </li>
+        </ul>
+      </template>
 
-        <div class="card shadow h-100 d-flex flex-column" style="overflow:hidden; border-radius: 0;">
-          <div
-            class="card-header d-flex justify-content-between align-items-center py-2 px-4"
-            :class="isDraggable ? 'cursor-grab' : ''"
-            @mousedown="isDraggable && modalRef ? startDrag($event, modalRef) : null"
-          >
-            <h5 class="mb-0">{{ modalMode === 'create' ? 'Нова роль' : 'Редагувати роль' }}</h5>
-            <div class="d-flex gap-2 align-items-center">
-              <button
-                class="btn btn-sm btn-outline-secondary"
-                @mousedown.stop
-                @click="cycleMode"
-                :title="getModeSwitchTitle()"
-              >
-                <i :class="getModeIcon()"></i>
-              </button>
-              <button class="btn btn-sm btn-outline-secondary" @mousedown.stop @click="closeModal">✕</button>
-            </div>
+      <div v-if="saveError" class="alert alert-danger small mb-3">{{ saveError }}</div>
+
+      <template v-if="selectedRole">
+        <!-- General info -->
+        <template v-if="activeTab === 'general'">
+          <div class="mb-3">
+            <label class="form-label small mb-1">Slug (унікальний код)</label>
+            <input
+              v-model="formData.slug"
+              type="text"
+              class="form-control form-control-sm"
+              :readonly="modalMode === 'edit' && selectedRole.is_system"
+              placeholder="moderator"
+            />
+            <div class="form-text small">Латиниця, підкреслення. Приклад: content_manager</div>
           </div>
 
-          <!-- Tabs -->
-          <div class="border-bottom px-3 pt-1" style="flex-shrink:0; background:#fff">
-            <ul class="nav nav-tabs border-0">
-              <li class="nav-item">
-                <button
-                  class="nav-link py-2 px-2 small text-nowrap"
-                  :class="{ active: activeTab === 'general' }"
-                  @click="activeTab = 'general'"
-                >
-                  <i class="bi bi-info-circle me-1"></i>Загальна інформація
-                </button>
-              </li>
-              <li class="nav-item">
-                <button
-                  class="nav-link py-2 px-2 small text-nowrap"
-                  :class="{ active: activeTab === 'permissions' }"
-                  @click="activeTab = 'permissions'"
-                >
-                  <i class="bi bi-shield-check me-1"></i>Права доступу
-                </button>
-              </li>
-              <li class="nav-item">
-                <button
-                  class="nav-link py-2 px-2 small text-nowrap"
-                  :class="{ active: activeTab === 'hierarchy' }"
-                  @click="activeTab = 'hierarchy'"
-                >
-                  <i class="bi bi-diagram-3 me-1"></i>Ієрархія
-                </button>
-              </li>
-            </ul>
+          <div class="mb-3">
+            <label class="form-label small mb-1">Назва</label>
+            <input
+              v-model="formData.name"
+              type="text"
+              class="form-control form-control-sm"
+              placeholder="Content Manager"
+            />
           </div>
 
-          <!-- Tab content -->
-          <div class="card-body px-4 py-3" style="flex:1; overflow-y:auto">
-          <!-- General info -->
-          <template v-if="activeTab === 'general'">
-            <div class="mb-3">
-              <label class="form-label small mb-1">Slug (унікальний код)</label>
-              <input
-                v-model="formData.slug"
-                type="text"
-                class="form-control form-control-sm"
-                :readonly="modalMode === 'edit' && selectedRole.is_system"
-                placeholder="moderator"
-              />
-              <div class="form-text small">Латиниця, підкреслення. Приклад: content_manager</div>
-            </div>
+          <div class="mb-3">
+            <label class="form-label small mb-1">Опис</label>
+            <textarea
+              v-model="formData.description"
+              class="form-control form-control-sm"
+              rows="3"
+              placeholder="Може керувати контентом та модерувати відгуки"
+            ></textarea>
+          </div>
 
-            <div class="mb-3">
-              <label class="form-label small mb-1">Назва</label>
-              <input
-                v-model="formData.name"
-                type="text"
-                class="form-control form-control-sm"
-                placeholder="Content Manager"
-              />
-            </div>
+          <div v-if="selectedRole.is_system" class="alert alert-warning small">
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            Системна роль — можна редагувати тільки назву та опис
+          </div>
+        </template>
 
-            <div class="mb-3">
-              <label class="form-label small mb-1">Опис</label>
-              <textarea
-                v-model="formData.description"
-                class="form-control form-control-sm"
-                rows="3"
-                placeholder="Може керувати контентом та модерувати відгуки"
-              ></textarea>
-            </div>
+        <!-- Permissions -->
+        <template v-else-if="activeTab === 'permissions'">
+          <div class="alert alert-info small mb-3">
+            <i class="bi bi-info-circle me-1"></i>
+            Виберіть права доступу для цієї ролі та встановіть effect (allow/deny)
+          </div>
 
-            <div v-if="selectedRole.is_system" class="alert alert-warning small">
-              <i class="bi bi-exclamation-triangle me-1"></i>
-              Системна роль — можна редагувати тільки назву та опис
-            </div>
-          </template>
+          <div v-if="permissionsLoading" class="text-center py-5">
+            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+          </div>
 
-          <!-- Permissions -->
-          <template v-else-if="activeTab === 'permissions'">
-            <div class="alert alert-info small mb-3">
-              <i class="bi bi-info-circle me-1"></i>
-              Виберіть права доступу для цієї ролі та встановіть effect (allow/deny)
-            </div>
-
-            <div v-if="permissionsLoading" class="text-center py-5">
-              <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-            </div>
-
-            <div v-else>
-              <div v-for="module in groupedPermissions" :key="module.name" class="mb-3">
-                <h6 class="mb-2">
-                  <strong>{{ module.name }}</strong>
-                  <span class="text-muted small">({{ module.permissions.length }})</span>
-                </h6>
-                <div v-for="perm in module.permissions" :key="perm.id" class="mb-2 d-flex align-items-start gap-2">
-                  <input
-                    class="form-check-input mt-1"
-                    type="checkbox"
-                    :id="'perm-' + perm.id"
-                    :checked="isPermissionSelected(perm.id)"
-                    @change="togglePermission(perm.id, $event.target.checked)"
-                  />
-                  <div class="flex-grow-1">
-                    <label class="form-check-label small" :for="'perm-' + perm.id">
-                      <code class="small">{{ perm.slug }}</code> — {{ perm.name }}
-                      <div v-if="perm.description" class="text-muted" style="font-size: 0.75rem">
-                        {{ perm.description }}
-                      </div>
+          <div v-else>
+            <div v-for="module in groupedPermissions" :key="module.name" class="mb-3">
+              <h6 class="mb-2">
+                <strong>{{ module.name }}</strong>
+                <span class="text-muted small">({{ module.permissions.length }})</span>
+              </h6>
+              <div v-for="perm in module.permissions" :key="perm.id" class="mb-2 d-flex align-items-start gap-2">
+                <input
+                  class="form-check-input mt-1"
+                  type="checkbox"
+                  :id="'perm-' + perm.id"
+                  :checked="isPermissionSelected(perm.id)"
+                  @change="togglePermission(perm.id, $event.target.checked)"
+                />
+                <div class="flex-grow-1">
+                  <label class="form-check-label small" :for="'perm-' + perm.id">
+                    <code class="small">{{ perm.slug }}</code> — {{ perm.name }}
+                    <div v-if="perm.description" class="text-muted" style="font-size: 0.75rem">
+                      {{ perm.description }}
+                    </div>
+                  </label>
+                </div>
+                <div v-if="isPermissionSelected(perm.id)" class="d-flex gap-2">
+                  <div class="form-check form-check-inline">
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      :name="'effect-' + perm.id"
+                      :id="'allow-' + perm.id"
+                      value="allow"
+                      :checked="getPermissionEffect(perm.id) === 'allow'"
+                      @change="setPermissionEffect(perm.id, 'allow')"
+                    />
+                    <label class="form-check-label small text-success" :for="'allow-' + perm.id">
+                      Allow
                     </label>
                   </div>
-                  <div v-if="isPermissionSelected(perm.id)" class="d-flex gap-2">
-                    <div class="form-check form-check-inline">
-                      <input
-                        class="form-check-input"
-                        type="radio"
-                        :name="'effect-' + perm.id"
-                        :id="'allow-' + perm.id"
-                        value="allow"
-                        :checked="getPermissionEffect(perm.id) === 'allow'"
-                        @change="setPermissionEffect(perm.id, 'allow')"
-                      />
-                      <label class="form-check-label small text-success" :for="'allow-' + perm.id">
-                        Allow
-                      </label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                      <input
-                        class="form-check-input"
-                        type="radio"
-                        :name="'effect-' + perm.id"
-                        :id="'deny-' + perm.id"
-                        value="deny"
-                        :checked="getPermissionEffect(perm.id) === 'deny'"
-                        @change="setPermissionEffect(perm.id, 'deny')"
-                      />
-                      <label class="form-check-label small text-danger" :for="'deny-' + perm.id">
-                        Deny
-                      </label>
-                    </div>
+                  <div class="form-check form-check-inline">
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      :name="'effect-' + perm.id"
+                      :id="'deny-' + perm.id"
+                      value="deny"
+                      :checked="getPermissionEffect(perm.id) === 'deny'"
+                      @change="setPermissionEffect(perm.id, 'deny')"
+                    />
+                    <label class="form-check-label small text-danger" :for="'deny-' + perm.id">
+                      Deny
+                    </label>
                   </div>
                 </div>
               </div>
             </div>
-          </template>
-
-          <!-- Hierarchy -->
-          <template v-else-if="activeTab === 'hierarchy'">
-            <div class="alert alert-info small mb-3">
-              <i class="bi bi-info-circle me-1"></i>
-              Ця роль успадковує права від батьківських ролей
-            </div>
-
-            <div v-for="role in otherRoles" :key="role.id" class="form-check mb-2">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                :id="'role-' + role.id"
-                :value="role.id"
-                v-model="selectedParents"
-              />
-              <label class="form-check-label" :for="'role-' + role.id">
-                <strong>{{ role.name }}</strong>
-                <span class="text-muted small ms-1">({{ role.slug }})</span>
-                <div v-if="role.description" class="text-muted small">{{ role.description }}</div>
-              </label>
-            </div>
-
-            <div v-if="otherRoles.length === 0" class="text-muted small">
-              Немає інших ролей для вибору
-            </div>
-          </template>
-        </div>
-
-          <!-- Footer -->
-          <div class="card-footer py-2 px-4" style="flex-shrink:0">
-            <div v-if="saveError" class="alert alert-danger small mb-2">{{ saveError }}</div>
-            <div class="d-flex gap-2 justify-content-end">
-              <button @click="closeModal" class="btn btn-secondary btn-sm">
-                Скасувати
-              </button>
-              <button @click="saveRole" class="btn btn-primary btn-sm" :disabled="saving">
-                <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-                Зберегти
-              </button>
-            </div>
           </div>
+        </template>
+
+        <!-- Hierarchy -->
+        <template v-else-if="activeTab === 'hierarchy'">
+          <div class="alert alert-info small mb-3">
+            <i class="bi bi-info-circle me-1"></i>
+            Ця роль успадковує права від батьківських ролей
+          </div>
+
+          <div v-for="role in otherRoles" :key="role.id" class="form-check mb-2">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              :id="'role-' + role.id"
+              :value="role.id"
+              v-model="selectedParents"
+            />
+            <label class="form-check-label" :for="'role-' + role.id">
+              <strong>{{ role.name }}</strong>
+              <span class="text-muted small ms-1">({{ role.slug }})</span>
+              <div v-if="role.description" class="text-muted small">{{ role.description }}</div>
+            </label>
+          </div>
+
+          <div v-if="otherRoles.length === 0" class="text-muted small">
+            Немає інших ролей для вибору
+          </div>
+        </template>
+      </template>
+
+      <template #footer>
+        <div></div>
+        <div class="d-flex gap-2">
+          <button @click="closeModal" class="btn btn-secondary btn-sm">
+            Скасувати
+          </button>
+          <button @click="saveRole" class="btn btn-primary btn-sm" :disabled="saving">
+            <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
+            Зберегти
+          </button>
         </div>
-      </div>
-    </Teleport>
+      </template>
+    </BaseModal>
   </BaseLayout>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useAuth } from '@/composables/useAuth';
-import { useModalWindow } from '@/composables/useModalWindow';
 import { usePageLayout } from '@/composables/usePageLayout';
 import BaseLayout from '@/layouts/BaseLayout.vue';
+import BaseModal from '@/components/BaseModal.vue';
 
 const auth = useAuth();
 const { contentMargin: pageMargin } = usePageLayout();
-
-const modalRef = ref(null);
-
-// Modal window composable
-const {
-  mode,
-  floatingStyle,
-  dockedRightStyle,
-  dockedBottomStyle,
-  contentMargin: modalContentMargin,
-  isDraggable,
-  cursorClass,
-  startDrag,
-  startResize,
-  cycleMode,
-} = useModalWindow({
-  storageKey: 'role-management-modal',
-  mode: 'floating',
-  defaultWidth: 700,
-  minWidth: 500,
-  maxWidth: 1200,
-  defaultHeight: 500,
-  minHeight: 400,
-  maxHeight: 800,
-});
 
 const roles = ref([]);
 const permissions = ref([]);
 const loading = ref(true);
 const error = ref(null);
 
+const modalVisible = ref(false);
 const selectedRole = ref(null);
 const modalMode = ref('create'); // 'create' | 'edit'
 const activeTab = ref('general');
@@ -409,23 +346,15 @@ const otherRoles = computed(() => {
   return roles.value.filter(r => r.id !== selectedRole.value.id);
 });
 
-// Отправляем событие об изменении margin для родительской страницы
-watch([selectedRole, modalContentMargin], () => {
-  if (selectedRole.value) {
-    window.dispatchEvent(
-      new CustomEvent('modal-content-margin-change', {
-        detail: modalContentMargin.value,
-      })
-    )
-  } else {
-    // Сбрасываем margin при закрытии
-    window.dispatchEvent(
-      new CustomEvent('modal-content-margin-change', {
-        detail: {},
-      })
-    )
+// Закриття через хрестик/бекдроп/Escape всередині BaseModal минає closeModal()
+// нижче — тому прибирання обраної ролі винесено сюди, в один watcher на будь-яке
+// закриття. Зсув контенту сторінки (modal-content-margin-change) тепер теж
+// відправляє сам BaseModal — окремий watch тут більше не потрібен.
+watch(modalVisible, (val, wasVisible) => {
+  if (wasVisible && !val) {
+    selectedRole.value = null;
   }
-}, { deep: true })
+});
 
 onMounted(async () => {
   await loadRoles();
@@ -511,6 +440,7 @@ function openCreateModal() {
   selectedParents.value = [];
   activeTab.value = 'general';
   saveError.value = null;
+  modalVisible.value = true;
 }
 
 function openEditModal(role) {
@@ -528,11 +458,12 @@ function openEditModal(role) {
   selectedParents.value = role.parent_roles.map(p => p.id);
   activeTab.value = 'general';
   saveError.value = null;
+  modalVisible.value = true;
   loadPermissions();
 }
 
 function closeModal() {
-  selectedRole.value = null;
+  modalVisible.value = false;
 }
 
 async function saveRole() {
@@ -615,20 +546,6 @@ async function saveRole() {
   }
 }
 
-function getModeIcon() {
-  if (mode.value === 'floating') return 'bi bi-layout-sidebar-reverse'
-  if (mode.value === 'docked-right') return 'bi bi-window-dock'
-  if (mode.value === 'docked-bottom') return 'bi bi-window'
-  return 'bi bi-window'
-}
-
-function getModeSwitchTitle() {
-  if (mode.value === 'floating') return 'Закріпити справа'
-  if (mode.value === 'docked-right') return 'Закріпити знизу'
-  if (mode.value === 'docked-bottom') return 'Відкріпити (плаваюче вікно)'
-  return 'Змінити режим'
-}
-
 async function deleteRole(role) {
   if (!confirm(`Видалити роль "${role.name}"?`)) return;
 
@@ -653,77 +570,5 @@ async function deleteRole(role) {
 <style scoped>
 .page-content-wrapper {
   transition: margin 0.3s ease;
-}
-
-.modal-backdrop-simple {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, .45);
-  z-index: 1049;
-}
-
-.modal-window {
-  z-index: 1050;
-}
-
-.modal-window--floating {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  max-width: 900px;
-  max-height: 88vh;
-  width: 90vw;
-  cursor: default;
-}
-
-.modal-window--docked-right {
-  position: fixed;
-  top: 0;
-  right: 0;
-  height: 100vh;
-  box-shadow: -2px 0 8px rgba(0,0,0,0.15);
-}
-
-.modal-window--docked-bottom {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.15);
-}
-
-.resize-handle {
-  position: absolute;
-  background: transparent;
-  z-index: 10;
-}
-
-.resize-handle--left {
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 8px;
-  cursor: ew-resize;
-}
-
-.resize-handle--top {
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 8px;
-  cursor: ns-resize;
-}
-
-.resize-handle:hover {
-  background: rgba(13, 110, 253, 0.1);
-}
-
-.cursor-grab {
-  cursor: grab;
-}
-
-.cursor-grabbing {
-  cursor: grabbing;
 }
 </style>

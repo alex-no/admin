@@ -69,6 +69,12 @@
           </div>
         </div>
 
+        <!-- Опціональний блок між заголовком і тілом (напр. панель вкладок) —
+             рендериться лише якщо сторінка передала контент у цей слот. -->
+        <div v-if="$slots.subheader" class="border-bottom px-3 pt-1" style="flex-shrink:0; background:#fff">
+          <slot name="subheader"></slot>
+        </div>
+
         <div class="card-body px-4 py-3" style="flex:1; overflow-y:auto;">
           <slot></slot>
         </div>
@@ -82,7 +88,7 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
 import { useModalWindow } from '../composables/useModalWindow'
 
 const props = defineProps({
@@ -97,6 +103,15 @@ const props = defineProps({
   storageKey: {
     type: String,
     required: true
+  },
+  // Режим, з яким вікно відкривається вперше (поки для storageKey ще немає
+  // збереженого в localStorage вибору користувача). Більшості карток достатньо
+  // 'floating' (типове), але, наприклад, довідник країн історично відкривався
+  // одразу докнутим справа.
+  mode: {
+    type: String,
+    default: 'floating',
+    validator: (v) => ['floating', 'docked-right', 'docked-bottom'].includes(v)
   },
   headerClass: {
     type: String,
@@ -155,7 +170,7 @@ const {
   cycleMode,
 } = useModalWindow({
   storageKey: props.storageKey,
-  mode: 'floating',
+  mode: props.mode,
   defaultWidth: props.defaultWidth,
   minWidth: props.minWidth,
   maxWidth: props.maxWidth,
@@ -192,6 +207,23 @@ function handleBackdropClick() {
     handleClose()
   }
 }
+
+// Esc закриває так само, як хрестик, — через той самий handleClose(), тому
+// на сторінках з підтвердженням незбережених змін (StoRegistry.vue) Esc теж
+// коректно проганяється через їхній watch(visible) і може бути скасований.
+function handleEscape(e) {
+  if (e.key === 'Escape' && props.visible) {
+    handleClose()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleEscape)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleEscape)
+})
 
 function getModeIcon() {
   if (mode.value === 'floating') return 'bi bi-layout-sidebar-reverse'
