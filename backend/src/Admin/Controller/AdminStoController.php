@@ -22,9 +22,18 @@ final readonly class AdminStoController
 {
     use JsonResponseTrait;
 
-    private const SORTABLE = ['id', 'name_uk', 'sto_type', 'rating', 'is_active'];
+    private const SORTABLE = ['id', 'name_uk', 'sto_type', 'rating', 'is_active', 'phones'];
     private const TYPES    = ['service', 'tire', 'wash'];
-    private const EDITABLE = ['name_uk', 'sto_type', 'is_active', 'address', 'main_phone', 'rating', 'description'];
+    private const EDITABLE = ['name_uk', 'sto_type', 'is_active', 'address', 'phones', 'rating', 'description'];
+
+    // Ті самі підписи, що і в options списку "sto_type" на фронтенді
+    // (sto-registry.columns.json) — sto_type зберігається кодом (service/tire/wash),
+    // але сортувати треба за словом, яке користувач бачить у таблиці, а не за кодом.
+    private const TYPE_LABELS = [
+        'service' => 'СТО',
+        'tire'    => 'Шиномонтаж',
+        'wash'    => 'Автомийка',
+    ];
 
     public function __construct(
         private AdminAuth $auth,
@@ -46,8 +55,18 @@ final readonly class AdminStoController
             new OA\Parameter(name: 'sto_type', in: 'query', schema: new OA\Schema(type: 'string', enum: self::TYPES)),
             new OA\Parameter(name: 'status', in: 'query', schema: new OA\Schema(type: 'string', enum: ['active', 'inactive'])),
             new OA\Parameter(name: 'country_id', in: 'query', schema: new OA\Schema(type: 'integer')),
-            new OA\Parameter(name: 'sort_by', in: 'query', schema: new OA\Schema(type: 'string', enum: self::SORTABLE)),
-            new OA\Parameter(name: 'sort_dir', in: 'query', schema: new OA\Schema(type: 'string', enum: ['ASC', 'DESC'])),
+            new OA\Parameter(
+                name: 'sort_by',
+                in: 'query',
+                description: 'Можна декілька полів через кому, порядок = пріоритет сортування (напр. "sto_type,name_uk")',
+                schema: new OA\Schema(type: 'string')
+            ),
+            new OA\Parameter(
+                name: 'sort_dir',
+                in: 'query',
+                description: 'Напрямок для кожного поля з sort_by, у тому ж порядку, через кому (напр. "ASC,DESC")',
+                schema: new OA\Schema(type: 'string')
+            ),
         ],
         responses: [
             new OA\Response(response: 200, description: 'Paginated list of STOs'),
@@ -66,9 +85,7 @@ final readonly class AdminStoController
         $perPage = min(200, max(1, (int) ($params['per_page'] ?? 20)));
         $search  = trim((string) ($params['search'] ?? ''));
 
-        $sortBy  = $params['sort_by'] ?? null;
-        $sortDir = strtoupper((string) ($params['sort_dir'] ?? 'ASC')) === 'DESC' ? 'DESC' : 'ASC';
-        $order   = in_array($sortBy, self::SORTABLE, true) ? "$sortBy $sortDir" : 'id ASC';
+        $order = $this->buildOrderClause((string) ($params['sort_by'] ?? ''), (string) ($params['sort_dir'] ?? ''));
 
         $conditions = ['1=1'];
         $binds      = [];
@@ -113,6 +130,36 @@ final readonly class AdminStoController
         ]);
     }
 
+    #[OA\Get(
+        path: '/api/admin/sto/{id}',
+        summary: 'Get a single STO by id',
+        description: 'Використовується для прямого відкриття деталей за посиланням (id зберігається в URL сторінки)',
+        security: [['BearerAuth' => []]],
+        tags: ['Admin - STO'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'STO'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 403, description: 'Forbidden'),
+            new OA\Response(response: 404, description: 'STO not found'),
+        ]
+    )]
+    public function show(ServerRequestInterface $request): ResponseInterface
+    {
+        if ($err = $this->auth->guard($request, 'sto.view')) {
+            return $this->json(['status' => 'error', 'message' => $err['message']], $err['status']);
+        }
+
+        $id = $this->idFromPath($request);
+        if ($id === 0 || !$this->exists($id)) {
+            return $this->json(['status' => 'error', 'message' => 'STO not found'], 404);
+        }
+
+        return $this->json(['status' => 'success', 'data' => $this->format($this->fetchRow($id))]);
+    }
+
     #[OA\Patch(
         path: '/api/admin/sto/{id}',
         summary: 'Update STO field(s)',
@@ -130,7 +177,7 @@ final readonly class AdminStoController
                     new OA\Property(property: 'sto_type', type: 'string', enum: self::TYPES),
                     new OA\Property(property: 'is_active', type: 'boolean'),
                     new OA\Property(property: 'address', type: 'string'),
-                    new OA\Property(property: 'main_phone', type: 'string'),
+                    new OA\Property(property: 'phones', type: 'array', items: new OA\Items(type: 'string'), example: ['+380441234567', '+380441234568']),
                     new OA\Property(property: 'rating', type: 'number', format: 'float'),
                     new OA\Property(property: 'description', type: 'string'),
                 ]
@@ -163,8 +210,18 @@ final readonly class AdminStoController
             if (!array_key_exists($field, $data)) {
                 continue;
             }
-            $sets[]         = "$field = :$field";
-            $params[$field] = $field === 'is_active' ? (int) (bool) $data[$field] : $data[$field];
+            $sets[] = "$field = :$field";
+
+            if ($field === 'is_active') {
+                $params[$field] = (int) (bool) $data[$field];
+            } elseif ($field === 'phones') {
+                // У БД (і CSV) декілька номерів зберігаються одним рядком через ";" —
+                // у API/формі це завжди звичайний масив рядків.
+                $phones = array_filter(array_map('trim', (array) $data[$field]), static fn ($p) => $p !== '');
+                $params[$field] = implode(';', $phones);
+            } else {
+                $params[$field] = $data[$field];
+            }
         }
 
         if ($sets === []) {
@@ -214,6 +271,47 @@ final readonly class AdminStoController
         return $this->json(['status' => 'success']);
     }
 
+    /**
+     * Будує ORDER BY одразу по декількох полях (мульти-сортування з фронтенду:
+     * Ctrl+клік по заголовку додає колонку до вже вибраних). $sortBy і $sortDir —
+     * список полів/напрямків через кому, в одному й тому ж порядку.
+     */
+    private function buildOrderClause(string $sortBy, string $sortDir): string
+    {
+        $keys = array_filter(array_map('trim', explode(',', $sortBy)), static fn ($k) => $k !== '');
+        $dirs = array_map('trim', explode(',', $sortDir));
+
+        $parts = [];
+        foreach (array_values($keys) as $i => $key) {
+            if (!in_array($key, self::SORTABLE, true)) {
+                continue;
+            }
+            $dir = strtoupper($dirs[$i] ?? 'ASC') === 'DESC' ? 'DESC' : 'ASC';
+            $parts[] = $this->sortExpr($key) . " $dir";
+        }
+
+        return $parts !== [] ? implode(', ', $parts) : 'id ASC';
+    }
+
+    /**
+     * sto_type зберігається кодом (service/tire/wash) — сортувати треба за
+     * підписом (self::TYPE_LABELS), інакше порядок рядків не збігається з
+     * алфавітним порядком слів, які бачить користувач у колонці "Тип".
+     */
+    private function sortExpr(string $key): string
+    {
+        if ($key !== 'sto_type') {
+            return $key;
+        }
+
+        $cases = [];
+        foreach (self::TYPE_LABELS as $code => $label) {
+            $cases[] = 'WHEN ' . $this->pdo->quote($code) . ' THEN ' . $this->pdo->quote($label);
+        }
+
+        return 'CASE sto_type ' . implode(' ', $cases) . ' ELSE sto_type END';
+    }
+
     private function idFromPath(ServerRequestInterface $request): int
     {
         preg_match('~/api/admin/sto/(\d+)$~', $request->getUri()->getPath(), $m);
@@ -241,7 +339,7 @@ final readonly class AdminStoController
             'sto_type'   => $row['sto_type'],
             'name_uk'    => $row['name_uk'],
             'address'    => $row['address'],
-            'main_phone' => $row['main_phone'],
+            'phones'     => array_values(array_filter(explode(';', (string) $row['phones']), static fn ($p) => $p !== '')),
             'rating'     => $row['rating'] !== null ? (float) $row['rating'] : null,
             'is_active'  => (bool) $row['is_active'],
             'country_id' => $row['country_id'] !== null ? (int) $row['country_id'] : null,

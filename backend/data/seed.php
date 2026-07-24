@@ -38,7 +38,7 @@ $pdo->exec(<<<SQL
         sto_type    TEXT NOT NULL,
         name_uk     TEXT NOT NULL,
         address     TEXT,
-        main_phone  TEXT,
+        phones      TEXT,
         rating      REAL,
         is_active   INTEGER NOT NULL DEFAULT 1,
         country_id  INTEGER REFERENCES countries(id),
@@ -83,9 +83,11 @@ foreach (loadCsv($csvDir . '/countries.csv') as $row) {
 }
 
 foreach (loadCsv($csvDir . '/sto.csv') as $row) {
+    // phones у CSV — декілька номерів через ";" (та сама конвенція, що й для
+    // users.permissions), у API/формі це вже звичайний масив рядків.
     $pdo->prepare(
-        'INSERT INTO sto (id, sto_type, name_uk, address, main_phone, rating, is_active, country_id, description)
-         VALUES (:id, :sto_type, :name_uk, :address, :main_phone, :rating, :is_active, :country_id, :description)'
+        'INSERT INTO sto (id, sto_type, name_uk, address, phones, rating, is_active, country_id, description)
+         VALUES (:id, :sto_type, :name_uk, :address, :phones, :rating, :is_active, :country_id, :description)'
     )->execute($row);
 }
 

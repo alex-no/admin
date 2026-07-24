@@ -7,6 +7,9 @@ import { useRoute, useRouter } from 'vue-router'
  * @param {Object} config - Конфигурация фильтров
  * @param {Object} config.filters - Объект с реактивными фильтрами { filterName: ref(defaultValue) }
  * @param {Object} config.sorting - Объект с сортировкой { sortKey: ref('field'), sortDir: ref('ASC') }
+ * @param {import('vue').Ref} config.multiSort - Реф с массивом сортировки по нескольким колонкам
+ *   [{ key: 'field', dir: 'ASC' }, ...], порядок элементов = приоритет. В URL — один параметр
+ *   `sort=key:dir,key2:dir2`. Независим от config.sorting (используется list-framework вместо него).
  * @param {Object} config.detail - Объект для детального окна { id: ref(null), onOpen: (id) => void }
  * @param {Function} config.onUpdate - Callback для вызова при изменении фильтров/сортировки
  * @param {Object} config.mappers - Опциональные функции преобразования значений { filterName: { toUrl, fromUrl } }
@@ -15,7 +18,23 @@ export function useUrlFilters(config) {
   const route = useRoute()
   const router = useRouter()
 
-  const { filters = {}, sorting = null, detail = null, onUpdate = null, mappers = {} } = config
+  const { filters = {}, sorting = null, multiSort = null, detail = null, onUpdate = null, mappers = {} } = config
+
+  function parseMultiSort(raw) {
+    if (!raw) return []
+    return String(raw)
+      .split(',')
+      .map((part) => {
+        const [key, dir] = part.split(':')
+        if (!key) return null
+        return { key, dir: String(dir ?? 'ASC').toUpperCase() === 'DESC' ? 'DESC' : 'ASC' }
+      })
+      .filter(Boolean)
+  }
+
+  function serializeMultiSort(items) {
+    return (items ?? []).map((s) => `${s.key}:${s.dir}`).join(',')
+  }
 
   // Функция для получения значения из URL с учетом mapper
   function getFromUrl(key, defaultValue) {
@@ -82,6 +101,15 @@ export function useUrlFilters(config) {
       }
     }
 
+    // Применяем мульти-сортировку из URL
+    if (multiSort && route.query.sort) {
+      const parsed = parseMultiSort(route.query.sort)
+      if (parsed.length) {
+        multiSort.value = parsed
+        hasChanges = true
+      }
+    }
+
     // Применяем детальный ID из URL
     if (detail && route.query.id) {
       const detailId = Number(route.query.id)
@@ -123,6 +151,16 @@ export function useUrlFilters(config) {
         query.sort_dir = sorting.sortDir.value
       } else {
         delete query.sort_dir
+      }
+    }
+
+    // Обновляем мульти-сортировку в URL
+    if (multiSort) {
+      const serialized = serializeMultiSort(multiSort.value)
+      if (serialized) {
+        query.sort = serialized
+      } else {
+        delete query.sort
       }
     }
 
@@ -185,6 +223,13 @@ export function useUrlFilters(config) {
         updateUrl()
       })
     }
+  }
+
+  // Наблюдаем за изменениями мульти-сортування (глибоко — це масив об'єктів)
+  if (multiSort) {
+    watch(multiSort, () => {
+      updateUrl()
+    }, { deep: true })
   }
 
   // Наблюдаем за изменениями детального ID

@@ -5,6 +5,7 @@
     "key": "sto_type",
     "label": "Тип",
     "type": "select",
+    "sortable": true,
     "editable": true,
     "options": [
       { "value": "service", "label": "СТО" },
@@ -13,12 +14,13 @@
     ]
   },
   { "key": "address", "label": "Адреса", "type": "text" },
-  { "key": "main_phone", "label": "Телефон", "type": "text" },
-  { "key": "rating", "label": "Рейтинг", "type": "number", "align": "end", "width": "90px" },
+  { "key": "phones", "label": "Телефони", "type": "phone-list", "sortable": true },
+  { "key": "rating", "label": "Рейтинг", "type": "number", "align": "end", "width": "90px", "sortable": true },
   {
     "key": "is_active",
     "label": "Статус",
     "type": "boolean",
+    "sortable": true,
     "editable": true,
     "trueLabel": "Активне",
     "falseLabel": "Неактивне"

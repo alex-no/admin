@@ -25,6 +25,8 @@ return [
 
             Route::get('/api/admin/sto')
                 ->action([AdminStoController::class, 'list']),
+            Route::get('/api/admin/sto/{id:\d+}')
+                ->action([AdminStoController::class, 'show']),
             Route::methods(['PUT', 'PATCH'], '/api/admin/sto/{id:\d+}')
                 ->action([AdminStoController::class, 'update']),
             Route::delete('/api/admin/sto/{id:\d+}')

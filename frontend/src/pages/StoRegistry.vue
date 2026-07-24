@@ -75,15 +75,18 @@
 
       <!-- ── Контакти ──────────────────────────────────────────────────── -->
       <template v-else-if="activeTab === 'contacts'">
-        <div class="row g-3">
-          <div class="col-sm-8">
-            <label class="form-label small mb-1">Адреса</label>
-            <input v-model="form.address" type="text" class="form-control form-control-sm" />
-          </div>
-          <div class="col-sm-4">
-            <label class="form-label small mb-1">Телефон</label>
-            <input v-model="form.main_phone" type="text" class="form-control form-control-sm" />
-          </div>
+        <div class="mb-3">
+          <label class="form-label small mb-1">Адреса</label>
+          <input v-model="form.address" type="text" class="form-control form-control-sm" />
+        </div>
+        <div>
+          <label class="form-label small mb-1">Телефони</label>
+          <PhoneListCell
+            :field="{}"
+            :model-value="form.phones"
+            :readonly="false"
+            @update:model-value="(v) => (form.phones = v)"
+          />
         </div>
       </template>
 
@@ -131,13 +134,16 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, nextTick } from 'vue'
+import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
 import ListPageWrapper from '@/components/ListPageWrapper.vue'
 import BaseModal from '@/components/BaseModal.vue'
 import ModalTabs from '@/components/ModalTabs.vue'
 import DataListPage from '@/list-framework/DataListPage.vue'
+import PhoneListCell from '@/list-framework/cells/PhoneListCell.vue'
 import { useAuth } from '@/composables/useAuth'
+import { useUrlFilters } from '@/composables/useUrlFilters'
 import { useRemoteOptions } from '@/list-framework/composables/useRemoteOptions'
+import { normalizePhoneE164 } from '@/utils/phone'
 import filterConfig from './sto-registry.filter.json'
 import columnsConfig from './sto-registry.columns.json'
 import cfg from './sto-registry.config.json'
@@ -164,7 +170,7 @@ const TABS = [
 // Порожній масив = вкладка тільки для перегляду, кнопки збереження на ній сховані.
 const TAB_FIELDS = {
   general: ['name_uk', 'sto_type', 'is_active'],
-  contacts: ['address', 'main_phone'],
+  contacts: ['address', 'phones'],
   description: ['description'],
   rating: [],
   country: [],
@@ -181,7 +187,7 @@ const form = reactive({
   sto_type: 'service',
   is_active: true,
   address: '',
-  main_phone: '',
+  phones: [],
   description: '',
 })
 let originalForm = { ...form }
@@ -202,20 +208,25 @@ const countryName = computed(() => {
   return found ? found.label : '—'
 })
 
-function onRowAction({ type, row, tab }) {
-  if (type !== 'detail') return
-
+function populateForm(row) {
   detailRow.value = row
   Object.assign(form, {
     name_uk: row.name_uk,
     sto_type: row.sto_type,
     is_active: row.is_active,
     address: row.address,
-    main_phone: row.main_phone,
+    phones: row.phones ?? [],
     description: row.description ?? '',
   })
   originalForm = { ...form }
+}
+
+function onRowAction({ type, row, tab }) {
+  if (type !== 'detail') return
+
+  populateForm(row)
   activeTab.value = tab || 'general'
+  detailId.value = row.id
   detailOpen.value = true
 }
 
@@ -231,7 +242,36 @@ watch(detailOpen, (val, wasOpen) => {
       }
     }
     suppressUnsavedCheck = false
+    detailId.value = null
   }
+})
+
+// Синхронізація з URL: активна вкладка (tab) — звичайний фільтр, id відкритого
+// запису — спеціальний параметр detail (той самий підхід, що й у StoList.vue).
+// Завдяки цьому посилання на сторінку з відкритою деталькою — при перезавантаженні
+// чи передачі іншій людині — відкриває саме той запис і саме ту вкладку.
+const detailId = ref(null)
+
+const { initFromUrl } = useUrlFilters({
+  filters: { tab: activeTab },
+  detail: {
+    id: detailId,
+    onOpen: async (id) => {
+      try {
+        const res = await fetch(`${cfg.apiUpdate}/${id}`, { headers: auth.authHeaders() })
+        const json = await res.json().catch(() => ({}))
+        if (!res.ok || !json.data) return
+        populateForm(json.data)
+        detailOpen.value = true
+      } catch (e) {
+        console.error('Failed to load STO:', e)
+      }
+    },
+  },
+})
+
+onMounted(() => {
+  initFromUrl()
 })
 
 async function saveTab(close) {
@@ -243,7 +283,11 @@ async function saveTab(close) {
   try {
     const fields = close ? Object.values(TAB_FIELDS).flat() : TAB_FIELDS[activeTab.value]
     const payload = {}
-    for (const f of fields) payload[f] = form[f]
+    for (const f of fields) {
+      payload[f] = f === 'phones'
+        ? form.phones.map(normalizePhoneE164).filter((p) => p)
+        : form[f]
+    }
 
     const res = await fetch(`${cfg.apiUpdate}/${detailRow.value.id}`, {
       method: 'PATCH',

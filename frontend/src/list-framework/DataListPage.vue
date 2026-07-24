@@ -30,10 +30,11 @@
                   :key="col.key"
                   :style="col.width ? { width: col.width } : {}"
                   :class="[col.align ? `text-${col.align}` : '', col.sortable ? 'th-sortable' : '']"
-                  @click="col.sortable ? toggleSort(col.key) : null"
+                  :title="col.sortable ? 'Клік — сортувати. Ctrl+клік — додати до сортування' : null"
+                  @click="col.sortable ? toggleSort(col.key, $event) : null"
                 >
                   {{ col.label }}
-                  <SortIcon v-if="col.sortable" :col="col.key" :sort-key="sortKey ?? ''" :sort-dir="sortDir" />
+                  <SortIcon v-if="col.sortable" :col="col.key" :sort-items="sortItems" />
                 </th>
                 <th v-if="actions.length" style="width:100px"></th>
               </tr>
@@ -116,12 +117,13 @@ for (const f of props.filterConfig) {
   filters[f.key] = ref(f.default ?? (f.type === 'checkbox' ? false : ''))
 }
 
-const sortKey = ref(null)
-const sortDir = ref('ASC')
+// Мульти-сортування: масив [{ key, dir }], порядок елементів = пріоритет
+// (спочатку по type, потім по name — саме в такому порядку, як клікав користувач).
+const sortItems = ref([])
 
 const urlFilters = useUrlFilters({
   filters,
-  sorting: { sortKey, sortDir },
+  multiSort: sortItems,
 })
 
 // ── List state ───────────────────────────────────────────────────────────
@@ -145,7 +147,7 @@ function scheduleLoad(immediate) {
 for (const f of props.filterConfig) {
   watch(filters[f.key], () => scheduleLoad(f.type !== 'text'))
 }
-watch([sortKey, sortDir], () => load(1))
+watch(sortItems, () => load(1), { deep: true })
 
 async function load(p = 1) {
   page.value = p
@@ -155,9 +157,9 @@ async function load(p = 1) {
     const params = new URLSearchParams()
     params.set('page', String(p))
     params.set('per_page', String(props.perPage))
-    if (sortKey.value) {
-      params.set('sort_by', sortKey.value)
-      params.set('sort_dir', sortDir.value)
+    if (sortItems.value.length) {
+      params.set('sort_by', sortItems.value.map((s) => s.key).join(','))
+      params.set('sort_dir', sortItems.value.map((s) => s.dir).join(','))
     }
     for (const f of props.filterConfig) {
       const v = filters[f.key].value
@@ -178,15 +180,29 @@ async function load(p = 1) {
   }
 }
 
-function toggleSort(key) {
-  if (sortKey.value !== key) {
-    sortKey.value = key
-    sortDir.value = 'ASC'
-  } else if (sortDir.value === 'ASC') {
-    sortDir.value = 'DESC'
+// Звичайний клік — сортує лише по цій колонці (скидає решту).
+// Ctrl/Cmd+клік — додає колонку до вже вибраного сортування (або перемикає
+// її напрямок/прибирає, якщо вона вже там) — так можна сортувати спершу
+// по "Тип", потім (додатково) по "Назва".
+function toggleSort(key, event) {
+  const additive = !!(event && (event.ctrlKey || event.metaKey))
+  const idx = sortItems.value.findIndex((s) => s.key === key)
+
+  if (!additive) {
+    if (sortItems.value.length === 1 && idx === 0) {
+      sortItems.value = sortItems.value[0].dir === 'ASC' ? [{ key, dir: 'DESC' }] : []
+    } else {
+      sortItems.value = [{ key, dir: 'ASC' }]
+    }
+    return
+  }
+
+  if (idx === -1) {
+    sortItems.value = [...sortItems.value, { key, dir: 'ASC' }]
+  } else if (sortItems.value[idx].dir === 'ASC') {
+    sortItems.value = sortItems.value.map((s, i) => (i === idx ? { ...s, dir: 'DESC' } : s))
   } else {
-    sortKey.value = null
-    sortDir.value = 'ASC'
+    sortItems.value = sortItems.value.filter((_, i) => i !== idx)
   }
 }
 
