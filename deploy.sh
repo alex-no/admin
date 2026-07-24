@@ -13,6 +13,11 @@ git fetch origin staging
 git reset --hard origin/staging
 git clean -fd
 
+# deploy.sh числится в репозитории как 644 (Windows не хранит unix-права),
+# поэтому git reset --hard каждый раз сбрасывает исполняемый бит — восстанавливаем
+# его сразу же, иначе следующий запуск `./deploy.sh` откажет с Permission denied.
+chmod +x deploy.sh
+
 echo "Rebuilding and restarting backend..."
 docker compose -f docker-compose.prod.yml up -d --build
 
