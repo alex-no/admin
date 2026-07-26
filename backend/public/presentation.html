@@ -18,7 +18,7 @@
     background:var(--bg); color:var(--ink); overflow:hidden;
     -webkit-font-smoothing:antialiased;
   }
-  .deck{height:100vh;width:100vw;position:relative}
+  .deck{height:100vh;height:100dvh;width:100vw;position:relative}
   .slide{
     position:absolute;inset:0;display:none;flex-direction:column;
     padding:clamp(28px,5vw,70px) clamp(28px,7vw,110px);
@@ -40,7 +40,7 @@
   .g2{grid-template-columns:1fr 1fr}
   .g3{grid-template-columns:repeat(3,1fr)}
   .split{display:grid;grid-template-columns:1fr 1.15fr;gap:38px;align-items:center;flex:1;min-height:0}
-  @media(max-width:900px){.split,.g2,.g3{grid-template-columns:1fr}}
+  @media(max-width:900px){.split,.g2,.g3,.steps{grid-template-columns:1fr}}
 
   .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
     padding:22px 24px;box-shadow:var(--shadow)}
@@ -116,6 +116,27 @@
   .hint kbd{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:2px 7px;font-family:inherit;font-size:.8rem;box-shadow:0 2px 6px rgba(0,0,0,.05)}
   .pagenum{position:absolute;top:clamp(20px,4vw,46px);right:clamp(28px,7vw,110px);font-size:.8rem;color:var(--muted);font-weight:600}
   @media(max-width:640px){.dots{display:none}}
+
+  @media(max-width:640px){
+    .slide{padding:20px 20px 104px;overflow-x:hidden}
+    .split{align-items:start}
+    .contact-grid{grid-template-columns:1fr;max-width:100%}
+    h1{font-size:clamp(1.6rem,7vw,2.2rem)}
+    h2{font-size:clamp(1.25rem,5.5vw,1.6rem)}
+    .lead{font-size:.95rem;max-width:none}
+    .stats{gap:22px}
+    .steps{gap:14px}
+    .chips{gap:8px}
+    .chip{padding:7px 13px;font-size:.85rem}
+    pre{font-size:.76rem;padding:14px 16px}
+    .authorbox{flex-direction:column;align-items:flex-start;gap:12px;padding-top:20px}
+    .authorbox .who{text-align:left!important}
+    .nav{bottom:14px;right:14px;gap:7px}
+    .nav button{width:40px;height:40px;font-size:1rem}
+    .nav .count{min-width:42px;font-size:.85rem}
+    .hint{display:none}
+    .pagenum{font-size:.72rem}
+  }
 </style>
 </head>
 <body>
