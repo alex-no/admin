@@ -10,15 +10,27 @@ declare(strict_types=1);
  * тому дані завжди скидаються до вихідного стану після рестарту.
  */
 
-$root   = dirname(__DIR__);
-$dbPath = $root . '/runtime/fake.sqlite';
-$csvDir = __DIR__ . '/csv';
+$root      = dirname(__DIR__);
+$dbPath    = $root . '/runtime/fake.sqlite';
+$csvDir    = __DIR__ . '/csv';
+$mediaDir  = $root . '/public/api/media';
 
 if (!is_dir(dirname($dbPath))) {
     mkdir(dirname($dbPath), 0777, true);
 }
 if (file_exists($dbPath)) {
     unlink($dbPath);
+}
+
+// Завантажені фото — теж фейкові дані: скидаємо каталог до порожнього стану
+// разом із SQLite, інакше файли на диску пережили б рестарт, а їх рядки в
+// sto_media — ні (осиротілі файли).
+if (is_dir($mediaDir)) {
+    foreach (glob($mediaDir . '/*') as $file) {
+        unlink($file);
+    }
+} else {
+    mkdir($mediaDir, 0777, true);
 }
 
 $pdo = new PDO('sqlite:' . $dbPath);
@@ -47,13 +59,77 @@ $pdo->exec(<<<SQL
 SQL);
 
 $pdo->exec(<<<SQL
+    CREATE TABLE sto_media (
+        id            INTEGER PRIMARY KEY,
+        sto_id        INTEGER NOT NULL REFERENCES sto(id),
+        file_name     TEXT NOT NULL,
+        original_name TEXT,
+        mime_type     TEXT NOT NULL,
+        size          INTEGER NOT NULL,
+        source        TEXT NOT NULL CHECK (source IN ('upload', 'url')),
+        source_url    TEXT,
+        caption       TEXT,
+        is_cover      INTEGER NOT NULL DEFAULT 0,
+        created_at    TEXT NOT NULL
+    )
+SQL);
+
+$pdo->exec(<<<SQL
     CREATE TABLE users (
         id            INTEGER PRIMARY KEY,
         username      TEXT NOT NULL UNIQUE,
         password_hash TEXT NOT NULL,
         name          TEXT NOT NULL,
-        "group"       TEXT NOT NULL,
-        permissions   TEXT NOT NULL
+        "group"       TEXT NOT NULL
+    )
+SQL);
+
+$pdo->exec(<<<SQL
+    CREATE TABLE role (
+        id          INTEGER PRIMARY KEY,
+        slug        TEXT NOT NULL UNIQUE,
+        name        TEXT NOT NULL,
+        description TEXT,
+        is_system   INTEGER NOT NULL DEFAULT 0
+    )
+SQL);
+
+$pdo->exec(<<<SQL
+    CREATE TABLE permission (
+        id          INTEGER PRIMARY KEY,
+        slug        TEXT NOT NULL UNIQUE,
+        name        TEXT NOT NULL,
+        description TEXT,
+        module      TEXT,
+        is_system   INTEGER NOT NULL DEFAULT 0
+    )
+SQL);
+
+$pdo->exec(<<<SQL
+    CREATE TABLE role_permission (
+        id            INTEGER PRIMARY KEY,
+        role_id       INTEGER NOT NULL REFERENCES role(id),
+        permission_id INTEGER NOT NULL REFERENCES permission(id),
+        effect        TEXT NOT NULL DEFAULT 'allow' CHECK (effect IN ('allow', 'deny')),
+        UNIQUE (role_id, permission_id)
+    )
+SQL);
+
+$pdo->exec(<<<SQL
+    CREATE TABLE role_hierarchy (
+        id             INTEGER PRIMARY KEY,
+        parent_role_id INTEGER NOT NULL REFERENCES role(id),
+        child_role_id  INTEGER NOT NULL REFERENCES role(id),
+        UNIQUE (parent_role_id, child_role_id)
+    )
+SQL);
+
+$pdo->exec(<<<SQL
+    CREATE TABLE user_role (
+        id      INTEGER PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        role_id INTEGER NOT NULL REFERENCES role(id),
+        UNIQUE (user_id, role_id)
     )
 SQL);
 
@@ -140,26 +216,59 @@ foreach (loadCsv($csvDir . '/countries.csv') as $row) {
 }
 
 foreach (loadCsv($csvDir . '/sto.csv') as $row) {
-    // phones у CSV — декілька номерів через ";" (та сама конвенція, що й для
-    // users.permissions), у API/формі це вже звичайний масив рядків.
+    // phones у CSV — декілька номерів через ";", у API/формі це вже звичайний масив рядків.
     $pdo->prepare(
         'INSERT INTO sto (id, sto_type, name_uk, address, phones, rating, is_active, country_id, description)
          VALUES (:id, :sto_type, :name_uk, :address, :phones, :rating, :is_active, :country_id, :description)'
     )->execute($row);
 }
 
+foreach (loadCsv($csvDir . '/role.csv') as $row) {
+    $pdo->prepare(
+        'INSERT INTO role (id, slug, name, description, is_system)
+         VALUES (:id, :slug, :name, :description, :is_system)'
+    )->execute($row);
+}
+
+foreach (loadCsv($csvDir . '/permission.csv') as $row) {
+    $pdo->prepare(
+        'INSERT INTO permission (id, slug, name, description, module, is_system)
+         VALUES (:id, :slug, :name, :description, :module, :is_system)'
+    )->execute($row);
+}
+
+foreach (loadCsv($csvDir . '/role_permission.csv') as $row) {
+    $pdo->prepare(
+        'INSERT INTO role_permission (id, role_id, permission_id, effect)
+         VALUES (:id, :role_id, :permission_id, :effect)'
+    )->execute($row);
+}
+
+foreach (loadCsv($csvDir . '/role_hierarchy.csv') as $row) {
+    $pdo->prepare(
+        'INSERT INTO role_hierarchy (id, parent_role_id, child_role_id)
+         VALUES (:id, :parent_role_id, :child_role_id)'
+    )->execute($row);
+}
+
 foreach (loadCsv($csvDir . '/users.csv') as $row) {
     $pdo->prepare(
-        'INSERT INTO users (id, username, password_hash, name, "group", permissions)
-         VALUES (:id, :username, :password_hash, :name, :group, :permissions)'
+        'INSERT INTO users (id, username, password_hash, name, "group")
+         VALUES (:id, :username, :password_hash, :name, :group)'
     )->execute([
         'id'            => $row['id'],
         'username'      => $row['username'],
         'password_hash' => password_hash($row['password'], PASSWORD_DEFAULT),
         'name'          => $row['name'],
         'group'         => $row['group'],
-        'permissions'   => $row['permissions'],
     ]);
+}
+
+foreach (loadCsv($csvDir . '/user_role.csv') as $row) {
+    $pdo->prepare(
+        'INSERT INTO user_role (id, user_id, role_id)
+         VALUES (:id, :user_id, :role_id)'
+    )->execute($row);
 }
 
 // ── Аналітика/логи помилок: не з CSV (тут природньо великий, часовий, випадковий

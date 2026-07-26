@@ -29,6 +29,17 @@
     ]
   },
   {
+    "id": "rbac",
+    "label": "Ролі та права",
+    "icon": "bi-shield-lock",
+    "permission": "role.view",
+    "roles": ["superadmin"],
+    "items": [
+      { "label": "Ролі",          "to": "/roles",       "icon": "bi-people-fill",  "permission": "role.view",       "roles": ["superadmin"] },
+      { "label": "Права доступу", "to": "/permissions", "icon": "bi-shield-check", "permission": "permission.view", "roles": ["superadmin"] }
+    ]
+  },
+  {
     "id": "system",
     "label": "Система",
     "icon": "bi-gear",

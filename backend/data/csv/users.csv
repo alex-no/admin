@@ -1,3 +1,4 @@
-id,username,password,name,group,permissions
-1,admin,admin123,Oleksandr Nosov,superadmin,*
-2,manager,manager123,Демо Менеджер,admin,sto.view;sto.edit;sto.delete;analytics.view
+id,username,password,name,group
+1,admin,admin123,Oleksandr Nosov,superadmin
+2,manager,manager123,Демо Менеджер,admin
+3,moderator,moderator123,Демо Контент-менеджер,content_manager

@@ -77,16 +77,7 @@ final readonly class AdminAuth
 
     public function can(array $user, string $permission): bool
     {
-        foreach (explode(';', (string) $user['permissions']) as $p) {
-            if ($p === '*' || $p === $permission) {
-                return true;
-            }
-            if (str_ends_with($p, '.*') && str_starts_with($permission, substr($p, 0, -1))) {
-                return true;
-            }
-        }
-
-        return false;
+        return in_array($permission, $this->resolvePermissionSlugs((int) $user['id']), true);
     }
 
     public function toPublicUser(array $user): array
@@ -96,7 +87,81 @@ final readonly class AdminAuth
             'username'    => $user['username'],
             'name'        => $user['name'],
             'group'       => $user['group'],
-            'permissions' => explode(';', (string) $user['permissions']),
+            'permissions' => $this->resolvePermissionSlugs((int) $user['id']),
         ];
+    }
+
+    /** @return string[] Ефективні permission slug'и користувача (з урахуванням ієрархії ролей, deny перекриває allow) */
+    public function resolvePermissionSlugs(int $userId): array
+    {
+        $roleIds = $this->resolveRoleIdsWithHierarchy($userId);
+        if ($roleIds === []) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($roleIds), '?'));
+        $stmt = $this->pdo->prepare(
+            "SELECT p.slug, rp.effect
+             FROM role_permission rp
+             JOIN permission p ON p.id = rp.permission_id
+             WHERE rp.role_id IN ($placeholders)"
+        );
+        $stmt->execute($roleIds);
+
+        $allow = [];
+        $deny  = [];
+        foreach ($stmt->fetchAll() as $row) {
+            if ($row['effect'] === 'deny') {
+                $deny[$row['slug']] = true;
+            } else {
+                $allow[$row['slug']] = true;
+            }
+        }
+
+        return array_keys(array_diff_key($allow, $deny));
+    }
+
+    /**
+     * Роль користувача + всі батьківські ролі за role_hierarchy (BFS, захист від циклів).
+     * child_role_id успадковує права свого parent_role_id.
+     *
+     * @return int[]
+     */
+    private function resolveRoleIdsWithHierarchy(int $userId): array
+    {
+        $stmt = $this->pdo->prepare('SELECT role_id FROM user_role WHERE user_id = :user_id');
+        $stmt->execute(['user_id' => $userId]);
+        $directRoleIds = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+
+        if ($directRoleIds === []) {
+            return [];
+        }
+
+        $allRoleIds = $directRoleIds;
+        $processedRoleIds = [];
+        $toProcess = $directRoleIds;
+
+        while ($toProcess !== []) {
+            $currentRoleId = array_shift($toProcess);
+            if (in_array($currentRoleId, $processedRoleIds, true)) {
+                continue;
+            }
+            $processedRoleIds[] = $currentRoleId;
+
+            $parentStmt = $this->pdo->prepare(
+                'SELECT parent_role_id FROM role_hierarchy WHERE child_role_id = :id'
+            );
+            $parentStmt->execute(['id' => $currentRoleId]);
+
+            foreach ($parentStmt->fetchAll(PDO::FETCH_COLUMN) as $parentRoleId) {
+                $parentRoleId = (int) $parentRoleId;
+                if (!in_array($parentRoleId, $allRoleIds, true)) {
+                    $allRoleIds[] = $parentRoleId;
+                    $toProcess[] = $parentRoleId;
+                }
+            }
+        }
+
+        return array_unique($allRoleIds);
     }
 }

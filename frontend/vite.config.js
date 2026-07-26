@@ -18,6 +18,13 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    // Bind-mount на Windows (Docker Desktop) не пробрасує inotify-події файлової
+    // системи хосту всередину контейнера — без polling Vite не бачить змін у
+    // файлах і продовжує віддавати застарілий скомпільований модуль, поки
+    // контейнер не перезапустити вручну.
+    watch: {
+      usePolling: true,
+    },
     proxy: {
       '/api': {
         target: process.env.VITE_API_PROXY_TARGET || 'http://localhost',

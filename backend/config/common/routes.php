@@ -7,7 +7,10 @@ use App\Admin\Controller\AdminAuthController;
 use App\Admin\Controller\AdminErrorLogController;
 use App\Admin\Controller\AdminGeographyController;
 use App\Admin\Controller\AdminNetworkToolsController;
+use App\Admin\Controller\AdminPermissionController;
+use App\Admin\Controller\AdminRoleController;
 use App\Admin\Controller\AdminStoController;
+use App\Admin\Controller\AdminStoMediaController;
 use App\Admin\Controller\AdminSystemController;
 use App\Admin\Controller\ApiDocController;
 use App\Web;
@@ -35,8 +38,37 @@ return [
             Route::delete('/api/admin/sto/{id:\d+}')
                 ->action([AdminStoController::class, 'delete']),
 
+            Route::get('/api/admin/sto/{id:\d+}/media')
+                ->action([AdminStoMediaController::class, 'list']),
+            Route::post('/api/admin/sto/{id:\d+}/media')
+                ->action([AdminStoMediaController::class, 'upload']),
+            Route::post('/api/admin/sto/{id:\d+}/media/from-url')
+                ->action([AdminStoMediaController::class, 'uploadFromUrl']),
+            Route::methods(['PUT', 'PATCH'], '/api/admin/sto/{id:\d+}/media/{mediaId:\d+}')
+                ->action([AdminStoMediaController::class, 'update']),
+            Route::delete('/api/admin/sto/{id:\d+}/media/{mediaId:\d+}')
+                ->action([AdminStoMediaController::class, 'delete']),
+
             Route::get('/api/admin/geography/countries')
                 ->action([AdminGeographyController::class, 'list']),
+
+            Route::get('/api/admin/roles')
+                ->action([AdminRoleController::class, 'list']),
+            Route::post('/api/admin/roles')
+                ->action([AdminRoleController::class, 'create']),
+            Route::methods(['PUT', 'PATCH'], '/api/admin/roles/{id:\d+}')
+                ->action([AdminRoleController::class, 'update']),
+            Route::delete('/api/admin/roles/{id:\d+}')
+                ->action([AdminRoleController::class, 'delete']),
+            Route::post('/api/admin/roles/{id:\d+}/permissions')
+                ->action([AdminRoleController::class, 'setPermissions']),
+            Route::post('/api/admin/roles/{id:\d+}/hierarchy')
+                ->action([AdminRoleController::class, 'setHierarchy']),
+
+            Route::get('/api/admin/permissions')
+                ->action([AdminPermissionController::class, 'list']),
+            Route::methods(['PUT', 'PATCH'], '/api/admin/permissions/{id:\d+}')
+                ->action([AdminPermissionController::class, 'update']),
 
             Route::get('/api/admin/system/metrics')
                 ->action([AdminSystemController::class, 'metrics']),

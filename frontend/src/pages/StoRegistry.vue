@@ -111,6 +111,126 @@
         <div class="text-muted small mb-1">Країна реєстрації</div>
         <div>{{ countryName }}</div>
       </template>
+
+      <!-- ── Фото: демо аплоаду файлів (з диска напряму або за URL) без
+             MinIO/S3 — файли лежать у public/api/media/ бекенду, метадані —
+             у фейковій таблиці sto_media. Обидва скидаються при рестарті
+             контейнера, як і решта даних тут. Своїх кнопок "Зберегти" немає —
+             кожна дія (аплоад/обкладинка/підпис/видалення) зберігається одразу. ── -->
+      <template v-else-if="activeTab === 'photos'">
+        <div class="mb-3">
+          <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+            <label class="btn btn-sm btn-outline-primary mb-0" style="cursor:pointer">
+              <i class="bi bi-upload me-1"></i>Завантажити фото
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                style="display:none"
+                @change="uploadPhotos($event)"
+              />
+            </label>
+            <button
+              class="btn btn-sm btn-outline-secondary"
+              @click="showUrlUpload = !showUrlUpload; photosError = null"
+            >
+              <i class="bi bi-link-45deg me-1"></i>Завантажити з URL
+            </button>
+            <span v-if="photosUploading" class="text-muted small">
+              <span class="spinner-border spinner-border-sm me-1"></span>Завантаження...
+            </span>
+          </div>
+          <div v-if="photosError" class="text-danger small mb-2">{{ photosError }}</div>
+
+          <div v-if="showUrlUpload" class="card border-secondary" style="max-width:600px">
+            <div class="card-body p-3">
+              <div class="mb-2">
+                <label class="form-label small mb-1">URL зображення</label>
+                <input
+                  v-model="photoUrl"
+                  type="text"
+                  class="form-control form-control-sm"
+                  placeholder="https://example.com/image.jpg"
+                  @keydown.enter.prevent="uploadPhotoFromUrl"
+                />
+                <div class="text-muted small mt-1">Підтримуються формати: JPG, PNG, WebP.</div>
+              </div>
+              <div class="d-flex gap-2">
+                <button
+                  class="btn btn-sm btn-primary"
+                  :disabled="!photoUrl.trim() || photosUploading"
+                  @click="uploadPhotoFromUrl"
+                >
+                  <i class="bi bi-download me-1"></i>Завантажити
+                </button>
+                <button
+                  class="btn btn-sm btn-secondary"
+                  @click="showUrlUpload = false; photoUrl = ''; photosError = null"
+                >
+                  Скасувати
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="photosLoading" class="text-center py-5">
+          <div class="spinner-border text-primary" role="status"></div>
+        </div>
+        <div v-else-if="!photosList.length" class="text-muted text-center py-5">
+          <i class="bi bi-images" style="font-size:2rem"></i>
+          <div class="mt-2">Фото відсутні</div>
+        </div>
+        <div v-else class="row g-3">
+          <div v-for="photo in photosList" :key="photo.id" class="col-6 col-md-4">
+            <div class="card h-100 shadow-sm" :class="{ 'border-primary': photo.is_cover }">
+              <div class="position-relative">
+                <img
+                  :src="photo.url"
+                  :alt="photo.caption ?? ''"
+                  class="card-img-top"
+                  style="width:100%; height:140px; object-fit:cover; cursor:pointer"
+                  @click="openPhotoPreview(photo)"
+                  loading="lazy"
+                />
+                <span
+                  v-if="photo.is_cover"
+                  class="badge bg-primary position-absolute"
+                  style="top:6px;left:6px;font-size:.65rem"
+                >
+                  <i class="bi bi-star-fill me-1"></i>Обкладинка
+                </span>
+              </div>
+              <div class="card-body p-2">
+                <input
+                  :value="photo.caption ?? ''"
+                  type="text"
+                  class="form-control form-control-sm mb-2"
+                  placeholder="Підпис..."
+                  @change="updatePhotoCaption(photo, $event.target.value)"
+                />
+                <div class="d-flex gap-1">
+                  <button
+                    v-if="!photo.is_cover"
+                    class="btn btn-sm btn-outline-primary py-0 px-1 flex-fill"
+                    title="Зробити обкладинкою"
+                    @click="setCover(photo)"
+                  >
+                    <i class="bi bi-star"></i>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-danger py-0 px-1 flex-fill"
+                    title="Видалити"
+                    @click="deletePhoto(photo)"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
     </div>
 
     <template v-if="TAB_FIELDS[activeTab]?.length" #footer>
@@ -162,6 +282,7 @@ const TABS = [
   { key: 'description', label: 'Опис та деталі', icon: 'bi-card-text' },
   { key: 'rating', label: 'Рейтинг та відгуки', icon: 'bi-star' },
   { key: 'country', label: 'Країна реєстрації', icon: 'bi-flag' },
+  { key: 'photos', label: 'Фото', icon: 'bi-images' },
 ]
 
 // Які поля належать якій вкладці — визначає, що саме відправляти при "Зберегти"
@@ -173,6 +294,7 @@ const TAB_FIELDS = {
   description: ['description'],
   rating: [],
   country: [],
+  photos: [],
 }
 
 const activeTab = ref('general')
@@ -207,6 +329,119 @@ const countryName = computed(() => {
   return found ? found.label : '—'
 })
 
+// ── Фото ──────────────────────────────────────────────────────────────────
+const photosLoading   = ref(false)
+const photosList      = ref([])
+const photosUploading = ref(false)
+const photosError     = ref(null)
+const showUrlUpload   = ref(false)
+const photoUrl        = ref('')
+
+async function loadPhotos() {
+  if (!detailRow.value) return
+
+  photosLoading.value = true
+  photosError.value = null
+  try {
+    const res = await fetch(`${cfg.apiUpdate}/${detailRow.value.id}/media`, { headers: auth.authHeaders() })
+    const json = await res.json()
+    photosList.value = json.data ?? []
+  } catch (e) {
+    photosError.value = "Помилка з'єднання з сервером"
+  } finally {
+    photosLoading.value = false
+  }
+}
+
+// Вкладка відкривається лише по кліку — фото вантажимо лише коли вона активна,
+// а не одразу при відкритті картки (як і решта тут, щоб не робити зайвих запитів).
+watch(activeTab, (tab) => {
+  if (tab === 'photos') loadPhotos()
+})
+
+async function uploadPhotos(event) {
+  const files = Array.from(event.target.files ?? [])
+  event.target.value = ''
+  if (!files.length || !detailRow.value) return
+
+  photosUploading.value = true
+  photosError.value = null
+  try {
+    for (const file of files) {
+      const fd = new FormData()
+      fd.append('photo', file)
+      const res = await fetch(`${cfg.apiUpdate}/${detailRow.value.id}/media`, {
+        method: 'POST',
+        headers: auth.authHeaders(),
+        body: fd,
+      })
+      const json = await res.json()
+      if (json.status === 'error') throw new Error(json.message)
+      photosList.value.push(json.data)
+    }
+  } catch (e) {
+    photosError.value = e.message
+  } finally {
+    photosUploading.value = false
+  }
+}
+
+async function uploadPhotoFromUrl() {
+  const url = photoUrl.value.trim()
+  if (!url || !detailRow.value) return
+
+  photosUploading.value = true
+  photosError.value = null
+  try {
+    const res = await fetch(`${cfg.apiUpdate}/${detailRow.value.id}/media/from-url`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...auth.authHeaders() },
+      body: JSON.stringify({ url }),
+    })
+    const json = await res.json()
+    if (json.status === 'error') throw new Error(json.message ?? 'Помилка завантаження')
+
+    photosList.value.push(json.data)
+    photoUrl.value = ''
+    showUrlUpload.value = false
+  } catch (e) {
+    photosError.value = e.message
+  } finally {
+    photosUploading.value = false
+  }
+}
+
+async function setCover(photo) {
+  await fetch(`${cfg.apiUpdate}/${detailRow.value.id}/media/${photo.id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...auth.authHeaders() },
+    body: JSON.stringify({ is_cover: true }),
+  })
+  photosList.value.forEach((p) => { p.is_cover = p.id === photo.id })
+}
+
+async function updatePhotoCaption(photo, caption) {
+  await fetch(`${cfg.apiUpdate}/${detailRow.value.id}/media/${photo.id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...auth.authHeaders() },
+    body: JSON.stringify({ caption }),
+  })
+  photo.caption = caption
+}
+
+async function deletePhoto(photo) {
+  if (!confirm('Видалити фото?')) return
+  await fetch(`${cfg.apiUpdate}/${detailRow.value.id}/media/${photo.id}`, {
+    method: 'DELETE',
+    headers: auth.authHeaders(),
+  })
+  photosList.value = photosList.value.filter((p) => p.id !== photo.id)
+}
+
+function openPhotoPreview(photo) {
+  window.open(photo.url, '_blank')
+}
+
 function populateForm(row) {
   detailRow.value = row
   Object.assign(form, {
@@ -218,6 +453,12 @@ function populateForm(row) {
     description: row.description ?? '',
   })
   originalForm = { ...form }
+
+  photosList.value = []
+  photosError.value = null
+  showUrlUpload.value = false
+  photoUrl.value = ''
+  if (activeTab.value === 'photos') loadPhotos()
 }
 
 function onRowAction({ type, row, tab }) {

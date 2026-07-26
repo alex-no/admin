@@ -1,6 +1,9 @@
 # fake "database" + logs (перестворюється при кожному старті контейнера)
 /runtime
 
+# фейкові завантажені фото (теж скидаються при кожному старті контейнера)
+/public/api/media
+
 # phpstorm project files
 .idea
 
