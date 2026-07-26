@@ -8,3 +8,4 @@ deploy-staging.ps1
 *.log
 .vscode/
 .idea/
+/*.bat
