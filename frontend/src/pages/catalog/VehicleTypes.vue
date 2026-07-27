@@ -111,10 +111,14 @@ import { ref, computed, onMounted } from 'vue'
 import BaseLayout from '@/layouts/BaseLayout.vue'
 import VehicleTypeModal from '@/components/VehicleTypeModal.vue'
 import { useAuth } from '@/composables/useAuth'
+import { useNotify } from '@/composables/useNotify'
+import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import { usePageLayout } from '@/composables/usePageLayout'
 import cfg from './vehicle-types.config.json'
 
 const { can, authHeaders } = useAuth()
+const { notify } = useNotify()
+const { deleteWithUndo } = useUndoableDelete()
 const { contentMargin } = usePageLayout()
 
 function canEditField(key) {
@@ -204,24 +208,34 @@ async function saveInline(row, field) {
   cancelInline()
   if (newVal === (row[field] ?? '')) return
   try { applyToRow(row.id, await patch(row.id, { [field]: newVal })) }
-  catch (e) { alert(e.message) }
+  catch (e) { notify(e.message, { type: 'error' }) }
 }
 
 function cancelInline() { inlineCell.value = null; inlineValue.value = '' }
 
 // ── Delete ────────────────────────────────────────────────────────────────────
-async function deleteRow(row) {
-  if (!confirm(`Видалити «${row.name_uk || row.slug}»?`)) return
-  try {
-    const res  = await fetch(`${cfg.apiDelete}/${row.id}`, { method: 'DELETE', headers: authHeaders() })
-    const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка видалення')
-    items.value = items.value.filter(r => r.id !== row.id)
-    justCreatedIds.value.delete(row.id)
-    total.value--
-  } catch (e) {
-    alert(e.message)
-  }
+function deleteRow(row) {
+  const index = items.value.findIndex(r => r.id === row.id)
+  if (index === -1) return
+
+  deleteWithUndo({
+    message: `«${row.name_uk || row.slug}» видалено`,
+    remove: () => {
+      items.value.splice(index, 1)
+      justCreatedIds.value.delete(row.id)
+      total.value--
+    },
+    restore: () => {
+      items.value.splice(index, 0, row)
+      total.value++
+    },
+    commit: async () => {
+      const res  = await fetch(`${cfg.apiDelete}/${row.id}`, { method: 'DELETE', headers: authHeaders() })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.message ?? 'Помилка видалення')
+    },
+    onCommitError: () => load(page.value),
+  })
 }
 
 // ── Modal ─────────────────────────────────────────────────────────────────────

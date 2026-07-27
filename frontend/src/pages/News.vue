@@ -210,9 +210,13 @@ import ListPageWrapper from '@/components/ListPageWrapper.vue'
 import Pagination from '@/components/Pagination.vue'
 import BaseModal from '@/components/BaseModal.vue'
 import { useAuth } from '@/composables/useAuth'
+import { useNotify } from '@/composables/useNotify'
+import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import { apiGet, apiPost, apiPatch, apiDelete } from '@/utils/api'
 
 const { can, authHeaders } = useAuth()
+const { notify } = useNotify()
+const { deleteWithUndo } = useUndoableDelete()
 
 const loading = ref(false)
 const error = ref(null)
@@ -261,7 +265,7 @@ async function changeStatus(row, newStatus) {
   if (newStatus === row.status) return
 
   if (newStatus === 'scheduled' && !row.scheduled_at) {
-    alert('Для запланованої публікації потрібно вказати дату — відкрийте редагування новини (олівець).')
+    notify('Для запланованої публікації потрібно вказати дату — відкрийте редагування новини (олівець).', { type: 'error' })
     return
   }
 
@@ -269,12 +273,12 @@ async function changeStatus(row, newStatus) {
   try {
     const res = await apiPatch(`/admin/news/${row.id}`, { status: newStatus })
     if (!res.success) {
-      alert(res.message || 'Помилка зміни статусу')
+      notify(res.message || 'Помилка зміни статусу', { type: 'error' })
       return
     }
     await load(page.value)
   } catch (err) {
-    alert(err.message)
+    notify(err.message, { type: 'error' })
   } finally {
     changingStatusId.value = null
   }
@@ -415,18 +419,20 @@ async function save() {
   }
 }
 
-async function removeItem(row) {
-  if (!window.confirm(`Видалити новину "${row.title_uk}"?`)) return
-  try {
-    const res = await apiDelete(`/admin/news/${row.id}`)
-    if (!res.success) {
-      alert(res.message || 'Помилка видалення')
-      return
-    }
-    await load(page.value)
-  } catch (err) {
-    alert(err.message)
-  }
+function removeItem(row) {
+  const index = items.value.findIndex(r => r.id === row.id)
+  if (index === -1) return
+
+  deleteWithUndo({
+    message: `Новину "${row.title_uk}" видалено`,
+    remove: () => { items.value.splice(index, 1) },
+    restore: () => { items.value.splice(index, 0, row) },
+    commit: async () => {
+      const res = await apiDelete(`/admin/news/${row.id}`)
+      if (!res.success) throw new Error(res.message || 'Помилка видалення')
+    },
+    onCommitError: () => load(page.value),
+  })
 }
 
 onMounted(() => load(1))

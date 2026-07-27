@@ -306,11 +306,13 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useAuth } from '@/composables/useAuth';
+import { useUndoableDelete } from '@/composables/useUndoableDelete';
 import { usePageLayout } from '@/composables/usePageLayout';
 import BaseLayout from '@/layouts/BaseLayout.vue';
 import BaseModal from '@/components/BaseModal.vue';
 
 const auth = useAuth();
+const { deleteWithUndo } = useUndoableDelete();
 const { contentMargin: pageMargin } = usePageLayout();
 
 const roles = ref([]);
@@ -546,24 +548,24 @@ async function saveRole() {
   }
 }
 
-async function deleteRole(role) {
-  if (!confirm(`Видалити роль "${role.name}"?`)) return;
+function deleteRole(role) {
+  const index = roles.value.findIndex((r) => r.id === role.id);
+  if (index === -1) return;
 
-  try {
-    const response = await fetch(`/api/admin/roles/${role.id}`, {
-      method: 'DELETE',
-      headers: auth.authHeaders(),
-    });
-    const json = await response.json();
-
-    if (json.status === 'success') {
-      await loadRoles();
-    } else {
-      alert(json.message || 'Помилка видалення');
-    }
-  } catch (e) {
-    alert("Помилка з'єднання");
-  }
+  deleteWithUndo({
+    message: `Роль "${role.name}" видалено`,
+    remove: () => { roles.value.splice(index, 1); },
+    restore: () => { roles.value.splice(index, 0, role); },
+    commit: async () => {
+      const response = await fetch(`/api/admin/roles/${role.id}`, {
+        method: 'DELETE',
+        headers: auth.authHeaders(),
+      });
+      const json = await response.json().catch(() => ({}));
+      if (json.status !== 'success') throw new Error(json.message || 'Помилка видалення');
+    },
+    onCommitError: () => loadRoles(),
+  });
 }
 </script>
 

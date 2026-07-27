@@ -44,12 +44,10 @@
               <button
                 v-if="canEdit"
                 class="btn btn-sm btn-outline-danger p-0 px-1"
-                :disabled="deletingAsgnId === a.id"
                 title="Видалити прив'язку"
                 @click="deleteAssignment(a)"
               >
-                <span v-if="deletingAsgnId === a.id" class="spinner-border spinner-border-sm"></span>
-                <i v-else class="bi bi-trash3"></i>
+                <i class="bi bi-trash3"></i>
               </button>
             </td>
           </tr>
@@ -158,9 +156,11 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import { useAuth } from '@/composables/useAuth'
+import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import BaseModal from './BaseModal.vue'
 
 const { can, authHeaders } = useAuth()
+const { deleteWithUndo } = useUndoableDelete()
 const canEdit = ref(false)
 
 // Props
@@ -177,7 +177,6 @@ const asgnTz = ref(null)
 const asgnList = ref([])
 const asgnLoading = ref(false)
 const asgnError = ref(null)
-const deletingAsgnId = ref(null)
 
 // Add form
 const addType = ref('')
@@ -304,24 +303,26 @@ async function addAssignment() {
 }
 
 async function deleteAssignment(asgn) {
-  deletingAsgnId.value = asgn.id
-  try {
-    const res = await fetch(
-      `/api/admin/geography/timezones/${asgnTz.value.id}/assignments/${asgn.id}`,
-      { method: 'DELETE', headers: authHeaders() }
-    )
-    if (!res.ok) {
-      const json = await res.json()
-      throw new Error(json.message ?? 'Помилка')
-    }
-    asgnList.value = asgnList.value.filter(a => a.id !== asgn.id)
-    // Notify parent to update counter
-    window.dispatchEvent(new CustomEvent('timezone-assignment-deleted', { detail: { timezone_id: asgnTz.value.id } }))
-  } catch (e) {
-    alert(e.message)
-  } finally {
-    deletingAsgnId.value = null
-  }
+  const index = asgnList.value.findIndex(a => a.id === asgn.id)
+  if (index === -1) return
+
+  deleteWithUndo({
+    message: "Прив'язку видалено",
+    remove: () => { asgnList.value.splice(index, 1) },
+    restore: () => { asgnList.value.splice(index, 0, asgn) },
+    commit: async () => {
+      const res = await fetch(
+        `/api/admin/geography/timezones/${asgnTz.value.id}/assignments/${asgn.id}`,
+        { method: 'DELETE', headers: authHeaders() }
+      )
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}))
+        throw new Error(json.message ?? 'Помилка')
+      }
+      // Notify parent to update counter — лише після реального видалення на сервері.
+      window.dispatchEvent(new CustomEvent('timezone-assignment-deleted', { detail: { timezone_id: asgnTz.value.id } }))
+    },
+  })
 }
 
 function close() {

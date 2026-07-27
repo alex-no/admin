@@ -93,9 +93,11 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue';
 import { useAuth } from '@/composables/useAuth';
+import { useNotify } from '@/composables/useNotify';
 import BaseLayout from '@/layouts/BaseLayout.vue';
 
 const auth = useAuth();
+const { notify } = useNotify();
 
 const permissions = ref([]);
 const loading = ref(true);
@@ -163,10 +165,10 @@ async function saveDescription(perm) {
       perm.description = editingDescription.value;
       cancelEdit();
     } else {
-      alert(json.message || 'Помилка збереження');
+      notify(json.message || 'Помилка збереження', { type: 'error' });
     }
   } catch (e) {
-    alert("Помилка з'єднання з сервером");
+    notify("Помилка з'єднання з сервером", { type: 'error' });
   } finally {
     saving.value = false;
   }

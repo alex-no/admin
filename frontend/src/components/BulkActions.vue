@@ -24,7 +24,7 @@
       v-if="actions.includes('delete')"
       class="btn btn-sm btn-outline-danger"
       :disabled="busy"
-      @click="confirmDelete"
+      @click="run('delete')"
     >
       <i class="bi bi-trash me-1"></i>Видалити
     </button>
@@ -38,7 +38,7 @@
 </template>
 
 <script setup>
-const props = defineProps({
+defineProps({
   count: { type: Number, required: true },
   actions: { type: Array, default: () => [] },
   busy: { type: Boolean, default: false },
@@ -48,11 +48,5 @@ const emit = defineEmits(['action', 'clear'])
 
 function run(action) {
   emit('action', action)
-}
-
-function confirmDelete() {
-  if (window.confirm(`Видалити обрані записи (${props.count})? Цю дію можна буде скасувати лише вручну.`)) {
-    emit('action', 'delete')
-  }
 }
 </script>

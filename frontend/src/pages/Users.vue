@@ -322,10 +322,8 @@
                       <td>
                         <button v-if="canEdit"
                                 class="btn btn-sm btn-outline-danger p-0 px-1"
-                                :disabled="msDeletingId === ms.sto_id"
                                 @click="removeManagedSto(ms)">
-                          <span v-if="msDeletingId === ms.sto_id" class="spinner-border spinner-border-sm"></span>
-                          <i v-else class="bi bi-trash3"></i>
+                          <i class="bi bi-trash3"></i>
                         </button>
                       </td>
                     </tr>
@@ -426,10 +424,8 @@
                       <td>
                         <button v-if="canEdit"
                                 class="btn btn-sm btn-outline-danger p-0 px-1"
-                                :disabled="empDeletingId === emp.id"
                                 @click="removeEmployment(emp)">
-                          <span v-if="empDeletingId === emp.id" class="spinner-border spinner-border-sm"></span>
-                          <i v-else class="bi bi-trash3"></i>
+                          <i class="bi bi-trash3"></i>
                         </button>
                       </td>
                     </tr>
@@ -630,10 +626,14 @@ import ListPageWrapper from '@/components/ListPageWrapper.vue'
 import BaseModal from '@/components/BaseModal.vue'
 import Pagination from '@/components/Pagination.vue'
 import { useAuth } from '@/composables/useAuth'
+import { useNotify } from '@/composables/useNotify'
+import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import { useUrlFilters } from '@/composables/useUrlFilters'
 import cfg from './users.config.json'
 
 const { can, authHeaders } = useAuth()
+const { notify } = useNotify()
+const { deleteWithUndo } = useUndoableDelete()
 const canEdit = computed(() => can(cfg.editPermission) || can('*'))
 
 // Page layout для сдвига контента при docked модалках
@@ -658,6 +658,8 @@ const sortKey      = ref('created_at')
 const sortDir      = ref('desc')
 const search       = ref('')
 const filterStatus = ref('')
+
+const detailId = ref(null)
 
 // Синхронизация фильтров с URL
 const { initFromUrl } = useUrlFilters({
@@ -755,7 +757,6 @@ const modalForm = ref({})
 const saving    = ref(false)
 const saveError = ref(null)
 const activeTab = ref('general')
-const detailId  = ref(null)
 
 function openModal(row) {
   modalData.value = { ...row }
@@ -901,7 +902,6 @@ const msLoading    = ref(false)
 const msLoaded     = ref(false)
 const msError      = ref(null)
 const msList       = ref([])
-const msDeletingId = ref(null)
 const msSearchTerm  = ref('')
 const msStoResults  = ref([])
 const msStoLoading  = ref(false)
@@ -922,16 +922,21 @@ async function loadManagedStos() {
   finally { msLoading.value = false }
 }
 
-async function removeManagedSto(ms) {
-  msDeletingId.value = ms.sto_id
-  try {
-    const res = await fetch(`/api/admin/users/${modalData.value.id}/managed-stos/${ms.sto_id}`, {
-      method: 'DELETE', headers: authHeaders(),
-    })
-    if (!res.ok) throw new Error((await res.json()).message ?? 'Помилка')
-    msList.value = msList.value.filter(m => m.sto_id !== ms.sto_id)
-  } catch (e) { alert(e.message) }
-  finally { msDeletingId.value = null }
+function removeManagedSto(ms) {
+  const index = msList.value.findIndex(m => m.sto_id === ms.sto_id)
+  if (index === -1) return
+
+  deleteWithUndo({
+    message: `Доступ до «${ms.sto_name}» відкликано`,
+    remove: () => { msList.value.splice(index, 1) },
+    restore: () => { msList.value.splice(index, 0, ms) },
+    commit: async () => {
+      const res = await fetch(`/api/admin/users/${modalData.value.id}/managed-stos/${ms.sto_id}`, {
+        method: 'DELETE', headers: authHeaders(),
+      })
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message ?? 'Помилка')
+    },
+  })
 }
 
 async function addManagedSto() {
@@ -958,7 +963,6 @@ const empLoading     = ref(false)
 const empLoaded      = ref(false)
 const empError       = ref(null)
 const empList        = ref([])
-const empDeletingId  = ref(null)
 const empTogglingId  = ref(null)
 const empUpdatingId  = ref(null)
 const empSearchTerm  = ref('')
@@ -1008,7 +1012,7 @@ async function changeEmpPosition(emp, newPosId) {
     const json = await res.json()
     if (!res.ok) throw new Error(json.message ?? 'Помилка')
     Object.assign(emp, json.data)
-  } catch (e) { alert(e.message) }
+  } catch (e) { notify(e.message, { type: 'error' }) }
   finally { empUpdatingId.value = null }
 }
 
@@ -1023,20 +1027,25 @@ async function toggleEmpActive(emp) {
     const json = await res.json()
     if (!res.ok) throw new Error(json.message ?? 'Помилка')
     emp.is_active = json.data.is_active
-  } catch (e) { alert(e.message) }
+  } catch (e) { notify(e.message, { type: 'error' }) }
   finally { empTogglingId.value = null }
 }
 
-async function removeEmployment(emp) {
-  empDeletingId.value = emp.id
-  try {
-    const res = await fetch(`/api/admin/users/${modalData.value.id}/employments/${emp.id}`, {
-      method: 'DELETE', headers: authHeaders(),
-    })
-    if (!res.ok) throw new Error((await res.json()).message ?? 'Помилка')
-    empList.value = empList.value.filter(e => e.id !== emp.id)
-  } catch (e) { alert(e.message) }
-  finally { empDeletingId.value = null }
+function removeEmployment(emp) {
+  const index = empList.value.findIndex(e => e.id === emp.id)
+  if (index === -1) return
+
+  deleteWithUndo({
+    message: 'Працевлаштування видалено',
+    remove: () => { empList.value.splice(index, 1) },
+    restore: () => { empList.value.splice(index, 0, emp) },
+    commit: async () => {
+      const res = await fetch(`/api/admin/users/${modalData.value.id}/employments/${emp.id}`, {
+        method: 'DELETE', headers: authHeaders(),
+      })
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message ?? 'Помилка')
+    },
+  })
 }
 
 async function addEmployment() {

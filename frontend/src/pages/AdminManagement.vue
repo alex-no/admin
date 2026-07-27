@@ -111,10 +111,12 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useAuth } from '@/composables/useAuth';
+import { useNotify } from '@/composables/useNotify';
 import ListPageWrapper from '@/components/ListPageWrapper.vue';
 import RoleManagementModal from '@/components/RoleManagementModal.vue';
 
 const auth = useAuth();
+const { notify } = useNotify();
 
 const users = ref([]);
 const loading = ref(true);
@@ -167,12 +169,12 @@ async function grantAccess(user) {
 
     if (json.status === 'success') {
       await loadUsers();
-      alert('Доступ надано. Користувач може встановити пароль через /admin/first-login');
+      notify('Доступ надано. Користувач може встановити пароль через /admin/first-login', { type: 'success' });
     } else {
-      alert(json.message || 'Помилка');
+      notify(json.message || 'Помилка', { type: 'error' });
     }
   } catch (e) {
-    alert('Помилка з\'єднання');
+    notify('Помилка з\'єднання', { type: 'error' });
   }
 }
 
@@ -188,12 +190,12 @@ async function revokeAccess(user) {
 
     if (json.status === 'success') {
       await loadUsers();
-      alert('Доступ відкликано');
+      notify('Доступ відкликано', { type: 'success' });
     } else {
-      alert(json.message || 'Помилка');
+      notify(json.message || 'Помилка', { type: 'error' });
     }
   } catch (e) {
-    alert('Помилка з\'єднання');
+    notify('Помилка з\'єднання', { type: 'error' });
   }
 }
 

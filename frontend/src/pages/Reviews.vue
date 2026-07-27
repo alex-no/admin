@@ -172,7 +172,10 @@ import ListPageWrapper from '../components/ListPageWrapper.vue'
 import Pagination from '../components/Pagination.vue'
 import ReviewDetailModal from '../components/ReviewDetailModal.vue'
 import { apiGet, apiPost } from '../utils/api'
+import { useNotify } from '../composables/useNotify'
 import { useUrlFilters } from '../composables/useUrlFilters'
+
+const { notify } = useNotify()
 
 const loading = ref(false)
 const error = ref(null)
@@ -266,11 +269,11 @@ async function approve(id) {
       await load(page.value)
       await loadStats()
     } else {
-      alert(response.message || 'Помилка схвалення відгуку')
+      notify(response.message || 'Помилка схвалення відгуку', { type: 'error' })
     }
   } catch (err) {
     console.error('Error approving review:', err)
-    alert('Помилка схвалення відгуку')
+    notify('Помилка схвалення відгуку', { type: 'error' })
   }
 }
 
@@ -288,11 +291,11 @@ async function reject(id) {
       await load(page.value)
       await loadStats()
     } else {
-      alert(response.message || 'Помилка відхилення відгуку')
+      notify(response.message || 'Помилка відхилення відгуку', { type: 'error' })
     }
   } catch (err) {
     console.error('Error rejecting review:', err)
-    alert('Помилка відхилення відгуку')
+    notify('Помилка відхилення відгуку', { type: 'error' })
   }
 }
 

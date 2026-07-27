@@ -1530,6 +1530,8 @@ import BaseModal from '@/components/BaseModal.vue'
 import Pagination from '@/components/Pagination.vue'
 import BulkActions from '@/components/BulkActions.vue'
 import { useAuth } from '@/composables/useAuth'
+import { useNotify } from '@/composables/useNotify'
+import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import { usePageLayout } from '@/composables/usePageLayout'
 import { useUnsavedChanges } from '@/composables/useUnsavedChanges'
 import { useUrlFilters } from '@/composables/useUrlFilters'
@@ -1641,6 +1643,8 @@ const TimeInput = defineComponent({
 })
 
 const { can, authHeaders } = useAuth()
+const { notify } = useNotify()
+const { deleteWithUndo, deleteManyWithUndo } = useUndoableDelete()
 
 // Page layout для отодвигания контента при docked модалках
 const canEdit       = computed(() => can('sto.edit') || can('*'))
@@ -1680,26 +1684,62 @@ function toggleSelectRow(id) {
   selectedIds.value = new Set(selectedIds.value)
 }
 
+async function bulkRequest(ids, action) {
+  const res = await fetch('/api/admin/sto/bulk', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ ids, action }),
+  })
+  const json = await res.json()
+  if (json.status !== 'success') throw new Error(json.message || 'Помилка виконання масової дії')
+}
+
 async function handleBulkAction(action) {
   const ids = Array.from(selectedIds.value)
   if (!ids.length) return
 
+  // "delete" — той самий optimistic+undo підхід, що й у DataListPage.vue: рядки
+  // зникають одразу, реальний запит на сервер відкладається на час "Скасувати".
+  // activate/deactivate не деструктивні — виконуються одразу, без undo-вікна.
+  if (action === 'delete') {
+    const removed = ids
+      .map((id) => ({ id, index: items.value.findIndex((r) => r.id === id) }))
+      .filter(({ index }) => index !== -1)
+      .map(({ id, index }) => ({ id, row: items.value[index], index }))
+    selectedIds.value = new Set()
+
+    deleteManyWithUndo({
+      items: removed,
+      message: `Видалено ${removed.length} запис(ів)`,
+      remove: () => {
+        removed
+          .slice()
+          .sort((a, b) => b.index - a.index)
+          .forEach(({ index }) => items.value.splice(index, 1))
+        total.value -= removed.length
+      },
+      restore: (items_) => {
+        items_
+          .slice()
+          .sort((a, b) => a.index - b.index)
+          .forEach(({ row, index }) => {
+            items.value.splice(Math.min(index, items.value.length), 0, row)
+          })
+        total.value += items_.length
+      },
+      commitOne: ({ id }) => bulkRequest([id], 'delete'),
+      onAnyCommitError: () => load(page.value),
+    })
+    return
+  }
+
   bulkBusy.value = true
   try {
-    const res = await fetch('/api/admin/sto/bulk', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeaders() },
-      body: JSON.stringify({ ids, action }),
-    })
-    const json = await res.json()
-    if (json.status !== 'success') {
-      alert(json.message || 'Помилка виконання масової дії')
-      return
-    }
+    await bulkRequest(ids, action)
     selectedIds.value = new Set()
     await load(page.value)
   } catch (err) {
-    alert(err.message || 'Помилка з\'єднання')
+    notify(err.message || 'Помилка виконання масової дії', { type: 'error' })
   } finally {
     bulkBusy.value = false
   }
@@ -1804,7 +1844,7 @@ async function toggleStatus(row) {
     row.is_active   = json.data.is_active
     row.updated_at  = json.data.updated_at
   } catch (e) {
-    alert('Помилка зміни статусу: ' + e.message)
+    notify('Помилка зміни статусу: ' + e.message, { type: 'error' })
   } finally {
     togglingId.value = null
   }
@@ -1826,7 +1866,7 @@ async function changeType(row, newType) {
     if (!res.ok) throw new Error(json.message ?? 'Помилка')
     row.sto_type = json.data.sto_type ?? newType
   } catch (e) {
-    alert('Помилка: ' + e.message)
+    notify('Помилка: ' + e.message, { type: 'error' })
   } finally {
     changingTypeId.value = null
   }
@@ -1869,7 +1909,7 @@ async function commitRating(row) {
     if (!res.ok) throw new Error(json.message ?? 'Помилка')
     row.rating = json.data?.rating ?? newVal
   } catch (e) {
-    alert('Помилка: ' + e.message)
+    notify('Помилка: ' + e.message, { type: 'error' })
     row.rating = orig
   }
 }
@@ -1913,7 +1953,7 @@ async function commitName(row) {
     row.name_uk    = json.data.name_uk
     row.updated_at = json.data.updated_at
   } catch (e) {
-    alert('Помилка збереження назви: ' + e.message)
+    notify('Помилка збереження назви: ' + e.message, { type: 'error' })
     row.name_uk = editingNameOrig.value  // rollback
   } finally {
     savingName.value = null
@@ -2272,7 +2312,7 @@ async function createAddress() {
     // Reload addresses list
     await loadAddresses()
   } catch (e) {
-    alert('Помилка: ' + e.message)
+    notify('Помилка: ' + e.message, { type: 'error' })
   } finally {
     addressLoading.value = false
   }
@@ -2808,7 +2848,7 @@ async function toggleEmployee(emp) {
     const json = await res.json()
     if (!res.ok) throw new Error(json.message ?? 'Помилка')
     emp.is_active = json.data.is_active
-  } catch (e) { alert(e.message) }
+  } catch (e) { notify(e.message, { type: 'error' }) }
   finally { togglingEmployeeId.value = null }
 }
 
@@ -2826,7 +2866,7 @@ async function changeEmployeePosition(emp, newPositionId) {
     emp.position_id   = json.data.position_id
     emp.position_name = json.data.position_name
     emp.group_name    = json.data.group_name
-  } catch (e) { alert(e.message) }
+  } catch (e) { notify(e.message, { type: 'error' }) }
   finally { updatingEmployeeId.value = null }
 }
 
@@ -2879,7 +2919,7 @@ async function changeBookingStatus(booking, newStatus) {
     const json = await res.json()
     if (!res.ok) throw new Error(json.message ?? 'Помилка')
     booking.status = json.data.status
-  } catch (e) { alert(e.message) }
+  } catch (e) { notify(e.message, { type: 'error' }) }
 }
 
 function bookingStatusLabel(s) { return BOOKING_STATUSES.find(x => x.value === s)?.label ?? s }
@@ -2955,7 +2995,7 @@ async function changeReviewStatus(review, newStatus) {
         modalData.value.rating = json.data.sto_rating
       }
     }
-  } catch (e) { alert(e.message) }
+  } catch (e) { notify(e.message, { type: 'error' }) }
 }
 
 function reviewStatusLabel(s) { return REVIEW_STATUSES.find(x => x.value === s)?.label ?? s }
@@ -3036,41 +3076,38 @@ async function saveReviews() {
     if (allOk) {
       changedReviews.value.clear()
       hasUnsavedChanges.value = false
-      alert('Відгуки збережено успішно')
+      notify('Відгуки збережено успішно', { type: 'success' })
     } else {
       throw new Error('Деякі відгуки не вдалося зберегти')
     }
   } catch (e) {
-    alert(`Помилка збереження відгуків: ${e.message}`)
+    notify(`Помилка збереження відгуків: ${e.message}`, { type: 'error' })
   } finally {
     reviewsSaving.value = false
   }
 }
 
 async function deleteReviewMedia(reviewId, mediaId) {
-  if (!confirm('Видалити це фото?')) return
+  const review = reviewsList.value.find(r => r.id === reviewId)
+  const index = review?.media?.findIndex(m => m.id === mediaId) ?? -1
+  if (index === -1) return
+  const media = review.media[index]
 
-  try {
-    const response = await fetch(`/api/admin/reviews/media/${mediaId}`, {
-      method: 'DELETE',
-      headers: authHeaders(),
-    })
-
-    if (!response.ok) {
-      const data = await response.json()
-      throw new Error(data.message || 'Помилка видалення')
-    }
-
-    // Удаляем из локального списка
-    const review = reviewsList.value.find(r => r.id === reviewId)
-    if (review && review.media) {
-      review.media = review.media.filter(m => m.id !== mediaId)
-    }
-
-    alert('Фото видалено')
-  } catch (e) {
-    alert(`Помилка: ${e.message}`)
-  }
+  deleteWithUndo({
+    message: 'Фото видалено',
+    remove: () => { review.media.splice(index, 1) },
+    restore: () => { review.media.splice(index, 0, media) },
+    commit: async () => {
+      const response = await fetch(`/api/admin/reviews/media/${mediaId}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      })
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.message || 'Помилка видалення')
+      }
+    },
+  })
 }
 
 // ── Review Responses ──────────────────────────────────────────────────
@@ -3129,38 +3166,34 @@ async function saveResponseFromModal() {
     // Сбрасываем флаг изменений перед закрытием
     responseModalChanged.value = false
     closeResponseModal()
-    alert('Відповідь збережено')
+    notify('Відповідь збережено', { type: 'success' })
   } catch (e) {
-    alert(`Помилка: ${e.message}`)
+    notify(`Помилка: ${e.message}`, { type: 'error' })
   } finally {
     responseModalSaving.value = false
   }
 }
 
 async function deleteReviewResponse(reviewId) {
-  if (!confirm('Видалити відповідь СТО?')) return
+  const review = reviewsList.value.find(r => r.id === reviewId)
+  if (!review?.response) return
+  const savedResponse = review.response
 
-  try {
-    const response = await fetch(`/api/admin/reviews/${reviewId}/response`, {
-      method: 'DELETE',
-      headers: authHeaders()
-    })
-
-    if (!response.ok) {
-      const data = await response.json()
-      throw new Error(data.message || 'Помилка видалення')
-    }
-
-    // Удаляем из локальных данных
-    const review = reviewsList.value.find(r => r.id === reviewId)
-    if (review) {
-      review.response = null
-    }
-
-    alert('Відповідь видалено')
-  } catch (e) {
-    alert(`Помилка: ${e.message}`)
-  }
+  deleteWithUndo({
+    message: 'Відповідь видалено',
+    remove: () => { review.response = null },
+    restore: () => { review.response = savedResponse },
+    commit: async () => {
+      const response = await fetch(`/api/admin/reviews/${reviewId}/response`, {
+        method: 'DELETE',
+        headers: authHeaders()
+      })
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.message || 'Помилка видалення')
+      }
+    },
+  })
 }
 
 // Watch modalOpen to handle close via BaseModal (X button or ESC)
@@ -3354,12 +3387,21 @@ function copyCanvasCommand() {
 }
 
 async function deletePhoto(photo) {
-  if (!confirm('Видалити фото?')) return
-  await fetch(`/api/admin/sto/${modalData.value.id}/media/${photo.id}`, {
-    method:  'DELETE',
-    headers: authHeaders(),
+  const index = photosList.value.findIndex(p => p.id === photo.id)
+  if (index === -1) return
+
+  deleteWithUndo({
+    message: 'Фото видалено',
+    remove: () => { photosList.value.splice(index, 1) },
+    restore: () => { photosList.value.splice(index, 0, photo) },
+    commit: async () => {
+      const res = await fetch(`/api/admin/sto/${modalData.value.id}/media/${photo.id}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      })
+      if (!res.ok) throw new Error('Помилка видалення фото')
+    },
   })
-  photosList.value = photosList.value.filter(p => p.id !== photo.id)
 }
 
 async function setCover(photo) {

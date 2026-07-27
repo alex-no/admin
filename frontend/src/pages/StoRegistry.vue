@@ -260,6 +260,7 @@ import ModalTabs from '@/components/ModalTabs.vue'
 import DataListPage from '@/list-framework/DataListPage.vue'
 import PhoneListCell from '@/list-framework/cells/PhoneListCell.vue'
 import { useAuth } from '@/composables/useAuth'
+import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import { useUrlFilters } from '@/composables/useUrlFilters'
 import { useRemoteOptions } from '@/list-framework/composables/useRemoteOptions'
 import { normalizePhoneE164 } from '@/utils/phone'
@@ -268,6 +269,7 @@ import columnsConfig from './sto-registry.columns.json'
 import cfg from './sto-registry.config.json'
 
 const auth = useAuth()
+const { deleteWithUndo } = useUndoableDelete()
 const listRef = ref(null)
 
 // Субменю картки деталей — той самий підхід, що і в AllSTO (StoList.vue):
@@ -429,13 +431,22 @@ async function updatePhotoCaption(photo, caption) {
   photo.caption = caption
 }
 
-async function deletePhoto(photo) {
-  if (!confirm('Видалити фото?')) return
-  await fetch(`${cfg.apiUpdate}/${detailRow.value.id}/media/${photo.id}`, {
-    method: 'DELETE',
-    headers: auth.authHeaders(),
+function deletePhoto(photo) {
+  const index = photosList.value.findIndex((p) => p.id === photo.id)
+  if (index === -1) return
+
+  deleteWithUndo({
+    message: 'Фото видалено',
+    remove: () => { photosList.value.splice(index, 1) },
+    restore: () => { photosList.value.splice(index, 0, photo) },
+    commit: async () => {
+      const res = await fetch(`${cfg.apiUpdate}/${detailRow.value.id}/media/${photo.id}`, {
+        method: 'DELETE',
+        headers: auth.authHeaders(),
+      })
+      if (!res.ok) throw new Error('Помилка видалення фото')
+    },
   })
-  photosList.value = photosList.value.filter((p) => p.id !== photo.id)
 }
 
 function openPhotoPreview(photo) {

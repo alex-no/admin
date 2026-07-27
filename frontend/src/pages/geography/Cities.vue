@@ -169,9 +169,13 @@ import { ref, computed, onMounted } from 'vue'
 import ListPageWrapper from '@/components/ListPageWrapper.vue'
 import CityModal from '@/components/CityModal.vue'
 import { useAuth } from '@/composables/useAuth'
+import { useNotify } from '@/composables/useNotify'
+import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import cfg from './cities.config.json'
 
 const { can, authHeaders } = useAuth()
+const { notify } = useNotify()
+const { deleteWithUndo } = useUndoableDelete()
 
 function canEditField(key) {
   const field = cfg.fields[key]
@@ -280,7 +284,7 @@ async function toggleStatus(row) {
   togglingId.value = row.id
   try {
     applyToRow(row.id, await patch(row.id, { is_active: !row.is_active }))
-  } catch (e) { alert(e.message) }
+  } catch (e) { notify(e.message, { type: 'error' }) }
   finally { togglingId.value = null }
 }
 
@@ -295,23 +299,33 @@ async function saveInline(row, field) {
   cancelInline()
   if (newVal === (row[field] ?? '')) return
   try { applyToRow(row.id, await patch(row.id, { [field]: newVal })) }
-  catch (e) { alert(e.message) }
+  catch (e) { notify(e.message, { type: 'error' }) }
 }
 
 function cancelInline() { inlineCell.value = null; inlineValue.value = '' }
 
-async function deleteRow(row) {
-  if (!confirm(`Видалити «${row.name_uk}»?`)) return
-  try {
-    const res  = await fetch(`${cfg.apiDelete}/${row.id}`, { method: 'DELETE', headers: authHeaders() })
-    const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка видалення')
-    items.value = items.value.filter(r => r.id !== row.id)
-    justCreatedIds.value.delete(row.id)
-    total.value--
-  } catch (e) {
-    alert(e.message)
-  }
+function deleteRow(row) {
+  const index = items.value.findIndex(r => r.id === row.id)
+  if (index === -1) return
+
+  deleteWithUndo({
+    message: `«${row.name_uk}» видалено`,
+    remove: () => {
+      items.value.splice(index, 1)
+      justCreatedIds.value.delete(row.id)
+      total.value--
+    },
+    restore: () => {
+      items.value.splice(index, 0, row)
+      total.value++
+    },
+    commit: async () => {
+      const res  = await fetch(`${cfg.apiDelete}/${row.id}`, { method: 'DELETE', headers: authHeaders() })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.message ?? 'Помилка видалення')
+    },
+    onCommitError: () => load(page.value),
+  })
 }
 
 function openCreateModal() {

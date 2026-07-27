@@ -72,6 +72,9 @@
 import { ref, watch, onMounted } from 'vue'
 import BaseModal from './BaseModal.vue'
 import ModalContent from './AnalyticsDetailsModalContent.vue'
+import { useNotify } from '@/composables/useNotify'
+
+const { notify } = useNotify()
 
 // Тут лишилась тільки бізнес-логіка цієї картки (завантаження даних, мережеві
 // інструменти, вкладки). Все, що стосується самого вікна — floating/docked
@@ -232,7 +235,7 @@ async function runBlacklistCheck() {
     if (json.status === 'success') {
       blacklistResult.value = json.data
     } else {
-      alert(json.message || 'Помилка перевірки blacklist')
+      notify(json.message || 'Помилка перевірки blacklist', { type: 'error' })
     }
   } finally {
     loadingBlacklist.value = false

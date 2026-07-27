@@ -171,6 +171,9 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import BaseModal from './BaseModal.vue'
+import { useNotify } from '@/composables/useNotify'
+
+const { notify } = useNotify()
 
 // Тут лишилась тільки бізнес-логіка цієї картки (завантаження запису логу,
 // форматування stack trace/контексту). Все, що стосується самого вікна —
@@ -257,7 +260,7 @@ function formatStackTrace(trace) {
 function copyStackTrace() {
   const text = formatStackTrace(data.value.stack_trace)
   navigator.clipboard.writeText(text).then(() => {
-    alert('Stack trace скопійовано в буфер обміну')
+    notify('Stack trace скопійовано в буфер обміну', { type: 'success' })
   })
 }
 

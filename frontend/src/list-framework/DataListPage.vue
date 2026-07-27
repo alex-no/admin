@@ -147,6 +147,8 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useAuth } from '@/composables/useAuth'
+import { useNotify } from '@/composables/useNotify'
+import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import { useUrlFilters } from '@/composables/useUrlFilters'
 import Pagination from '@/components/Pagination.vue'
 import SortIcon from '@/components/SortIcon.vue'
@@ -171,6 +173,8 @@ const props = defineProps({
 const emit = defineEmits(['row-action'])
 
 const auth = useAuth()
+const { notify } = useNotify()
+const { deleteWithUndo, deleteManyWithUndo } = useUndoableDelete()
 
 // ── Filters state (по одному ref на кожне поле з filterConfig) ─────────────
 const filters = {}
@@ -308,27 +312,38 @@ async function handleCellUpdate(row, field, value) {
     if (!res.ok) throw new Error(json.message ?? 'Помилка збереження')
   } catch (e) {
     row[field.key] = prev
-    alert(e.message)
+    notify(e.message, { type: 'error' })
   }
 }
 
 // ── Row actions (detail / delete / custom) ──────────────────────────────
 async function handleDelete(row) {
-  if (!confirm(`Видалити запис #${row[props.rowKey]}?`)) return
-  try {
-    const res = await fetch(`${props.apiDelete}/${row[props.rowKey]}`, {
-      method: 'DELETE',
-      headers: auth.authHeaders(),
-    })
-    if (!res.ok) {
-      const json = await res.json().catch(() => ({}))
-      throw new Error(json.message ?? 'Помилка видалення')
-    }
-    items.value = items.value.filter((r) => r[props.rowKey] !== row[props.rowKey])
-    total.value--
-  } catch (e) {
-    alert(e.message)
-  }
+  const id = row[props.rowKey]
+  const index = items.value.findIndex((r) => r[props.rowKey] === id)
+  if (index === -1) return
+
+  deleteWithUndo({
+    message: `Запис #${id} видалено`,
+    remove: () => {
+      items.value.splice(index, 1)
+      total.value--
+    },
+    restore: () => {
+      items.value.splice(index, 0, row)
+      total.value++
+    },
+    commit: async () => {
+      const res = await fetch(`${props.apiDelete}/${id}`, {
+        method: 'DELETE',
+        headers: auth.authHeaders(),
+      })
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}))
+        throw new Error(json.message ?? 'Помилка видалення')
+      }
+    },
+    onCommitError: () => load(page.value),
+  })
 }
 
 // ── Bulk selection + bulk actions ───────────────────────────────────────
@@ -372,7 +387,7 @@ async function applyBulkUpdate() {
     clearSelection()
     await load(page.value)
   } catch (e) {
-    alert(e.message)
+    notify(e.message, { type: 'error' })
   } finally {
     bulkApplying.value = false
   }
@@ -380,24 +395,41 @@ async function applyBulkUpdate() {
 
 async function applyBulkDelete() {
   if (!props.apiDelete || !selected.value.length) return
-  if (!confirm(`Видалити ${selected.value.length} записів?`)) return
 
-  bulkApplying.value = true
-  try {
-    for (const id of selected.value) {
-      const res = await fetch(`${props.apiDelete}/${id}`, { method: 'DELETE', headers: auth.authHeaders() })
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}))
-        throw new Error(json.message ?? `Помилка видалення запису #${id}`)
-      }
-    }
-    clearSelection()
-    await load(page.value)
-  } catch (e) {
-    alert(e.message)
-  } finally {
-    bulkApplying.value = false
-  }
+  const removed = selected.value
+    .map((id) => ({ id, index: items.value.findIndex((r) => r[props.rowKey] === id) }))
+    .filter(({ index }) => index !== -1)
+    .map(({ index }) => ({ row: items.value[index], index }))
+  clearSelection()
+
+  deleteManyWithUndo({
+    items: removed,
+    message: `Видалено ${removed.length} запис(ів)`,
+    remove: () => {
+      removed
+        .slice()
+        .sort((a, b) => b.index - a.index)
+        .forEach(({ index }) => items.value.splice(index, 1))
+      total.value -= removed.length
+    },
+    restore: (items_) => {
+      items_
+        .slice()
+        .sort((a, b) => a.index - b.index)
+        .forEach(({ row, index }) => {
+          items.value.splice(Math.min(index, items.value.length), 0, row)
+        })
+      total.value += items_.length
+    },
+    commitOne: async ({ row }) => {
+      const res = await fetch(`${props.apiDelete}/${row[props.rowKey]}`, {
+        method: 'DELETE',
+        headers: auth.authHeaders(),
+      })
+      if (!res.ok) throw new Error('Помилка видалення')
+    },
+    onAnyCommitError: () => load(page.value),
+  })
 }
 
 function handleAction(action, row) {

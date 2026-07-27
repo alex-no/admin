@@ -291,6 +291,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useNotify } from '../composables/useNotify'
 import { useUrlFilters } from '../composables/useUrlFilters'
 import { formatDate } from '../utils/date'
 import ListPageWrapper from '../components/ListPageWrapper.vue'
@@ -298,6 +299,8 @@ import SortIcon from '../components/SortIcon.vue'
 import Pagination from '../components/Pagination.vue'
 import AnalyticsDetailsModal from '../components/AnalyticsDetailsModal.vue'
 import ChangeClientTypeModal from '../components/ChangeClientTypeModal.vue'
+
+const { notify } = useNotify()
 
 // Page layout для управления отступами при docked модальных окнах
 const items = ref([])
@@ -602,10 +605,10 @@ async function applyBulkChange() {
       clearSelection()
       load(page.value)
     } else {
-      alert('Помилка: ' + (json.message || 'Невідома помилка'))
+      notify('Помилка: ' + (json.message || 'Невідома помилка'), { type: 'error' })
     }
   } catch (e) {
-    alert('Помилка: ' + e.message)
+    notify('Помилка: ' + e.message, { type: 'error' })
   }
 }
 
@@ -627,10 +630,10 @@ async function showMyIp() {
         load(1)
       }
     } else {
-      alert('Не вдалося отримати IP: ' + (json.message || 'Невідома помилка'))
+      notify('Не вдалося отримати IP: ' + (json.message || 'Невідома помилка'), { type: 'error' })
     }
   } catch (e) {
-    alert('Помилка: ' + e.message)
+    notify('Помилка: ' + e.message, { type: 'error' })
   }
 }
 
@@ -668,10 +671,10 @@ onMounted(() => {
       if (json.status === 'success') {
         load(page.value) // Перезагрузить текущую страницу
       } else {
-        alert('Помилка: ' + (json.message || 'Невідома помилка'))
+        notify('Помилка: ' + (json.message || 'Невідома помилка'), { type: 'error' })
       }
     } catch (err) {
-      alert('Помилка: ' + err.message)
+      notify('Помилка: ' + err.message, { type: 'error' })
     }
   })
 })

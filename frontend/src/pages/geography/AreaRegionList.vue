@@ -279,6 +279,8 @@ import { ref, computed, onMounted } from 'vue'
 import ListPageWrapper from '@/components/ListPageWrapper.vue'
 import BaseModal from '@/components/BaseModal.vue'
 import { useAuth } from '@/composables/useAuth'
+import { useNotify } from '@/composables/useNotify'
+import { useUndoableDelete } from '@/composables/useUndoableDelete'
 
 const props = defineProps({
   cfg:           { type: Object, required: true },
@@ -287,6 +289,8 @@ const props = defineProps({
 })
 
 const { can, authHeaders } = useAuth()
+const { notify } = useNotify()
+const { deleteWithUndo } = useUndoableDelete()
 
 // ── Config helpers ────────────────────────────────────────────────────────────
 function canEditField(key) {
@@ -474,7 +478,7 @@ async function toggleStatus(row) {
     const updated = await patch(row.id, { is_active: !row.is_active })
     applyToRow(row.id, updated)
   } catch (e) {
-    alert(e.message)
+    notify(e.message, { type: 'error' })
   } finally {
     togglingId.value = null
   }
@@ -495,7 +499,7 @@ async function saveInline(row, field) {
     const updated = await patch(row.id, { [field]: newVal })
     applyToRow(row.id, updated)
   } catch (e) {
-    alert(e.message)
+    notify(e.message, { type: 'error' })
   }
 }
 
@@ -505,21 +509,31 @@ function cancelInline() {
 }
 
 // ── Delete ────────────────────────────────────────────────────────────────
-async function deleteRow(row) {
-  if (!confirm(`Видалити «${row.name_uk}»?`)) return
-  try {
-    const res  = await fetch(`${props.cfg.apiDelete}/${row.id}`, {
-      method: 'DELETE',
-      headers: authHeaders(),
-    })
-    const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка видалення')
-    items.value = items.value.filter(r => r.id !== row.id)
-    justCreatedIds.value.delete(row.id)
-    total.value--
-  } catch (e) {
-    alert(e.message)
-  }
+function deleteRow(row) {
+  const index = items.value.findIndex(r => r.id === row.id)
+  if (index === -1) return
+
+  deleteWithUndo({
+    message: `«${row.name_uk}» видалено`,
+    remove: () => {
+      items.value.splice(index, 1)
+      justCreatedIds.value.delete(row.id)
+      total.value--
+    },
+    restore: () => {
+      items.value.splice(index, 0, row)
+      total.value++
+    },
+    commit: async () => {
+      const res  = await fetch(`${props.cfg.apiDelete}/${row.id}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.message ?? 'Помилка видалення')
+    },
+    onCommitError: () => load(page.value),
+  })
 }
 
 // ── Modal ─────────────────────────────────────────────────────────────────────

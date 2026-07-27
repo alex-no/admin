@@ -165,9 +165,13 @@ import { ref, computed, onMounted } from 'vue'
 import ListPageWrapper from '@/components/ListPageWrapper.vue'
 import CountryModal from '@/components/CountryModal.vue'
 import { useAuth } from '@/composables/useAuth'
+import { useNotify } from '@/composables/useNotify'
+import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import cfg from './countries.config.json'
 
 const { can, authHeaders } = useAuth()
+const { notify } = useNotify()
+const { deleteWithUndo } = useUndoableDelete()
 
 // Permissions
 const canCreate     = computed(() => can(cfg.createPermission))
@@ -260,7 +264,7 @@ async function toggleStatus(c) {
     const updated = await patch(c.id, { is_active: !c.is_active })
     applyToRow(c.id, updated)
   } catch (e) {
-    alert(e.message)
+    notify(e.message, { type: 'error' })
   } finally {
     togglingId.value = null
   }
@@ -287,27 +291,37 @@ async function saveInline(c, field) {
     const updated = await patch(c.id, { [field]: newVal })
     applyToRow(c.id, updated)
   } catch (e) {
-    alert(e.message)
+    notify(e.message, { type: 'error' })
     c[field] = inlineOrig.value
   }
 }
 
-async function deleteRow(c) {
-  if (!confirm(`Видалити країну "${c.name_uk}"?`)) return
-  try {
-    const res = await fetch(`${cfg.apiDelete}/${c.id}`, {
-      method: 'DELETE',
-      headers: authHeaders(),
-    })
-    if (!res.ok) {
-      const json = await res.json()
-      throw new Error(json.message ?? 'Помилка видалення')
-    }
-    countries.value = countries.value.filter(x => x.id !== c.id)
-    total.value--
-  } catch (e) {
-    alert(e.message)
-  }
+function deleteRow(c) {
+  const index = countries.value.findIndex(x => x.id === c.id)
+  if (index === -1) return
+
+  deleteWithUndo({
+    message: `Країну "${c.name_uk}" видалено`,
+    remove: () => {
+      countries.value.splice(index, 1)
+      total.value--
+    },
+    restore: () => {
+      countries.value.splice(index, 0, c)
+      total.value++
+    },
+    commit: async () => {
+      const res = await fetch(`${cfg.apiDelete}/${c.id}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      })
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}))
+        throw new Error(json.message ?? 'Помилка видалення')
+      }
+    },
+    onCommitError: () => load(page.value),
+  })
 }
 
 // Modal actions

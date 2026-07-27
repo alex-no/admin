@@ -118,9 +118,11 @@ import { ref, computed, onMounted } from 'vue'
 import BaseLayout from '@/layouts/BaseLayout.vue'
 import CarModelModal from '@/components/CarModelModal.vue'
 import { useAuth } from '@/composables/useAuth'
+import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import { usePageLayout } from '@/composables/usePageLayout'
 
 const { can, authHeaders } = useAuth()
+const { deleteWithUndo } = useUndoableDelete()
 const { contentMargin } = usePageLayout()
 
 const canCreate = computed(() => can('catalog.car-models.create'))
@@ -208,18 +210,28 @@ async function load(p = 1) {
 }
 
 // ── Delete ────────────────────────────────────────────────────────────────────
-async function deleteRow(row) {
-  if (!confirm(`Видалити модель «${row.name}»?`)) return
-  try {
-    const res  = await fetch(`${API}/${row.id}`, { method: 'DELETE', headers: authHeaders() })
-    const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка видалення')
-    items.value = items.value.filter(r => r.id !== row.id)
-    justCreatedIds.value.delete(row.id)
-    total.value--
-  } catch (e) {
-    alert(e.message)
-  }
+function deleteRow(row) {
+  const index = items.value.findIndex(r => r.id === row.id)
+  if (index === -1) return
+
+  deleteWithUndo({
+    message: `Модель «${row.name}» видалено`,
+    remove: () => {
+      items.value.splice(index, 1)
+      justCreatedIds.value.delete(row.id)
+      total.value--
+    },
+    restore: () => {
+      items.value.splice(index, 0, row)
+      total.value++
+    },
+    commit: async () => {
+      const res  = await fetch(`${API}/${row.id}`, { method: 'DELETE', headers: authHeaders() })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.message ?? 'Помилка видалення')
+    },
+    onCommitError: () => load(page.value),
+  })
 }
 
 // ── Modal ─────────────────────────────────────────────────────────────────────

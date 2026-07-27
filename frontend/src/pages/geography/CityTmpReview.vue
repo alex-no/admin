@@ -247,9 +247,11 @@
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import BaseLayout from '@/layouts/BaseLayout.vue'
 import { useAuth } from '@/composables/useAuth'
+import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import { formatDateShort } from '@/utils/date'
 
 const { authHeaders } = useAuth()
+const { deleteWithUndo } = useUndoableDelete()
 
 const API = '/api/admin/geography/city-tmp'
 
@@ -430,21 +432,29 @@ async function approveModal() {
   }
 }
 
-async function dismissRow() {
-  if (!confirm('Прибрати запис з черги? Чернетка міста залишиться неактивною.')) return
-  saving.value = true
-  try {
-    const res  = await fetch(`${API}/${modalRow.value.id}`, { method: 'DELETE', headers: authHeaders() })
-    const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
-    items.value = items.value.filter(r => r.id !== modalRow.value.id)
-    total.value--
-    closeModal()
-  } catch (e) {
-    saveError.value = e.message
-  } finally {
-    saving.value = false
-  }
+function dismissRow() {
+  const row = modalRow.value
+  const index = row ? items.value.findIndex(r => r.id === row.id) : -1
+  if (index === -1) return
+
+  closeModal()
+  deleteWithUndo({
+    message: 'Запис прибрано з черги',
+    remove: () => {
+      items.value.splice(index, 1)
+      total.value--
+    },
+    restore: () => {
+      items.value.splice(index, 0, row)
+      total.value++
+    },
+    commit: async () => {
+      const res  = await fetch(`${API}/${row.id}`, { method: 'DELETE', headers: authHeaders() })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    },
+    onCommitError: () => load(page.value),
+  })
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

@@ -238,9 +238,11 @@
 import { ref, computed } from 'vue'
 import BaseLayout from '@/layouts/BaseLayout.vue'
 import { useAuth } from '@/composables/useAuth'
+import { useNotify } from '@/composables/useNotify'
 import { formatDate } from '@/utils/date'
 
 const { authHeaders } = useAuth()
+const { notify } = useNotify()
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const STO_TYPES = {
@@ -401,7 +403,7 @@ async function saveResponse(h, row) {
     row.last_response_status = json.data.response_status
     editingResponseId.value  = null
   } catch (e) {
-    alert('Помилка: ' + e.message)
+    notify('Помилка: ' + e.message, { type: 'error' })
   } finally {
     savingResponse.value = false
   }

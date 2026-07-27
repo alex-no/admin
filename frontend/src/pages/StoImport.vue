@@ -576,9 +576,13 @@
 import { ref, onMounted, computed, nextTick } from 'vue'
 import BaseLayout from '../layouts/BaseLayout.vue'
 import { useAuth } from '@/composables/useAuth'
+import { useNotify } from '@/composables/useNotify'
+import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import { formatDate } from '@/utils/date'
 
 const { authHeaders } = useAuth()
+const { notify } = useNotify()
+const { deleteWithUndo } = useUndoableDelete()
 const headers = () => ({ ...authHeaders(), 'Content-Type': 'application/json' })
 
 const DISPLAY_FIELDS = [
@@ -673,14 +677,28 @@ async function reloadBatch() {
   }
 }
 
-async function deleteBatch(batch) {
-  if (!confirm(`Видалити батч #${batch.id} (${batch.region_query})? Всі кандидати будуть видалені.`)) return
-  await fetch(`/api/admin/import/batches/${batch.id}`, { method: 'DELETE', headers: headers() })
-  if (selectedBatch.value?.id === batch.id) {
-    selectedBatch.value = null
-    candidates.value    = []
-  }
-  await loadBatches()
+function deleteBatch(batch) {
+  const index = batches.value.findIndex(b => b.id === batch.id)
+  if (index === -1) return
+
+  deleteWithUndo({
+    message: `Батч #${batch.id} видалено`,
+    remove: () => {
+      batches.value.splice(index, 1)
+      if (selectedBatch.value?.id === batch.id) {
+        selectedBatch.value = null
+        candidates.value    = []
+      }
+    },
+    restore: () => {
+      batches.value.splice(index, 0, batch)
+    },
+    commit: async () => {
+      const res = await fetch(`/api/admin/import/batches/${batch.id}`, { method: 'DELETE', headers: headers() })
+      if (!res.ok) throw new Error('Помилка видалення батчу')
+    },
+    onCommitError: () => loadBatches(),
+  })
 }
 
 async function openCandidate(c) {
@@ -885,7 +903,7 @@ const allPhotos = computed(() => {
 async function acceptCandidate() {
   // Validate city selection
   if (!selectedCity.value) {
-    alert('Будь ласка, оберіть місто перед прийняттям кандидата.')
+    notify('Будь ласка, оберіть місто перед прийняттям кандидата.', { type: 'error' })
     return
   }
 
@@ -915,7 +933,7 @@ async function acceptCandidate() {
     })
     const j = await r.json()
     if (j.status === 'error') {
-      alert('Помилка: ' + j.message)
+      notify('Помилка: ' + j.message, { type: 'error' })
       return
     }
     // Закрити модалку та оновити список
@@ -923,7 +941,7 @@ async function acceptCandidate() {
     await reloadBatch()
     await loadBatches()
     if (j.warnings?.length) {
-      alert('СТО створено (#' + j.sto_id + '), але:\n' + j.warnings.join('\n'))
+      notify('СТО створено (#' + j.sto_id + '), але:\n' + j.warnings.join('\n'), { type: 'error', duration: 8000 })
     }
   } finally {
     saving.value = false
@@ -1001,22 +1019,20 @@ async function splitSource(sourceKey) {
     const json = await res.json()
 
     if (json.status === 'error') {
-      alert('Помилка: ' + json.message)
+      notify('Помилка: ' + json.message, { type: 'error' })
       return
     }
 
     if (json.merged) {
-      alert(
-        `Джерело "${label}" розділено та об'єднано!\n\n` +
-        `• Поточний кандидат #${json.original_id}\n` +
-        `• Об'єднано з існуючим кандидатом #${json.merged_into}\n\n` +
-        `Знайдено схожий СТО, тому джерело додано до існуючого кандидата.`
+      notify(
+        `Джерело "${label}" розділено та об'єднано! Поточний кандидат #${json.original_id}, ` +
+        `об'єднано з існуючим кандидатом #${json.merged_into} (знайдено схожий СТО).`,
+        { type: 'success', duration: 8000 }
       )
     } else {
-      alert(
-        `Джерело "${label}" розділено!\n\n` +
-        `• Поточний кандидат #${json.original_id}\n` +
-        `• Новий кандидат #${json.new_candidate_id}`
+      notify(
+        `Джерело "${label}" розділено! Поточний кандидат #${json.original_id}, новий кандидат #${json.new_candidate_id}.`,
+        { type: 'success', duration: 8000 }
       )
     }
 
@@ -1024,7 +1040,7 @@ async function splitSource(sourceKey) {
     await reloadBatch()
     await loadBatches()
   } catch (e) {
-    alert('Помилка: ' + e.message)
+    notify('Помилка: ' + e.message, { type: 'error' })
   } finally {
     saving.value = false
   }
