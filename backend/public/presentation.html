@@ -407,6 +407,24 @@ docker compose restart backend</pre>
   </section>
 
   <section class="slide">
+    <span class="pagenum">Питання 3 · Розширення</span>
+    <div class="kicker">Заплановано, не реалізовано в цьому демо</div>
+    <h2>Два наступні кроки — вже описані як Claude Code skills</h2>
+    <p class="lead" style="margin:14px 0 18px">Аудит змін і захист від одночасного редагування — це вже не про фронтенд-каркас, а про бекенд конкретного ресурсу (нова таблиця, ручний виклик у контролері, бо ORM-хуків тут немає). Тому замість реалізації в самому демо — готовий план у вигляді двох skills, які підключаються в будь-якому проєкті, коли знадобляться.</p>
+    <div class="grid g2" style="margin-top:10px">
+      <div class="card">
+        <h3><span class="ico">◆</span> admin-audit-log</h3>
+        <p>Хто/що/коли змінив запис: таблиця <code class="inline">audit_log</code>, helper для diff'а before/after, вкладка «Історія» в картці деталей або окрема сторінка перегляду.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ico">◆</span> admin-optimistic-locking</h3>
+        <p>Захист від тихого перезапису при одночасному редагуванні: дешева перевірка версії (<code class="inline">409 Conflict</code>) за замовчуванням, realtime-присутність — лише якщо справді знадобиться.</p>
+      </div>
+    </div>
+    <p class="lead" style="margin-top:20px">Обидва skill перевіряють, чи є у цільовому проєкті власна система міграцій, і радять писати міграцію, а не інлайн-SQL, якщо вона є.</p>
+  </section>
+
+  <section class="slide">
     <span class="pagenum">Технології</span>
     <div class="kicker">Стек технологій</div>
     <h2>Сучасно й без зайвого</h2>
@@ -447,7 +465,7 @@ docker compose restart backend</pre>
 <div class="dots" id="dots"></div>
 <div class="nav">
   <button id="prev" aria-label="Назад">‹</button>
-  <span class="count" id="count">1 / 15</span>
+  <span class="count" id="count">1 / 16</span>
   <button id="next" aria-label="Далі">›</button>
 </div>
 <div class="hint"><kbd>←</kbd> <kbd>→</kbd> навігація · <kbd>F</kbd> повний екран</div>
