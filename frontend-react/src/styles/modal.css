@@ -1,0 +1,140 @@
+/* Modal window styles - three modes: floating, docked-right, docked-bottom */
+
+/* Backdrop для floating режима */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1049;
+}
+
+/* Floating режим */
+.modal-floating {
+  position: fixed;
+  z-index: 1050;
+  inset: 0;
+  pointer-events: none;
+}
+
+.modal-floating-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 1100px;
+  max-height: 88vh;
+  height: 88vh;
+  width: 90vw;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+/* Docked right */
+.modal-docked-right {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1050;
+  border-left: 1px solid #dee2e6;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Docked bottom */
+.modal-docked-bottom {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1050;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Resize handles */
+.modal-resize-handle {
+  position: absolute;
+  background: transparent;
+  z-index: 10;
+  transition: background 0.2s;
+}
+
+.modal-resize-w {
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: ew-resize;
+}
+
+.modal-resize-n {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  cursor: ns-resize;
+}
+
+.modal-resize-se {
+  right: 0;
+  bottom: 0;
+  width: 20px;
+  height: 20px;
+  cursor: nwse-resize;
+  border-bottom-right-radius: 4px;
+  /* Видима "ручка" — три діагональні риски */
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.35) 0px,
+    rgba(0, 0, 0, 0.35) 1.5px,
+    transparent 1.5px,
+    transparent 5px
+  );
+  background-position: bottom right;
+  background-size: 12px 12px;
+  background-repeat: no-repeat;
+}
+
+.modal-resize-handle:hover {
+  background: rgba(13, 110, 253, 0.3);
+}
+
+.modal-resize-handle:active {
+  background: rgba(13, 110, 253, 0.5);
+}
+
+/* Курсоры */
+.cursor-grab {
+  cursor: grab;
+  user-select: none;
+}
+
+.cursor-grabbing,
+.cursor-grabbing * {
+  cursor: grabbing !important;
+  user-select: none;
+}
+
+.cursor-resizing-x,
+.cursor-resizing-x * {
+  cursor: ew-resize !important;
+  user-select: none;
+}
+
+.cursor-resizing-y,
+.cursor-resizing-y * {
+  cursor: ns-resize !important;
+  user-select: none;
+}
+
+.cursor-resizing-both,
+.cursor-resizing-both * {
+  cursor: nwse-resize !important;
+  user-select: none;
+}
+
+/* Block body scroll when modal is open */
+body.modal-open {
+  overflow: hidden;
+}

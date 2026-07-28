@@ -16,6 +16,23 @@ services:
     depends_on:
       - backend
 
+  frontend-react:
+    build:
+      context: ./frontend-react
+      dockerfile: ../docker/frontend-react.Dockerfile
+    container_name: admin_frontend_react
+    working_dir: /app
+    ports:
+      - "5174:5174"
+    environment:
+      - VITE_API_PROXY_TARGET=http://backend
+      - VITE_MOCK_AUTH=false
+    volumes:
+      - ./frontend-react:/app
+      - node_modules_react:/app/node_modules
+    depends_on:
+      - backend
+
   backend:
     build:
       context: ./docker
@@ -31,3 +48,4 @@ services:
 
 volumes:
   node_modules:
+  node_modules_react:
