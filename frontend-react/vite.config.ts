@@ -10,6 +10,13 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    outDir: 'dist',
+    // У проді обидва фронтенди лежать в одному public/ спільного контейнера:
+    // Vue — index.html + app-assets/, React — react-index.html + react-assets/.
+    // Різні імена, щоб збірки не затирали одна одну (див. docker/apache/backend-prod.conf).
+    assetsDir: 'react-assets',
+  },
   server: {
     host: '0.0.0.0',
     port: 5174,

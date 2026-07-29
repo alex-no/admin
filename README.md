@@ -503,9 +503,9 @@ Claude сам розпізнає, що це саме `admin-audit-log`/`admin-op
 docker compose restart frontend-react    # якщо правки не підхопились
 ```
 
-У `frontend-react/vite.config.ts` увімкнено `watch.usePolling` — це знімає проблему з
-file-watcher на Windows + Docker Desktop, описану вище для Vue-версії. Але правки типів,
-хуків і залежностей ефектів HMR іноді все одно не підхоплює — тоді рестарт контейнера.
+У `frontend-react/vite.config.ts` увімкнено `watch.usePolling` (як і в Vue-версії) —
+без нього file-watcher на Windows + Docker Desktop не бачить правок. Але навіть з ним
+HMR іноді не підхоплює зміни в типах, хуках і залежностях ефектів — тоді рестарт контейнера.
 
 Перевірка перед комітом:
 
