@@ -145,11 +145,12 @@
 
   <section class="slide active title-slide">
     <div class="logo">A</div>
-    <div class="kicker">Портфоліо · Vue 3 + будь-який REST API · MIT License</div>
+    <div class="kicker">Портфоліо · Vue 3 + React · будь-який REST API · MIT License</div>
     <h1>Admin — <span class="accent">конструктор адмін-панелей</span></h1>
     <p class="lead" style="margin-top:20px">Не готовий продукт, а набір перевикористовуваних механізмів: список із фільтром і пейджингом, універсальне вікно деталей та JSON-конфігурація сторінок. Один раз інтегрується — далі нові сутності додаються за аналогією.</p>
     <div class="chips">
       <div class="chip"><span>◆</span> Vue 3 + Vite</div>
+      <div class="chip"><span>◆</span> Порт на React + TS</div>
       <div class="chip"><span>◆</span> Демо-бекенд: Yii3 + SQLite</div>
       <div class="chip"><span>◆</span> Docker Compose</div>
       <div class="chip"><span>◆</span> REST API + Swagger</div>
@@ -324,7 +325,7 @@ docker compose up -d <span class="k">--build</span>
 <span class="c"># оновити демо-дані — правимо CSV і рестартуємо</span>
 docker compose restart backend</pre>
         <ul class="clean" style="margin-top:18px">
-          <li>Frontend: <code class="inline">localhost:5173</code> · API: <code class="inline">localhost:8080</code></li>
+          <li>Vue: <code class="inline">localhost:5173</code> · React: <code class="inline">localhost:5174</code> · API: <code class="inline">localhost:8080</code></li>
           <li>Дані — у <code class="inline">backend/data/csv/*.csv</code></li>
         </ul>
       </div>
@@ -407,6 +408,28 @@ docker compose restart backend</pre>
   </section>
 
   <section class="slide">
+    <span class="pagenum">Питання 3 · Незалежність від фреймворку</span>
+    <div class="kicker">Перевірка тези — не словами, а портом</div>
+    <h2>Той самий каркас на React</h2>
+    <p class="lead" style="margin:14px 0 18px">Головна теза проєкту — що більшість коду адмінки не про продукт, а про перевикористовувані механізми. Найчесніша перевірка цієї тези — перенести каркас на інший фреймворк. <b>frontend-react/</b> — повний порт на React 18 + TypeScript: ті самі сторінки, та сама поведінка, той самий бекенд. Обидва фронтенди піднімаються одночасно (<code class="inline">:5173</code> і <code class="inline">:5174</code>) — можна відкрити в сусідніх вкладках і порівняти екран в екран.</p>
+    <div class="grid g3" style="margin-top:10px">
+      <div class="card">
+        <h3><span class="ico">◆</span> Збіглося майже один в один</h3>
+        <p>Структура каталогів, імена файлів і контракти: <code class="inline">list-framework/</code>, реєстр типів комірок, <code class="inline">BaseModal</code> з трьома режимами, стан у URL, права доступу. Композебли стали хуками — решта без переосмислення.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ico">◆</span> Повний набір фіч</h3>
+        <p>Усі сторінки: реєстр, аналітика зі SVG-графіками, ролі, права, логи. Масові операції, експорт у CSV, мульти-сортування, інлайн-редагування, undo-видалення, тости, мережева діагностика.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ico">◆</span> Де розійшлося навмисно</h3>
+        <p>Замість спілкування сторінки з модалкою через глобальні події — звичайні пропси. Плюс гейт маршрутів за правами, карта яких будується з того самого <code class="inline">menu.json</code>, що малює меню.</p>
+      </div>
+    </div>
+    <p class="lead" style="margin-top:20px">Vue-версія лишається еталоном: при розбіжності правильною вважається її поведінка.</p>
+  </section>
+
+  <section class="slide">
     <span class="pagenum">Питання 3 · Розширення</span>
     <div class="kicker">Заплановано, не реалізовано в цьому демо</div>
     <h2>Два наступні кроки — вже описані як Claude Code skills</h2>
@@ -429,7 +452,7 @@ docker compose restart backend</pre>
     <div class="kicker">Стек технологій</div>
     <h2>Сучасно й без зайвого</h2>
     <div class="grid g3" style="margin-top:24px">
-      <div class="card"><h3><span class="ico">◆</span> Frontend</h3><p>Vue 3 (Composition API), Vite, Bootstrap 5, композебли для модалок, URL-стану та layout.</p></div>
+      <div class="card"><h3><span class="ico">◆</span> Frontend</h3><p>Vue 3 (Composition API), Vite, Bootstrap 5, композебли для модалок, URL-стану та layout. Плюс повний порт на React 18 + TypeScript — той самий набір фіч на спільному бекенді.</p></div>
       <div class="card"><h3><span class="ico">◆</span> Backend (демо)</h3><p>Yii3 на PSR (DI/router/middleware), SQLite через PDO без ORM, сідинг із CSV — лише приклад реалізації; підійде будь-який REST API незалежно від мови й фреймворку.</p></div>
       <div class="card"><h3><span class="ico">◆</span> API & Docs</h3><p>REST + Swagger (zircote/swagger-php), єдиний контракт відповідей, атрибути <code class="inline">#[OA\...]</code>.</p></div>
       <div class="card"><h3><span class="ico">◆</span> DevOps</h3><p>Docker Compose (dev і prod), деплой за reverse-proxy (Apache + Let's Encrypt).</p></div>
@@ -465,7 +488,7 @@ docker compose restart backend</pre>
 <div class="dots" id="dots"></div>
 <div class="nav">
   <button id="prev" aria-label="Назад">‹</button>
-  <span class="count" id="count">1 / 16</span>
+  <span class="count" id="count">1 / 17</span>
   <button id="next" aria-label="Далі">›</button>
 </div>
 <div class="hint"><kbd>←</kbd> <kbd>→</kbd> навігація · <kbd>F</kbd> повний екран</div>
