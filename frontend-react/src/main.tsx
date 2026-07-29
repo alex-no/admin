@@ -6,6 +6,7 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import './index.css'
 import './styles/modal.css'
+import './styles/toast.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

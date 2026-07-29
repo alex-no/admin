@@ -1,6 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { apiPost } from '@/utils/api'
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
+import { apiGet, apiPost } from '@/utils/api'
 import type { User, LoginResponse } from '@/types'
 
 interface AuthContextType {
@@ -10,19 +9,43 @@ interface AuthContextType {
   logout: () => void
   isAuthenticated: boolean
   isLoading: boolean
+  can: (permission: string) => boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Read token synchronously on init
   const [user, setUser] = useState<User | null>(null)
-  const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem('admin_token')
-  })
-  const [isLoading, setIsLoading] = useState(false)
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('admin_token'))
+  // Поки тягнемо профіль — застосунок не рендериться, інакше на мить блимне
+  // меню з пунктами, на які прав немає.
+  const [isLoading, setIsLoading] = useState<boolean>(() => Boolean(localStorage.getItem('admin_token')))
 
-  // No useEffect needed for initial token read anymore
+  const logout = useCallback(() => {
+    localStorage.removeItem('admin_token')
+    setToken(null)
+    setUser(null)
+  }, [])
+
+  // Профіль із правами при старті (сторінку могли перезавантажити з валідним токеном)
+  useEffect(() => {
+    if (!token) {
+      setUser(null)
+      setIsLoading(false)
+      return
+    }
+    if (user) return // вже маємо — після login()
+
+    let alive = true
+    setIsLoading(true)
+
+    apiGet('/admin/auth/me')
+      .then(res => { if (alive) setUser(res.user) })
+      .catch(() => { if (alive) logout() })
+      .finally(() => { if (alive) setIsLoading(false) })
+
+    return () => { alive = false }
+  }, [token, user, logout])
 
   // Install 401 interceptor
   useEffect(() => {
@@ -31,7 +54,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await originalFetch(...args)
 
       if (response.status === 401) {
-        const url = typeof args[0] === 'string' ? args[0] : (args[0]?.url ?? '')
+        // args[0] — RequestInfo | URL: рядок, URL або Request, у кожного свій спосіб дістати адресу
+        const input = args[0]
+        const url =
+          typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
         const isLoginRequest = url.includes('/api/admin/auth/login')
 
         if (!isLoginRequest) {
@@ -45,28 +71,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       window.fetch = originalFetch
     }
-  }, [])
+  }, [logout])
 
   const login = async (username: string, password: string) => {
-    const response = await apiPost<LoginResponse>('/admin/auth/login', {
-      username,
-      password,
-    })
+    const response = await apiPost<LoginResponse>('/admin/auth/login', { username, password })
 
     if (response.status === 'success' && response.token) {
       localStorage.setItem('admin_token', response.token)
       setToken(response.token)
-      // TODO: fetch user data
+      if (response.user) setUser(response.user)
     } else {
       throw new Error(response.message || 'Login failed')
     }
   }
 
-  const logout = () => {
-    localStorage.removeItem('admin_token')
-    setToken(null)
-    setUser(null)
-  }
+  /**
+   * Перевірка права. Підтримує ті самі два спецвипадки, що й Vue-версія:
+   * "*" — усі права, "module.*" — усі права модуля.
+   */
+  const can = useCallback((permission: string): boolean => {
+    for (const p of user?.permissions ?? []) {
+      if (p === '*' || p === permission) return true
+      if (p.endsWith('.*') && permission.startsWith(p.slice(0, -2) + '.')) return true
+    }
+    return false
+  }, [user])
 
   return (
     <AuthContext.Provider
@@ -77,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         isAuthenticated: !!token,
         isLoading,
+        can,
       }}
     >
       {children}

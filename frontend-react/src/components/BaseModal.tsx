@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
+import type React from 'react'
 import { useModalWindow } from '@/hooks/useModalWindow'
 
 interface BaseModalProps {
@@ -43,8 +44,6 @@ export default function BaseModal({
     dockedBottomStyle,
     contentMargin,
     cursorClass,
-    isDragging,
-    isResizing,
     isDraggable,
     startDrag,
     startResize,

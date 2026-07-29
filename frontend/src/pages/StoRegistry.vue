@@ -95,21 +95,35 @@
         <textarea v-model="form.description" class="form-control form-control-sm" rows="7"></textarea>
       </template>
 
-      <!-- ── Рейтинг (тільки перегляд — своїх полів для збереження немає) ── -->
+      <!-- ── Рейтинг ───────────────────────────────────────────────────── -->
       <template v-else-if="activeTab === 'rating'">
         <div class="text-muted small mb-2">
-          Рейтинг розраховується автоматично на основі відгуків користувачів і тут не редагується.
+          Зазвичай рейтинг розраховується з відгуків користувачів — тут його можна задати вручну.
         </div>
-        <div class="fs-3">
-          <i class="bi bi-star-fill text-warning me-2"></i>{{ detailRow.rating ?? '—' }}
+        <label class="form-label small mb-1">Рейтинг</label>
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-star-fill text-warning fs-5"></i>
+          <input
+            v-model.number="form.rating"
+            type="number"
+            min="0"
+            max="5"
+            step="0.05"
+            class="form-control form-control-sm"
+            style="width:100px"
+          />
         </div>
+        <div class="text-muted small mt-1">Від 0 до 5</div>
       </template>
 
-      <!-- ── Країна (тільки перегляд, дані — з того ж кешу useRemoteOptions,
-             що й фільтр "Країна" у списку; повторного запиту не буде) ─────── -->
+      <!-- ── Країна (довідник — з того ж кешу useRemoteOptions, що й фільтр
+             "Країна" у списку; повторного запиту не буде) ────────────────── -->
       <template v-else-if="activeTab === 'country'">
-        <div class="text-muted small mb-1">Країна реєстрації</div>
-        <div>{{ countryName }}</div>
+        <label class="form-label small mb-1">Країна реєстрації</label>
+        <select v-model="form.country_id" class="form-select form-select-sm" style="max-width:300px">
+          <option :value="null">— Оберіть країну —</option>
+          <option v-for="c in countryOptions" :key="c.value" :value="c.value">{{ c.label }}</option>
+        </select>
       </template>
 
       <!-- ── Фото: демо аплоаду файлів (з диска напряму або за URL) без
@@ -294,8 +308,8 @@ const TAB_FIELDS = {
   general: ['name_uk', 'sto_type', 'is_active'],
   contacts: ['address', 'phones'],
   description: ['description'],
-  rating: [],
-  country: [],
+  rating: ['rating'],
+  country: ['country_id'],
   photos: [],
 }
 
@@ -312,6 +326,8 @@ const form = reactive({
   address: '',
   phones: [],
   description: '',
+  rating: null,
+  country_id: null,
 })
 let originalForm = { ...form }
 let suppressUnsavedCheck = false
@@ -325,10 +341,6 @@ const hasUnsavedChanges = computed(
 const { options: countryOptions } = useRemoteOptions('/api/admin/geography/countries', {
   valueKey: 'id',
   labelKey: 'name_uk',
-})
-const countryName = computed(() => {
-  const found = countryOptions.value.find((o) => String(o.value) === String(detailRow.value?.country_id))
-  return found ? found.label : '—'
 })
 
 // ── Фото ──────────────────────────────────────────────────────────────────
@@ -462,6 +474,8 @@ function populateForm(row) {
     address: row.address,
     phones: row.phones ?? [],
     description: row.description ?? '',
+    rating: row.rating ?? null,
+    country_id: row.country_id ?? null,
   })
   originalForm = { ...form }
 

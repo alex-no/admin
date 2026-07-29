@@ -1,14 +1,16 @@
+/** Те, що реально віддає /api/admin/auth/login і /api/admin/auth/me */
 export interface User {
   id: number
   username: string
-  email: string
-  role: string
+  name: string
+  group: string
   permissions: string[]
 }
 
 export interface LoginResponse {
   status: 'success' | 'error'
   token?: string
+  user?: User
   message?: string
 }
 

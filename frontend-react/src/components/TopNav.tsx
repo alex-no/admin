@@ -21,7 +21,7 @@ interface MenuSection {
 }
 
 export default function TopNav() {
-  const { user, logout } = useAuth()
+  const { user, logout, can } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [openMenu, setOpenMenu] = useState<string | null>(null)
@@ -29,10 +29,11 @@ export default function TopNav() {
 
   const menu = menuConfig as MenuSection[]
 
-  // TODO: implement proper permission check
-  const canAccess = (permission: string) => true
-
-  const visibleMenu = menu.filter(s => canAccess(s.permission))
+  // Розділ показуємо, якщо є право на нього або хоча б на один його пункт —
+  // інакше заголовок групи висів би з порожнім списком.
+  const visibleMenu = menu.filter(
+    s => can(s.permission) || s.items.some(i => can(i.permission))
+  )
 
   const activeSection = visibleMenu.find(s =>
     s.items.some(i => location.pathname.startsWith(i.to))
@@ -75,7 +76,7 @@ export default function TopNav() {
               </a>
               {/* Second level */}
               <ul className={`dropdown-menu mt-0 ${openMenu === section.id ? 'show' : ''}`}>
-                {section.items.filter(i => canAccess(i.permission)).map(item => (
+                {section.items.filter(i => can(i.permission)).map(item => (
                   <li key={item.to}>
                     <Link
                       className="dropdown-item"

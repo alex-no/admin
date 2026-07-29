@@ -17,6 +17,7 @@ RUN a2enmod rewrite headers
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+COPY php-uploads.ini /usr/local/etc/php/conf.d/uploads.ini
 COPY apache/backend.conf /etc/apache2/sites-available/000-default.conf
 COPY backend-entrypoint.sh /usr/local/bin/backend-entrypoint.sh
 RUN chmod +x /usr/local/bin/backend-entrypoint.sh

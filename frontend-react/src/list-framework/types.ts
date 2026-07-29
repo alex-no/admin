@@ -9,6 +9,11 @@ export interface PaginatedResponse<T> {
   }
 }
 
+export interface Option {
+  value: any
+  label: string
+}
+
 export interface ColumnConfig {
   key: string
   label: string
@@ -16,9 +21,33 @@ export interface ColumnConfig {
   editable?: boolean
   width?: string
   align?: 'left' | 'center' | 'right'
-  type?: 'text' | 'select' | 'date' | 'boolean' | 'custom'
-  options?: Array<{ value: any; label: string }>
+  /** Тип комірки з реєстру cellTypes: text | select | boolean | number | phone-list */
+  type?: string
+  /** select: статичні варіанти */
+  options?: Option[]
+  /** select: варіанти з API (кешуються між комірками) */
+  optionsUrl?: string
+  optionsValueKey?: string
+  optionsLabelKey?: string
+  /** number: обмеження вводу */
+  min?: number
+  max?: number
+  step?: number
+  /** number: іконка перед значенням (напр. 'bi-star-fill text-warning') */
+  icon?: string
+  /** boolean: підписи станів */
+  trueLabel?: string
+  falseLabel?: string
+  /** Довільний рендер (має пріоритет нижче за `type`) */
   format?: (value: any, row: any) => string | React.ReactNode
+}
+
+export interface CellProps {
+  field: ColumnConfig
+  value: any
+  readonly: boolean
+  row: any
+  onChange: (value: any) => void
 }
 
 export interface FilterConfig {
@@ -26,7 +55,11 @@ export interface FilterConfig {
   type: 'search' | 'select' | 'date-range' | 'checkbox'
   placeholder?: string
   label?: string
-  options?: Array<{ value: any; label: string }>
+  options?: Option[]
+  /** select: варіанти з API */
+  optionsUrl?: string
+  optionsValueKey?: string
+  optionsLabelKey?: string
   default?: any
 }
 
@@ -40,7 +73,8 @@ export interface ActionConfig {
   label: string
   icon: string
   permission?: string
-  handler: (row: any) => void | Promise<void>
+  /** Не обов'язковий для type: 'delete' — таблиця видаляє сама через apiDelete */
+  handler?: (row: any) => void | Promise<void>
 }
 
 export interface TableState {
@@ -65,6 +99,11 @@ export interface TableState {
   selected: (string | number)[]
 }
 
+/** Імперативний API таблиці (аналог defineExpose({ reload }) у Vue) */
+export interface DataTableHandle {
+  reload: () => void
+}
+
 export interface DataTableProps {
   title?: string
   apiList: string
@@ -75,4 +114,6 @@ export interface DataTableProps {
   actions?: ActionConfig[]
   rowKey?: string
   defaultPerPage?: number
+  /** Рядок успішно змінено інлайн — щоб сторінка могла оновити відкриту картку */
+  onRowUpdated?: (row: any) => void
 }

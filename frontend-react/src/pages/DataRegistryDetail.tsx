@@ -1,293 +1,310 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import BaseModal from '@/components/BaseModal'
-import { apiGet } from '@/utils/api'
+import PhoneListInput from '@/components/PhoneListInput'
+import DataRegistryPhotos from './DataRegistryPhotos'
+import { useRemoteOptions } from '@/list-framework'
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
+import { apiPatch } from '@/utils/api'
+import { normalizePhoneE164 } from '@/utils/phone'
 
 interface DataRegistryDetailProps {
-  id: number
+  /** Рядок таблиці — джерело даних картки, щоб список і картка не розходились */
+  row: any
+  initialTab?: string
   onClose: () => void
+  /** Викликається після успішного збереження, щоб сторінка перезавантажила список */
+  onSaved?: () => void
 }
 
 const STO_TYPES = [
-  { value: 'service', label: 'Автосервіс' },
-  { value: 'dealer', label: 'Дилер' },
+  { value: 'service', label: 'СТО' },
   { value: 'tire', label: 'Шиномонтаж' },
   { value: 'wash', label: 'Автомийка' },
-  { value: 'parts', label: 'Запчастини' },
 ]
 
-export default function DataRegistryDetail({ id, onClose }: DataRegistryDetailProps) {
-  const [activeTab, setActiveTab] = useState('general')
-  const [loading, setLoading] = useState(true)
-  const [data, setData] = useState<any>(null)
+// Які поля належать якій вкладці — визначає, що саме відправляти при "Зберегти"
+// (тільки поточна вкладка) проти "Зберегти та закрити" (усі вкладки одразу).
+// Порожній масив = вкладка тільки для перегляду, кнопки збереження на ній сховані.
+const TAB_FIELDS: Record<string, string[]> = {
+  general: ['name_uk', 'sto_type', 'is_active'],
+  contacts: ['address', 'phones'],
+  description: ['description'],
+  rating: ['rating'],
+  country: ['country_id'],
+  photos: [],
+}
 
+const TABS = [
+  { key: 'general', label: 'Основна інформація', icon: 'bi-info-circle' },
+  { key: 'contacts', label: 'Контактні дані', icon: 'bi-telephone' },
+  { key: 'description', label: 'Опис та деталі', icon: 'bi-card-text' },
+  { key: 'rating', label: 'Рейтинг та відгуки', icon: 'bi-star' },
+  { key: 'country', label: 'Країна реєстрації', icon: 'bi-flag' },
+  { key: 'photos', label: 'Фото', icon: 'bi-images' },
+]
+
+function formFromRow(row: any) {
+  return {
+    name_uk: row.name_uk ?? '',
+    sto_type: row.sto_type ?? 'service',
+    is_active: !!row.is_active,
+    address: row.address ?? '',
+    phones: row.phones ?? [],
+    description: row.description ?? '',
+    rating: row.rating ?? null,
+    country_id: row.country_id ?? null,
+  }
+}
+
+export default function DataRegistryDetail({
+  row,
+  initialTab = 'general',
+  onClose,
+  onSaved,
+}: DataRegistryDetailProps) {
+  const [activeTab, setActiveTab] = useState(initialTab)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
+  const [form, setForm] = useState(() => formFromRow(row))
+  const [savedForm, setSavedForm] = useState(() => formFromRow(row))
+
+  // Незбережені зміни: попередження і при закритті картки, і при закритті вкладки
+  const isDirty = JSON.stringify(form) !== JSON.stringify(savedForm)
+  const { confirmClose } = useUnsavedChanges(isDirty)
+
+  const handleClose = () => {
+    if (confirmClose()) onClose()
+  }
+
+  // Той самий довідник, що й у фільтрі "Країна" — useRemoteOptions кешує за URL,
+  // тому другого запиту до бекенду не буде.
+  const { options: countryOptions } = useRemoteOptions('/admin/geography/countries', {
+    valueKey: 'id',
+    labelKey: 'name_uk',
+  })
+
+  useEffect(() => setActiveTab(initialTab), [initialTab])
+
+  // Рядок змінився (інший запис або список перезавантажився) — переініціалізуємо форму
   useEffect(() => {
-    setLoading(true)
-    apiGet(`/admin/sto/${id}`)
-      .then(response => {
-        setData(response.data)
-        setLoading(false)
-      })
-      .catch(() => {
-        setLoading(false)
-      })
-  }, [id])
+    setForm(formFromRow(row))
+    setSavedForm(formFromRow(row))
+  }, [row])
 
-  const stoType = data ? STO_TYPES.find(t => t.value === data.sto_type)?.label ?? data.sto_type : ''
+  const updateForm = (field: string, value: any) => {
+    setForm(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleSave = async (close: boolean) => {
+    setSaving(true)
+    setSaveError('')
+
+    const fields = close ? Object.values(TAB_FIELDS).flat() : TAB_FIELDS[activeTab]
+    const payload: Record<string, any> = {}
+    for (const f of fields) {
+      payload[f] = f === 'phones'
+        ? (form.phones as string[]).map(normalizePhoneE164).filter(p => p)
+        : (form as any)[f]
+    }
+
+    try {
+      await apiPatch(`/admin/sto/${row.id}`, payload)
+      setSavedForm(form) // збережене стало новою точкою відліку для "змінено"
+      onSaved?.()
+      if (close) onClose()
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Помилка збереження')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const title = (
     <h5 className="mb-0">
-      Редагування СТО{' '}
-      <span className="text-muted fw-normal fs-6">#{id}</span>
-      {data?.name_uk && (
-        <span className="text-primary fw-normal fs-6 ms-2">
-          {data.name_uk}
-        </span>
+      СТО <span className="text-muted fw-normal fs-6">#{row.id}</span>
+      {form.name_uk && (
+        <span className="text-primary fw-normal fs-6 ms-2">{form.name_uk}</span>
       )}
     </h5>
   )
 
   const subheader = (
     <ul className="nav nav-tabs border-0">
-      <li className="nav-item">
-        <button
-          className={`nav-link py-2 px-2 small text-nowrap ${activeTab === 'general' ? 'active' : ''}`}
-          onClick={() => setActiveTab('general')}
-        >
-          <i className="bi bi-info-circle me-1" />
-          Основне
-        </button>
-      </li>
-      <li className="nav-item">
-        <button
-          className={`nav-link py-2 px-2 small text-nowrap ${activeTab === 'vehicle-types' ? 'active' : ''}`}
-          onClick={() => setActiveTab('vehicle-types')}
-        >
-          <i className="bi bi-truck me-1" />
-          Типи ТС
-        </button>
-      </li>
-      <li className="nav-item">
-        <button
-          className={`nav-link py-2 px-2 small text-nowrap ${activeTab === 'services' ? 'active' : ''}`}
-          onClick={() => setActiveTab('services')}
-        >
-          <i className="bi bi-wrench me-1" />
-          Послуги
-        </button>
-      </li>
-      <li className="nav-item">
-        <button
-          className={`nav-link py-2 px-2 small text-nowrap ${activeTab === 'amenities' ? 'active' : ''}`}
-          onClick={() => setActiveTab('amenities')}
-        >
-          <i className="bi bi-stars me-1" />
-          Зручності
-        </button>
-      </li>
-      <li className="nav-item">
-        <button
-          className={`nav-link py-2 px-2 small text-nowrap ${activeTab === 'address' ? 'active' : ''}`}
-          onClick={() => setActiveTab('address')}
-        >
-          <i className="bi bi-geo-alt me-1" />
-          Адреса
-        </button>
-      </li>
-      <li className="nav-item">
-        <button
-          className={`nav-link py-2 px-2 small text-nowrap ${activeTab === 'photos' ? 'active' : ''}`}
-          onClick={() => setActiveTab('photos')}
-        >
-          <i className="bi bi-images me-1" />
-          Фото
-        </button>
-      </li>
-      <li className="nav-item">
-        <button
-          className={`nav-link py-2 px-2 small text-nowrap ${activeTab === 'employees' ? 'active' : ''}`}
-          onClick={() => setActiveTab('employees')}
-        >
-          <i className="bi bi-people me-1" />
-          Співробітники
-        </button>
-      </li>
-      <li className="nav-item">
-        <button
-          className={`nav-link py-2 px-2 small text-nowrap ${activeTab === 'bookings' ? 'active' : ''}`}
-          onClick={() => setActiveTab('bookings')}
-        >
-          <i className="bi bi-calendar-check me-1" />
-          Записи
-        </button>
-      </li>
-      <li className="nav-item">
-        <button
-          className={`nav-link py-2 px-2 small text-nowrap ${activeTab === 'reviews' ? 'active' : ''}`}
-          onClick={() => setActiveTab('reviews')}
-        >
-          <i className="bi bi-star me-1" />
-          Відгуки
-        </button>
-      </li>
+      {TABS.map(tab => (
+        <li key={tab.key} className="nav-item">
+          <button
+            className={`nav-link py-2 px-2 small text-nowrap ${activeTab === tab.key ? 'active' : ''}`}
+            onClick={() => setActiveTab(tab.key)}
+          >
+            <i className={`bi ${tab.icon} me-1`} />
+            {tab.label}
+          </button>
+        </li>
+      ))}
     </ul>
   )
 
-  const footer = (
+  const footer = TAB_FIELDS[activeTab]?.length ? (
     <>
-      <div className="text-muted small">IP: {data?.ip || '—'}</div>
-      <button type="button" className="btn btn-sm btn-secondary" onClick={onClose}>
-        Закрити
-      </button>
+      <div></div>
+      <div className="d-flex gap-2">
+        <button className="btn btn-secondary btn-sm" onClick={handleClose}>Закрити</button>
+        <button className="btn btn-outline-primary btn-sm" disabled={saving} onClick={() => handleSave(false)}>
+          {saving && <span className="spinner-border spinner-border-sm me-1" />}Зберегти
+        </button>
+        <button className="btn btn-primary btn-sm" disabled={saving} onClick={() => handleSave(true)}>
+          {saving && <span className="spinner-border spinner-border-sm me-1" />}Зберегти та закрити
+        </button>
+      </div>
+    </>
+  ) : (
+    <>
+      <div></div>
+      <button className="btn btn-secondary btn-sm" onClick={handleClose}>Закрити</button>
     </>
   )
 
   return (
     <BaseModal
       visible={true}
-      onClose={onClose}
+      onClose={handleClose}
       title={title}
       subheader={subheader}
       footer={footer}
-      storageKey="sto-edit-modal"
-      defaultWidth={1100}
-      minWidth={800}
-      maxWidth={1400}
-      defaultHeight={600}
-      minHeight={400}
-      maxHeight={900}
+      storageKey="sto-registry-detail"
+      defaultWidth={700}
+      minWidth={480}
+      maxWidth={1000}
+      defaultHeight={520}
+      minHeight={380}
+      maxHeight={800}
       closeOnBackdrop={false}
     >
-      {loading && (
-        <div className="text-center py-5">
-          <div className="spinner-border text-primary" />
-        </div>
-      )}
+      {saveError && <div className="alert alert-danger py-2 small">{saveError}</div>}
 
-      {!loading && !data && (
-        <div className="alert alert-danger">Не вдалося завантажити дані</div>
-      )}
-
-      {!loading && data && (
+      {/* ── Основна інформація ─────────────────────────────────────────── */}
+      {activeTab === 'general' && (
         <>
-          {activeTab === 'general' && (
-            <div>
-              <div className="row g-3 mb-3">
-                <div className="col-sm-4">
-                  <label className="form-label small mb-1">Тип СТО</label>
-                  <div className="form-control form-control-sm bg-light">{stoType}</div>
-                </div>
-                <div className="col-sm-2">
-                  <label className="form-label small mb-1">Статус</label>
-                  <div>
-                    <span className={`badge ${data.is_active ? 'bg-success' : 'bg-danger'}`}>
-                      {data.is_active ? 'Активне' : 'Неактивне'}
-                    </span>
-                  </div>
-                </div>
-                <div className="col-sm-2">
-                  <label className="form-label small mb-1">Рейтинг</label>
-                  <div className="form-control form-control-sm bg-light">
-                    {data.rating ? (
-                      <>
-                        <i className="bi bi-star-fill text-warning me-1" style={{ fontSize: '.7rem' }} />
-                        {Number(data.rating).toFixed(2)}
-                      </>
-                    ) : '—'}
-                  </div>
-                </div>
-                <div className="col-sm-4">
-                  <label className="form-label small mb-1">Країна</label>
-                  <div className="form-control form-control-sm bg-light">ID: {data.country_id}</div>
-                </div>
-              </div>
-
-              <div className="row g-3 mb-3">
-                <div className="col-sm-12">
-                  <label className="form-label small mb-1">Назва (UK)</label>
-                  <div className="form-control form-control-sm bg-light">{data.name_uk || '—'}</div>
-                </div>
-              </div>
-
-              <div className="mb-3">
-                <label className="form-label small mb-1">Адреса</label>
-                <div className="form-control form-control-sm bg-light">{data.address || '—'}</div>
-              </div>
-
-              <div className="mb-3">
-                <label className="form-label small mb-1">Опис</label>
-                <div className="form-control form-control-sm bg-light" style={{ minHeight: '60px' }}>
-                  {data.description || '—'}
-                </div>
-              </div>
-
-              <div className="row g-3 mb-3">
-                <div className="col-sm-12">
-                  <label className="form-label small mb-1">Телефони</label>
-                  <div className="form-control form-control-sm bg-light">
-                    {data.phones?.length > 0 ? data.phones.join(', ') : '—'}
-                  </div>
-                </div>
-              </div>
+          <div className="row g-3">
+            <div className="col-sm-8">
+              <label className="form-label small mb-1">Назва</label>
+              <input
+                type="text"
+                className="form-control form-control-sm"
+                value={form.name_uk}
+                onChange={(e) => updateForm('name_uk', e.target.value)}
+              />
             </div>
-          )}
-
-          {activeTab === 'vehicle-types' && (
-            <div className="alert alert-info">
-              <i className="bi bi-info-circle me-2" />
-              Розділ "Типи ТС" буде реалізовано пізніше
+            <div className="col-sm-4">
+              <label className="form-label small mb-1">Тип</label>
+              <select
+                className="form-select form-select-sm"
+                value={form.sto_type}
+                onChange={(e) => updateForm('sto_type', e.target.value)}
+              >
+                {STO_TYPES.map(t => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
             </div>
-          )}
-
-          {activeTab === 'services' && (
-            <div className="alert alert-info">
-              <i className="bi bi-info-circle me-2" />
-              Розділ "Послуги" буде реалізовано пізніше
+          </div>
+          <div className="mt-3">
+            <div className="form-check form-switch">
+              <input
+                id="sto-active-switch"
+                type="checkbox"
+                className="form-check-input"
+                role="switch"
+                checked={form.is_active}
+                onChange={(e) => updateForm('is_active', e.target.checked)}
+              />
+              <label className="form-check-label small" htmlFor="sto-active-switch">
+                {form.is_active ? 'Активне' : 'Неактивне'}
+              </label>
             </div>
-          )}
-
-          {activeTab === 'amenities' && (
-            <div className="alert alert-info">
-              <i className="bi bi-info-circle me-2" />
-              Розділ "Зручності" буде реалізовано пізніше
-            </div>
-          )}
-
-          {activeTab === 'address' && (
-            <div className="alert alert-info">
-              <i className="bi bi-info-circle me-2" />
-              Розділ "Адреса" буде реалізовано пізніше
-            </div>
-          )}
-
-          {activeTab === 'photos' && (
-            <div className="alert alert-info">
-              <i className="bi bi-info-circle me-2" />
-              Розділ "Фото" буде реалізовано пізніше
-            </div>
-          )}
-
-          {activeTab === 'employees' && (
-            <div className="alert alert-info">
-              <i className="bi bi-info-circle me-2" />
-              Розділ "Співробітники" буде реалізовано пізніше
-            </div>
-          )}
-
-          {activeTab === 'bookings' && (
-            <div className="alert alert-info">
-              <i className="bi bi-info-circle me-2" />
-              Розділ "Записи" буде реалізовано пізніше
-            </div>
-          )}
-
-          {activeTab === 'reviews' && (
-            <div className="alert alert-info">
-              <i className="bi bi-info-circle me-2" />
-              Розділ "Відгуки" буде реалізовано пізніше
-            </div>
-          )}
+          </div>
         </>
       )}
+
+      {/* ── Контактні дані ─────────────────────────────────────────────── */}
+      {activeTab === 'contacts' && (
+        <>
+          <div className="mb-3">
+            <label className="form-label small mb-1">Адреса</label>
+            <input
+              type="text"
+              className="form-control form-control-sm"
+              value={form.address}
+              onChange={(e) => updateForm('address', e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="form-label small mb-1">Телефони</label>
+            <PhoneListInput
+              value={form.phones}
+              onChange={(phones) => updateForm('phones', phones)}
+            />
+          </div>
+        </>
+      )}
+
+      {/* ── Опис та деталі ─────────────────────────────────────────────── */}
+      {activeTab === 'description' && (
+        <>
+          <label className="form-label small mb-1">Опис</label>
+          <textarea
+            className="form-control form-control-sm"
+            rows={7}
+            value={form.description}
+            onChange={(e) => updateForm('description', e.target.value)}
+          />
+        </>
+      )}
+
+      {/* ── Рейтинг ────────────────────────────────────────────────────── */}
+      {activeTab === 'rating' && (
+        <>
+          <div className="text-muted small mb-2">
+            Зазвичай рейтинг розраховується з відгуків користувачів — тут його можна задати вручну.
+          </div>
+          <label className="form-label small mb-1">Рейтинг</label>
+          <div className="d-flex align-items-center gap-2">
+            <i className="bi bi-star-fill text-warning fs-5" />
+            <input
+              type="number"
+              className="form-control form-control-sm"
+              style={{ width: '100px' }}
+              min={0}
+              max={5}
+              step={0.05}
+              value={form.rating ?? ''}
+              onChange={(e) => updateForm('rating', e.target.value === '' ? null : Number(e.target.value))}
+            />
+          </div>
+          <div className="text-muted small mt-1">Від 0 до 5</div>
+        </>
+      )}
+
+      {/* ── Країна реєстрації ──────────────────────────────────────────── */}
+      {activeTab === 'country' && (
+        <>
+          <label className="form-label small mb-1">Країна реєстрації</label>
+          <select
+            className="form-select form-select-sm"
+            style={{ maxWidth: '300px' }}
+            value={form.country_id ?? ''}
+            onChange={(e) => updateForm('country_id', e.target.value === '' ? null : Number(e.target.value))}
+          >
+            <option value="">— Оберіть країну —</option>
+            {countryOptions.map(c => (
+              <option key={String(c.value)} value={c.value}>{c.label}</option>
+            ))}
+          </select>
+        </>
+      )}
+
+      {/* ── Фото ───────────────────────────────────────────────────────── */}
+      {activeTab === 'photos' && <DataRegistryPhotos stoId={row.id} />}
     </BaseModal>
   )
 }

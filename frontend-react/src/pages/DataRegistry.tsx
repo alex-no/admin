@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useRef, useState, useCallback } from 'react'
 import { DataTable } from '@/list-framework'
 import DataRegistryDetail from './DataRegistryDetail'
-import type { ColumnConfig, FilterConfig } from '@/list-framework'
+import type { ColumnConfig, FilterConfig, DataTableHandle } from '@/list-framework'
 
 const RECORD_TYPES = [
   { value: 'service', label: 'СТО' },
@@ -10,15 +10,28 @@ const RECORD_TYPES = [
 ]
 
 export default function DataRegistry() {
-  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const listRef = useRef<DataTableHandle>(null)
+  const [detailRow, setDetailRow] = useState<any>(null)
+  const [detailTab, setDetailTab] = useState('general')
+
+  const openDetail = (row: any, tab: string) => {
+    setDetailRow(row)
+    setDetailTab(tab)
+  }
+
+  // Інлайн-правка в таблиці має одразу відображатись у відкритій картці,
+  // інакше список і картка показують різне (напр. статус).
+  const syncDetailRow = useCallback((row: any) => {
+    setDetailRow((cur: any) => (cur && cur.id === row.id ? row : cur))
+  }, [])
   const filterConfig: FilterConfig[] = [
     {
       key: 'search',
       type: 'search',
-      placeholder: 'Пошук...',
+      placeholder: 'Пошук за назвою...',
     },
     {
-      key: 'type',
+      key: 'sto_type',
       type: 'select',
       placeholder: 'Всі типи',
       options: RECORD_TYPES,
@@ -32,116 +45,83 @@ export default function DataRegistry() {
         { value: 'inactive', label: 'Неактивні' },
       ],
     },
+    {
+      key: 'country_id',
+      type: 'select',
+      placeholder: 'Всі країни',
+      optionsUrl: '/admin/geography/countries',
+      optionsValueKey: 'id',
+      optionsLabelKey: 'name_uk',
+    },
   ]
 
   const columnsConfig: ColumnConfig[] = [
+    { key: 'id', label: 'ID', type: 'text', align: 'right', width: '60px', sortable: true },
+    { key: 'name_uk', label: 'Назва', type: 'text', sortable: true, editable: true },
     {
-      key: 'id',
-      label: 'ID',
-      sortable: true,
-      width: '60px',
-      align: 'right',
-    },
-    {
-      key: 'name_uk',
-      label: 'Назва',
-      sortable: true,
-    },
-    {
-      key: 'type',
+      key: 'sto_type',
       label: 'Тип',
-      format: (value) => {
-        const type = RECORD_TYPES.find(t => t.value === value)
-        return (
-          <span className={`badge ${getTypeBadge(value)}`}>
-            {type?.label || value}
-          </span>
-        )
-      },
+      type: 'select',
+      sortable: true,
+      editable: true,
+      options: RECORD_TYPES,
     },
-    {
-      key: 'address',
-      label: 'Адреса',
-      format: (value) => (
-        <span
-          style={{
-            maxWidth: '250px',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            display: 'inline-block',
-          }}
-          title={value}
-        >
-          {value || '—'}
-        </span>
-      ),
-    },
-    {
-      key: 'phone',
-      label: 'Телефон',
-    },
+    { key: 'address', label: 'Адреса', type: 'text' },
+    { key: 'phones', label: 'Телефони', type: 'phone-list', sortable: true },
     {
       key: 'rating',
       label: 'Рейтинг',
+      type: 'number',
+      align: 'right',
+      width: '90px',
       sortable: true,
-      width: '80px',
-      align: 'center',
-      format: (value) => value ? Number(value).toFixed(1) : '—',
+      editable: true,
+      min: 0,
+      max: 5,
+      step: 0.05,
+      icon: 'bi-star-fill text-warning',
     },
     {
       key: 'is_active',
       label: 'Статус',
+      type: 'boolean',
       sortable: true,
-      width: '100px',
-      format: (value) => (
-        <span className={`badge ${value ? 'bg-success' : 'bg-secondary'}`}>
-          {value ? 'Активне' : 'Неактивне'}
-        </span>
-      ),
+      editable: true,
+      trueLabel: 'Активне',
+      falseLabel: 'Неактивне',
     },
   ]
 
   const actions = [
-    {
-      type: 'edit',
-      label: 'Редагувати',
-      icon: 'bi-pencil',
-      handler: (row: any) => setSelectedId(row.id),
-    },
+    { type: 'detail', label: 'Деталі', icon: 'bi-eye', handler: (r: any) => openDetail(r, 'general') },
+    { type: 'detail', label: 'Контактні дані', icon: 'bi-telephone', handler: (r: any) => openDetail(r, 'contacts') },
+    { type: 'detail', label: 'Опис', icon: 'bi-card-text', handler: (r: any) => openDetail(r, 'description') },
+    { type: 'detail', label: 'Рейтинг та відгуки', icon: 'bi-star', handler: (r: any) => openDetail(r, 'rating') },
+    { type: 'delete', label: 'Видалити', icon: 'bi-trash', permission: 'sto.delete' },
   ]
-
-  function getTypeBadge(type: string): string {
-    switch (type) {
-      case 'service':
-        return 'bg-primary'
-      case 'tire':
-        return 'bg-warning text-dark'
-      case 'wash':
-        return 'bg-info'
-      default:
-        return 'bg-secondary'
-    }
-  }
 
   return (
     <div>
       <DataTable
+        ref={listRef}
         title="Реєстр даних"
         apiList="/admin/sto"
-        apiUpdate="/admin/sto/{id}"
-        apiDelete="/admin/sto/{id}"
+        apiUpdate="/admin/sto"
+        apiDelete="/admin/sto"
         filterConfig={filterConfig}
         columnsConfig={columnsConfig}
         actions={actions}
         rowKey="id"
         defaultPerPage={50}
+        onRowUpdated={syncDetailRow}
       />
 
-      {selectedId !== null && (
+      {detailRow && (
         <DataRegistryDetail
-          id={selectedId}
-          onClose={() => setSelectedId(null)}
+          row={detailRow}
+          initialTab={detailTab}
+          onClose={() => setDetailRow(null)}
+          onSaved={() => listRef.current?.reload()}
         />
       )}
     </div>

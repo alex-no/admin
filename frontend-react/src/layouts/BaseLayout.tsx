@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import TopNav from '@/components/TopNav'
+import RequirePermission from '@/components/RequirePermission'
 import { usePageLayout } from '@/hooks/usePageLayout'
 
 export default function BaseLayout() {
@@ -18,7 +19,9 @@ export default function BaseLayout() {
           ...contentMargin,
         }}
       >
-        <Outlet />
+        <RequirePermission>
+          <Outlet />
+        </RequirePermission>
       </main>
     </div>
   )

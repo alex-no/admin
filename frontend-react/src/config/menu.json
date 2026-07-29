@@ -3,14 +3,14 @@
     "id": "data",
     "label": "Дані",
     "icon": "bi-database",
-    "permission": "data.view",
+    "permission": "sto.view",
     "roles": ["admin", "superadmin"],
     "items": [
       {
         "label": "Реєстр даних",
         "to": "/data-registry",
         "icon": "bi-list-ul",
-        "permission": "data.view",
+        "permission": "sto.view",
         "roles": ["admin", "superadmin"],
         "note": "Демо-модуль React каркасу: список + фільтр + сортування + пагінація"
       }

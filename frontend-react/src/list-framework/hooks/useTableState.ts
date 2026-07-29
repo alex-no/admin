@@ -1,80 +1,104 @@
 import { useState, useEffect, useCallback } from 'react'
-import { apiGet } from '@/utils/api'
-import type { SortItem, FilterConfig, PaginatedResponse } from '../types'
+import { apiGet, apiPatch, apiDelete as apiDeleteRequest } from '@/utils/api'
+import { notify } from '@/hooks/useNotify'
+import { deleteWithUndo, deleteManyWithUndo } from '@/hooks/useUndoableDelete'
+import { getCached, setCached } from './useListCache'
+import { fetchOptions } from './useRemoteOptions'
+import { rowsToCsv, downloadCsv } from '@/utils/csv'
+import { formatPhoneUA } from '@/utils/phone'
+import {
+  useUrlFilters,
+  readFiltersFromUrl,
+  readMultiSortFromUrl,
+} from '@/hooks/useUrlFilters'
+import type { SortItem, FilterConfig, ColumnConfig, Option, PaginatedResponse } from '../types'
+
+const EXPORT_PAGE_SIZE = 500
+const EXPORT_MAX_ROWS = 20000
+
+/**
+ * Значення для CSV: коди замінюємо на те, що користувач бачить у таблиці.
+ * remoteOptions — довідники select-колонок з optionsUrl, підвантажені заздалегідь.
+ */
+function formatForExport(
+  col: ColumnConfig,
+  row: any,
+  remoteOptions: Map<string, Option[]>
+): any {
+  const value = row[col.key]
+
+  if (col.type === 'boolean') {
+    return value ? (col.trueLabel ?? 'Так') : (col.falseLabel ?? 'Ні')
+  }
+  if (col.type === 'phone-list') {
+    return (value ?? []).map(formatPhoneUA).join(', ')
+  }
+  if (col.type === 'select') {
+    const options = col.optionsUrl ? (remoteOptions.get(col.key) ?? []) : (col.options ?? [])
+    const found = options.find(o => String(o.value) === String(value))
+    return found ? found.label : (value ?? '')
+  }
+  return value ?? ''
+}
 
 interface UseTableStateOptions {
   apiList: string
+  apiUpdate?: string
+  apiDelete?: string
   filterConfig?: FilterConfig[]
   defaultPerPage?: number
   rowKey?: string
+  /** Рядок успішно змінено інлайн — щоб сторінка могла оновити відкриту картку */
+  onRowUpdated?: (row: any) => void
 }
 
 export function useTableState({
   apiList,
+  apiUpdate,
+  apiDelete,
   filterConfig = [],
   defaultPerPage = 50,
   rowKey = 'id',
+  onRowUpdated,
 }: UseTableStateOptions) {
   // Separate state for each concern
   const [items, setItems] = useState<any[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [page, setPage] = useState(1)
+  // Сторінка, сортування та фільтри піднімаються з URL — щоб посилання на список
+  // з конкретним фільтром/сторінкою можна було зберегти або переслати.
+  const [page, setPage] = useState(() => readFiltersFromUrl({ page: 1 }).page)
   const [perPage, setPerPage] = useState(defaultPerPage)
   const [totalPages, setTotalPages] = useState(0)
-  const [sortItems, setSortItems] = useState<SortItem[]>([])
+  const [sortItems, setSortItems] = useState<SortItem[]>(
+    () => readMultiSortFromUrl() as SortItem[]
+  )
   const [filters, setFilters] = useState<Record<string, any>>({})
   const [selected, setSelected] = useState<(string | number)[]>([])
+  const [reloadToken, setReloadToken] = useState(0)
+  const [revalidating, setRevalidating] = useState(false)
+  const [bulkApplying, setBulkApplying] = useState(false)
+  const [exporting, setExporting] = useState(false)
 
-  // Initialize filters from config (only once)
+  // Initialize filters from config (only once), overriding with values from URL
   useEffect(() => {
     const initialFilters: Record<string, any> = {}
     for (const f of filterConfig) {
       initialFilters[f.key] = f.default ?? (f.type === 'checkbox' ? false : '')
     }
-    setFilters(initialFilters)
+    setFilters(readFiltersFromUrl(initialFilters))
   }, []) // Empty deps - run once
 
-  // Load data from API
-  const load = useCallback(async (pageOverride?: number) => {
-    setLoading(true)
-    setError('')
+  useUrlFilters({
+    filters: { ...filters, page: page > 1 ? page : '' },
+    multiSort: sortItems,
+  })
 
-    // Capture current values - don't use from closure
-    const params = new URLSearchParams()
-
-    // Use ref values or pass them explicitly
-    params.append('page', String(pageOverride ?? page))
-    params.append('per_page', String(perPage))
-
-    // Add filters
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== '' && value !== null && value !== undefined) {
-        params.append(key, String(value))
-      }
-    })
-
-    // Add sort (Vue admin format: separate sort_by and sort_dir)
-    if (sortItems.length > 0) {
-      params.append('sort_by', sortItems.map(s => s.key).join(','))
-      params.append('sort_dir', sortItems.map(s => s.dir).join(','))
-    }
-
-    const url = `${apiList}?${params.toString()}`
-
-    try {
-      const response = await apiGet<PaginatedResponse<any>>(url)
-
-      setItems(response.data)
-      setTotal(response.pagination.total)
-      setTotalPages(response.pagination.total_pages)
-      setLoading(false)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Помилка завантаження')
-      setLoading(false)
-    }
-  }, [apiList]) // ONLY apiList in deps
+  // Примусове перезавантаження списку (аналог listRef.reload() у Vue):
+  // просто інкрементимо токен, який входить у deps ефекту завантаження нижче,
+  // щоб не дублювати логіку запиту другою копією.
+  const reload = useCallback(() => setReloadToken(t => t + 1), [])
 
   // Toggle sort
   const toggleSort = useCallback((key: string, ctrlKey = false) => {
@@ -150,6 +174,29 @@ export function useTableState({
     setSelected([])
   }, [])
 
+  // Inline cell edit: оптимістично оновлюємо рядок, PATCH на сервер,
+  // при помилці — відкат до попереднього значення (як у Vue-версії).
+  const updateCell = useCallback(async (row: any, field: ColumnConfig, value: any) => {
+    const id = row[rowKey]
+    const prev = row[field.key]
+
+    setItems(items => items.map(r => (r[rowKey] === id ? { ...r, [field.key]: value } : r)))
+
+    if (!apiUpdate) return
+
+    const url = apiUpdate.includes('{id}')
+      ? apiUpdate.replace('{id}', String(id))
+      : `${apiUpdate}/${id}`
+
+    try {
+      await apiPatch(url, { [field.key]: value })
+      onRowUpdated?.({ ...row, [field.key]: value })
+    } catch (err) {
+      setItems(items => items.map(r => (r[rowKey] === id ? { ...r, [field.key]: prev } : r)))
+      notify(err instanceof Error ? err.message : 'Помилка збереження', { type: 'error' })
+    }
+  }, [apiUpdate, rowKey, onRowUpdated])
+
   // Load on filters/sort/perPage/page change
   useEffect(() => {
     // Don't load if filters not initialized yet
@@ -176,26 +223,203 @@ export function useTableState({
 
     const url = `${apiList}?${params.toString()}`
 
-    setLoading(true)
+    // stale-while-revalidate: якщо цей самий запит уже був — показуємо збережене
+    // одразу (без спінера) і тихо оновлюємо у фоні.
+    const cached = getCached<PaginatedResponse<any>>(url)
+    if (cached) {
+      setItems(cached.data)
+      setTotal(cached.pagination.total)
+      setTotalPages(cached.pagination.total_pages)
+      setRevalidating(true)
+    } else {
+      setLoading(true)
+    }
     setError('')
 
     apiGet<PaginatedResponse<any>>(url)
       .then(response => {
+        setCached(url, response)
         setItems(response.data)
         setTotal(response.pagination.total)
         setTotalPages(response.pagination.total_pages)
-        setLoading(false)
       })
       .catch(err => {
-        setError(err instanceof Error ? err.message : 'Помилка завантаження')
-        setLoading(false)
+        // Якщо показане з кешу — не затираємо його помилкою, лише сповіщаємо
+        if (cached) notify(err instanceof Error ? err.message : 'Помилка оновлення', { type: 'error' })
+        else setError(err instanceof Error ? err.message : 'Помилка завантаження')
       })
-  }, [filters, sortItems, perPage, page, apiList])
+      .finally(() => {
+        setLoading(false)
+        setRevalidating(false)
+      })
+  }, [filters, sortItems, perPage, page, apiList, reloadToken])
+
+  // Видалення рядка: зникає одразу, справжній DELETE — через UNDO_DELETE_DELAY,
+  // весь цей час у тості доступне "Скасувати".
+  const deleteRow = useCallback((row: any) => {
+    if (!apiDelete) return
+    const id = row[rowKey]
+    const index = items.findIndex(r => r[rowKey] === id)
+
+    const url = apiDelete.includes('{id}')
+      ? apiDelete.replace('{id}', String(id))
+      : `${apiDelete}/${id}`
+
+    deleteWithUndo({
+      message: `Запис #${id} видалено`,
+      remove: () => {
+        setItems(items => items.filter(r => r[rowKey] !== id))
+        setTotal(t => t - 1)
+      },
+      restore: () => {
+        setItems(items => {
+          const restored = [...items]
+          restored.splice(index < 0 ? restored.length : index, 0, row)
+          return restored
+        })
+        setTotal(t => t + 1)
+      },
+      commit: async () => {
+        await apiDeleteRequest(url)
+      },
+    })
+  }, [apiDelete, rowKey, items])
+
+  // Масова зміна одного поля: той самий PATCH /{id}, що й для inline-редагування,
+  // але по черзі — SQLite-подібні бекенди погано переносять пачку одночасних записів.
+  const applyBulkUpdate = useCallback(async (field: string, value: any) => {
+    if (!apiUpdate || selected.length === 0) return
+    setBulkApplying(true)
+    try {
+      for (const id of selected) {
+        const url = apiUpdate.includes('{id}')
+          ? apiUpdate.replace('{id}', String(id))
+          : `${apiUpdate}/${id}`
+        await apiPatch(url, { [field]: value })
+      }
+      setSelected([])
+      reload()
+    } catch (err) {
+      notify(err instanceof Error ? err.message : 'Помилка оновлення', { type: 'error' })
+    } finally {
+      setBulkApplying(false)
+    }
+  }, [apiUpdate, selected, reload])
+
+  const applyBulkDelete = useCallback(() => {
+    if (!apiDelete || selected.length === 0) return
+
+    const removed = selected
+      .map(id => ({ id, index: items.findIndex(r => r[rowKey] === id) }))
+      .filter(({ index }) => index !== -1)
+      .map(({ index }) => ({ row: items[index], index }))
+
+    setSelected([])
+
+    deleteManyWithUndo({
+      items: removed,
+      message: `Видалено ${removed.length} запис(ів)`,
+      remove: () => {
+        const ids = new Set(removed.map(r => r.row[rowKey]))
+        setItems(list => list.filter(r => !ids.has(r[rowKey])))
+        setTotal(t => t - removed.length)
+      },
+      restore: (entries) => {
+        setItems(list => {
+          const restored = [...list]
+          // за зростанням індексу — інакше наступні вставки зсунуть попередні
+          for (const { row, index } of [...entries].sort((a, b) => a.index - b.index)) {
+            restored.splice(Math.min(index, restored.length), 0, row)
+          }
+          return restored
+        })
+        setTotal(t => t + entries.length)
+      },
+      commitOne: async ({ row }) => {
+        const id = row[rowKey]
+        const url = apiDelete.includes('{id}')
+          ? apiDelete.replace('{id}', String(id))
+          : `${apiDelete}/${id}`
+        await apiDeleteRequest(url)
+      },
+      onAnyCommitError: () => reload(),
+    })
+  }, [apiDelete, selected, items, rowKey, reload])
+
+  // Експорт у CSV: тягне всі сторінки під поточним фільтром, не лише видиму.
+  const exportCsv = useCallback(async (columnsConfig: ColumnConfig[]) => {
+    setExporting(true)
+    try {
+      // Довідники select-колонок — щоб у файл пішли підписи, а не коди.
+      // fetchOptions ділить кеш із таблицею, тож зазвичай це миттєво.
+      const remoteOptions = new Map<string, Option[]>()
+      await Promise.all(
+        columnsConfig
+          .filter(c => c.type === 'select' && c.optionsUrl)
+          .map(async c => {
+            remoteOptions.set(c.key, await fetchOptions(c.optionsUrl!, {
+              valueKey: c.optionsValueKey,
+              labelKey: c.optionsLabelKey,
+            }))
+          })
+      )
+
+      const params = new URLSearchParams()
+      params.set('per_page', String(EXPORT_PAGE_SIZE))
+      if (sortItems.length) {
+        params.set('sort_by', sortItems.map(s => s.key).join(','))
+        params.set('sort_dir', sortItems.map(s => s.dir).join(','))
+      }
+      for (const [key, value] of Object.entries(filters)) {
+        if (value !== '' && value !== null && value !== undefined && value !== false) {
+          params.set(key, String(value))
+        }
+      }
+
+      let allRows: any[] = []
+      let fetchPage = 1
+      let fetchedTotalPages = 1
+      do {
+        params.set('page', String(fetchPage))
+        const res = await apiGet<PaginatedResponse<any>>(`${apiList}?${params}`)
+        allRows = allRows.concat(res.data ?? [])
+        fetchedTotalPages = res.pagination?.total_pages ?? 1
+        fetchPage++
+      } while (fetchPage <= fetchedTotalPages && allRows.length < EXPORT_MAX_ROWS)
+
+      if (allRows.length >= EXPORT_MAX_ROWS) {
+        notify(
+          `Експортовано перші ${EXPORT_MAX_ROWS} записів (забагато для одного файлу) — звузьте фільтр`,
+          { type: 'info', duration: 8000 }
+        )
+      }
+
+      const headers = columnsConfig.map(c => c.label)
+      const csvRows = allRows.map(row =>
+        columnsConfig.map(col => formatForExport(col, row, remoteOptions))
+      )
+      downloadCsv(
+        `export-${new Date().toISOString().slice(0, 10)}.csv`,
+        rowsToCsv(headers, csvRows)
+      )
+      notify(`Експортовано ${allRows.length} запис(ів)`, { type: 'success' })
+    } catch (err) {
+      notify(err instanceof Error ? err.message : 'Помилка експорту', { type: 'error' })
+    } finally {
+      setExporting(false)
+    }
+  }, [apiList, filters, sortItems])
 
   return {
     items,
     total,
     loading,
+    revalidating,
+    bulkApplying,
+    exporting,
+    applyBulkUpdate,
+    applyBulkDelete,
+    exportCsv,
     error,
     page,
     perPage,
@@ -203,13 +427,17 @@ export function useTableState({
     sortItems,
     filters,
     selected,
-    load,
+    reload,
     toggleSort,
     setFilter,
     setPage,
     setPerPage: handleSetPerPage,
+    setFilters,
+    setSortItems,
     toggleSelect,
     toggleSelectAll,
     clearSelection,
+    updateCell,
+    deleteRow,
   }
 }

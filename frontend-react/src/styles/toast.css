@@ -1,0 +1,17 @@
+/* Прогрес-бар у тості: стискається за час життя (duration) */
+.toast-progress {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.6);
+  animation-name: toast-progress-shrink;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes toast-progress-shrink {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}

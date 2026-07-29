@@ -24,7 +24,7 @@ final readonly class AdminStoController
 
     private const SORTABLE = ['id', 'name_uk', 'sto_type', 'rating', 'is_active', 'phones'];
     private const TYPES    = ['service', 'tire', 'wash'];
-    private const EDITABLE = ['name_uk', 'sto_type', 'is_active', 'address', 'phones', 'rating', 'description'];
+    private const EDITABLE = ['name_uk', 'sto_type', 'is_active', 'address', 'phones', 'rating', 'description', 'country_id'];
 
     // Ті самі підписи, що і в options списку "sto_type" на фронтенді
     // (sto-registry.columns.json) — sto_type зберігається кодом (service/tire/wash),
