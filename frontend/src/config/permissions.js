@@ -47,6 +47,10 @@ const P = {
     view:       'sto.view',
     edit:       'sto.edit',
     editStatus: 'sto.edit.status',
+    // Право на рівні окремого поля: доповнює sto.edit, перевіряється і на бекенді
+    // (AdminStoController::FIELD_PERMISSIONS). Видане тільки superadmin — щоб на
+    // акаунті manager було видно, як колонка стає read-only.
+    editRating: 'sto.edit.rating',
     create:     'sto.create',
     delete:     'sto.delete',
   },

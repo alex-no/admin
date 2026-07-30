@@ -4,6 +4,16 @@ function authHeaders(): HeadersInit {
 }
 
 /**
+ * Історично сторінки передають шлях без префікса ('/admin/sto'), а спільні
+ * конфіги сторінок — повний ('/api/admin/sto'), бо їх читає ще й Vue-версія, де
+ * fetch викликається напряму. Приймаємо обидві форми, щоб `/api` не задвоївся.
+ * Контракт конфігів — shared/page-configs/README.md.
+ */
+function url(path: string): string {
+  return path.startsWith('/api/') ? path : `/api${path}`
+}
+
+/**
  * Бекенд віддає осмислені повідомлення ({status:'error', message:'...'}) —
  * дістаємо саме їх, а не безлике "HTTP 400", інакше користувач не дізнається,
  * що саме не так (напр. "Підтримуються лише JPG, PNG, WebP").
@@ -18,12 +28,12 @@ async function parse<T>(res: Response): Promise<T> {
 }
 
 export async function apiGet<T = any>(path: string): Promise<T> {
-  const res = await fetch(`/api${path}`, { headers: authHeaders() })
+  const res = await fetch(url(path), { headers: authHeaders() })
   return parse<T>(res)
 }
 
 async function withBody<T>(path: string, method: string, data: any): Promise<T> {
-  const res = await fetch(`/api${path}`, {
+  const res = await fetch(url(path), {
     method,
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(data),
@@ -45,7 +55,7 @@ export function apiPut<T = any>(path: string, data: any): Promise<T> {
 
 /** `data` потрібен там, де бекенд читає параметри саме з тіла DELETE (напр. error-logs/cleanup). */
 export async function apiDelete<T = any>(path: string, data?: any): Promise<T> {
-  const res = await fetch(`/api${path}`, {
+  const res = await fetch(url(path), {
     method: 'DELETE',
     headers: data === undefined
       ? authHeaders()
@@ -60,7 +70,7 @@ export async function apiDelete<T = any>(path: string, data?: any): Promise<T> {
  * підставити його сам разом із boundary.
  */
 export async function apiUpload<T = any>(path: string, form: FormData): Promise<T> {
-  const res = await fetch(`/api${path}`, {
+  const res = await fetch(url(path), {
     method: 'POST',
     headers: authHeaders(),
     body: form,

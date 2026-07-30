@@ -1,13 +1,14 @@
 import { useRef, useState, useCallback } from 'react'
 import { DataTable } from '@/list-framework'
 import DataRegistryDetail from './DataRegistryDetail'
-import type { ColumnConfig, FilterConfig, DataTableHandle } from '@/list-framework'
+import type { ColumnConfig, FilterConfig, ActionConfig, DataTableHandle } from '@/list-framework'
 
-const RECORD_TYPES = [
-  { value: 'service', label: 'СТО' },
-  { value: 'tire', label: 'Шиномонтаж' },
-  { value: 'wash', label: 'Автомийка' },
-]
+// Той самий конфіг, що читає Vue-версія (frontend/src/pages/StoRegistry.vue) —
+// один екран описується одним конфігом, а не двома копіями.
+// Див. shared/page-configs/README.md.
+import filterConfig from '@configs/sto-registry.filter.json'
+import columnsConfig from '@configs/sto-registry.columns.json'
+import cfg from '@configs/sto-registry.config.json'
 
 export default function DataRegistry() {
   const listRef = useRef<DataTableHandle>(null)
@@ -24,92 +25,24 @@ export default function DataRegistry() {
   const syncDetailRow = useCallback((row: any) => {
     setDetailRow((cur: any) => (cur && cur.id === row.id ? row : cur))
   }, [])
-  const filterConfig: FilterConfig[] = [
-    {
-      key: 'search',
-      type: 'search',
-      placeholder: 'Пошук за назвою...',
-    },
-    {
-      key: 'sto_type',
-      type: 'select',
-      placeholder: 'Всі типи',
-      options: RECORD_TYPES,
-    },
-    {
-      key: 'status',
-      type: 'select',
-      placeholder: 'Всі статуси',
-      options: [
-        { value: 'active', label: 'Активні' },
-        { value: 'inactive', label: 'Неактивні' },
-      ],
-    },
-    {
-      key: 'country_id',
-      type: 'select',
-      placeholder: 'Всі країни',
-      optionsUrl: '/admin/geography/countries',
-      optionsValueKey: 'id',
-      optionsLabelKey: 'name_uk',
-    },
-  ]
-
-  const columnsConfig: ColumnConfig[] = [
-    { key: 'id', label: 'ID', type: 'text', align: 'right', width: '60px', sortable: true },
-    { key: 'name_uk', label: 'Назва', type: 'text', sortable: true, editable: true },
-    {
-      key: 'sto_type',
-      label: 'Тип',
-      type: 'select',
-      sortable: true,
-      editable: true,
-      options: RECORD_TYPES,
-    },
-    { key: 'address', label: 'Адреса', type: 'text' },
-    { key: 'phones', label: 'Телефони', type: 'phone-list', sortable: true },
-    {
-      key: 'rating',
-      label: 'Рейтинг',
-      type: 'number',
-      align: 'right',
-      width: '90px',
-      sortable: true,
-      editable: true,
-      min: 0,
-      max: 5,
-      step: 0.05,
-      icon: 'bi-star-fill text-warning',
-    },
-    {
-      key: 'is_active',
-      label: 'Статус',
-      type: 'boolean',
-      sortable: true,
-      editable: true,
-      trueLabel: 'Активне',
-      falseLabel: 'Неактивне',
-    },
-  ]
-
-  const actions = [
-    { type: 'detail', label: 'Деталі', icon: 'bi-eye', handler: (r: any) => openDetail(r, 'general') },
-    { type: 'detail', label: 'Контактні дані', icon: 'bi-telephone', handler: (r: any) => openDetail(r, 'contacts') },
-    { type: 'detail', label: 'Опис', icon: 'bi-card-text', handler: (r: any) => openDetail(r, 'description') },
-    { type: 'detail', label: 'Рейтинг та відгуки', icon: 'bi-star', handler: (r: any) => openDetail(r, 'rating') },
-    { type: 'delete', label: 'Видалити', icon: 'bi-trash', permission: 'sto.delete' },
-  ]
+  // actions[] у конфізі — без обробників: JSON описує type/label/icon/permission/tab,
+  // а що робить дія, вирішує сторінка. 'delete' таблиця обробляє сама через apiDelete.
+  const actions: ActionConfig[] = (cfg.actions as ActionConfig[]).map((a) =>
+    a.type === 'detail'
+      ? { ...a, handler: (r: any) => openDetail(r, a.tab ?? 'general') }
+      : a
+  )
 
   return (
     <div>
       <DataTable
         ref={listRef}
         title="Реєстр даних"
-        apiList="/admin/sto"
-        apiUpdate="/admin/sto"
-        apiDelete="/admin/sto"
-        filterConfig={filterConfig}
-        columnsConfig={columnsConfig}
+        apiList={cfg.apiList}
+        apiUpdate={cfg.apiUpdate}
+        apiDelete={cfg.apiDelete}
+        filterConfig={filterConfig as FilterConfig[]}
+        columnsConfig={columnsConfig as ColumnConfig[]}
         actions={actions}
         rowKey="id"
         defaultPerPage={50}

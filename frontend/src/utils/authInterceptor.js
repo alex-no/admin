@@ -2,13 +2,20 @@
 import { useAuth } from '@/composables/useAuth'
 
 /**
- * Перехоплює 401 з будь-якого fetch-запиту (крім самого логіну) — чистить
- * токен і перекидає на сторінку логіну, замість того щоб сторінка показувала
- * сирий "Unauthorized" з тіла відповіді бекенду.
+ * Перехоплює 401 з будь-якого fetch-запиту — чистить токен і перекидає на
+ * сторінку логіну, замість того щоб сторінка показувала сирий "Unauthorized"
+ * з тіла відповіді бекенду.
  *
- * Актуально й тому, що бекенд тут фейковий (SQLite скидається при кожному
- * рестарті контейнера) — старий токен у localStorage браузера переживає
- * рестарт бекенду, а сесія на бекенді вже ні.
+ * Потрібен тому, що router.beforeEach перевіряє лише *наявність* токена в
+ * localStorage, а не його дійсність: після протермінування адмін лишається на
+ * сторінці, кожен запит валиться в 401, і жоден редирект не спрацьовує.
+ *
+ * Два виключення, обидва обовʼязкові:
+ * - сам запит логіну — інакше невірний пароль давав би редирект на логін
+ *   замість повідомлення про помилку;
+ * - публічні сторінки (`meta.public`: Login, FirstLogin, ForgotPassword,
+ *   SetPassword) — вони працюють без токена й самі звертаються до
+ *   /api/admin/auth/*, тому 401 там очікуваний і не має нікуди перекидати.
  */
 export function installAuthRedirect(router) {
   const auth = useAuth()
@@ -21,7 +28,7 @@ export function installAuthRedirect(router) {
       const url = typeof args[0] === 'string' ? args[0] : (args[0]?.url ?? '')
       const isLoginRequest = url.includes('/api/admin/auth/login')
 
-      if (!isLoginRequest && router.currentRoute.value.name !== 'Login') {
+      if (!isLoginRequest && !router.currentRoute.value.meta?.public) {
         auth.logout()
         router.push({ name: 'Login', query: { message: 'Сесія завершилась. Увійдіть знову.' } })
       }

@@ -17,7 +17,9 @@ There are two generations of list page in this codebase:
 
 Every new page needs three small JSON configs plus a thin `.vue` file:
 
-- **`{entity}.config.json`** — `apiList` / `apiUpdate` / `apiDelete`, `viewPermission` / `deletePermission`, and `actions` (row buttons — `{ type: 'detail', icon, label, tab? }` and `{ type: 'delete', ... }`). See `pages/sto-registry.config.json`.
+- **`{entity}.config.json`** — `apiList` / `apiUpdate` / `apiDelete`, `viewPermission` / `deletePermission`, and `actions` (row buttons — `{ type: 'detail', icon, label, tab? }` and `{ type: 'delete', ... }`). See `shared/page-configs/sto-registry.config.json` — page configs live **outside** both
+  frontends and are read by Vue and React alike through the `@configs` alias; see
+  `shared/page-configs/README.md` before adding a new flag.
 - **`{entity}.columns.json`** — one entry per column: `key`, `label`, `type` (resolved via `list-framework/cellTypes.js`: `text` | `select` | `boolean` | `number` | `phone-list`, or a custom type registered with `registerCellType`), plus `sortable`, `editable`, `align`, `width`, and type-specific options (`options` for `select`, `min`/`max`/`step` for `number`). `editable: true` + `apiUpdate` gets you inline cell editing for free — no modal required for that field.
 - **`{entity}.filter.json`** — one entry per filter: `key`, `type` (`text` | `select` | `checkbox`, via `filterTypes.js`), `label`, and either static `options` or `optionsUrl`/`optionsValueKey`/`optionsLabelKey` for a remote-loaded select (cached per-URL by `useRemoteOptions`, so reusing the same `optionsUrl` elsewhere — e.g. the same lookup inside the detail modal — doesn't cost a second request).
 - **The page component** — wrap `list-framework/DataListPage.vue` in `components/ListPageWrapper.vue`, pass the three configs, and handle `@row-action` for anything not built-in (`detail`; `delete` is handled internally by `DataListPage` already). See `pages/StoRegistry.vue` lines 1–15 for the minimal shell.

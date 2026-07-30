@@ -144,7 +144,8 @@ reverse-proxy (у проді — хостовий Apache з Let's Encrypt).
    `AdminStoController::show()` і `StoRegistry.vue`'s `useUrlFilters({ detail: { id, onOpen } })`
    як зразок.
 3. **Опишіть свою сутність** трьома JSON-файлами за зразком
-   `frontend/src/pages/sto-registry.{filter,columns,config}.json` (детальніше — розділ 4).
+   `shared/page-configs/sto-registry.{filter,columns,config}.json` — той самий конфіг
+   читає і React-версія (детальніше — розділ 4 і `shared/page-configs/README.md`).
 4. **Стилі.** Зараз використовується Bootstrap 5 — якщо в цільовому проекті інший UI-кит,
    компоненти `list-framework/filters/*` і `list-framework/cells/*` достатньо прості,
    щоб переписати розмітку під вашу дизайн-систему, не чіпаючи логіку в `DataListPage.vue`.
@@ -178,7 +179,7 @@ reverse-proxy (у проді — хостовий Apache з Let's Encrypt).
    > у проекті `admin` — це каркас списку з фільтром/пейджингом і універсального вікна
    > деталей. Перенеси ці механізми в мій проект і підключи їх для сутності `<назва>`:
    > колонки `<...>`, фільтри `<...>`, детальна картка — докер справа. Дивись на
-   > `frontend/src/pages/StoRegistry.vue` і `sto-registry.*.json` як на зразок, як
+   > `frontend/src/pages/StoRegistry.vue` і `shared/page-configs/sto-registry.*.json` як на зразок, як
    > це поєднується на одній сторінці.
 
 4. Для нестандартних елементів (свій тип фільтра, своя комірка таблиці) — попросіть
@@ -216,7 +217,11 @@ AI добре справляється саме з цим видом робот�
 
 ### 4.2. Список із фільтром і пейджингом (типовий випадок)
 
-Візьміть за зразок `frontend/src/pages/sto-registry.*.json` і `StoRegistry.vue`.
+Візьміть за зразок `shared/page-configs/sto-registry.*.json` і `frontend/src/pages/StoRegistry.vue`.
+
+⚠️ Конфіги сторінок лежать **поза** обома фронтендами — у `shared/page-configs/`, і
+читаються обома через алиас `@configs`. Причина й контракт — `shared/page-configs/README.md`.
+Раніше конфіг був у Vue-проєкті, а React тримав власну копію інлайном, і копії розійшлися.
 
 1. **Колонки** — `my-entity.columns.json`, масив об'єктів:
    ```json
@@ -279,7 +284,7 @@ AI добре справляється саме з цим видом робот�
    перезавантаження і годилося для передачі іншій людині: свій `useUrlFilters({ filters: { tab: activeTab }, detail: { id: detailId, onOpen } })`
    на рівні сторінки (окремо від того, що `DataListPage` вже робить для фільтрів списку) —
    `onOpen(id)` підвантажує запис через `GET {apiUpdate}/{id}` і відкриває `BaseModal`,
-   `activeTab` синхронізується як звичайний фільтр. У `sto-registry.config.json` кнопки
+   `activeTab` синхронізується як звичайний фільтр. У `shared/page-configs/sto-registry.config.json` кнопки
    дій (`actions`) теж можуть відкривати одразу конкретну вкладку через `"tab": "..."`.
 
 ### 4.3. Власний (кастомний) елемент фільтра або колонки

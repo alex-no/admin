@@ -26,6 +26,20 @@ final readonly class AdminStoController
     private const TYPES    = ['service', 'tire', 'wash'];
     private const EDITABLE = ['name_uk', 'sto_type', 'is_active', 'address', 'phones', 'rating', 'description', 'country_id'];
 
+    /**
+     * Права на рівні окремого поля — доповнення до загального sto.edit, який
+     * перевіряє guard() на вході в update(). Поле, якого тут немає, вимагає
+     * лише sto.edit.
+     *
+     * Джерело правди саме тут, а не в *.columns.json: фронтенд лише малює поле
+     * read-only, обійти це через DevTools тривіально. Крім того, фронтендний
+     * can() розуміє "module.*", а AdminAuth::can() — ні (строгий in_array), тож
+     * сервер навмисно строгіший за UI, а не навпаки.
+     */
+    private const FIELD_PERMISSIONS = [
+        'rating' => 'sto.edit.rating',
+    ];
+
     // Ті самі підписи, що і в options списку "sto_type" на фронтенді
     // (sto-registry.columns.json) — sto_type зберігається кодом (service/tire/wash),
     // але сортувати треба за словом, яке користувач бачить у таблиці, а не за кодом.
@@ -206,10 +220,22 @@ final readonly class AdminStoController
         $sets = [];
         $params = ['id' => $id];
 
+        // Поля, на які в цього користувача немає окремого права (див. FIELD_PERMISSIONS).
+        // Збираємо всі, а не падаємо на першому — щоб відповідь перелічила проблему цілком.
+        $user = $this->auth->userFromRequest($request);
+        $forbidden = [];
+
         foreach (self::EDITABLE as $field) {
             if (!array_key_exists($field, $data)) {
                 continue;
             }
+
+            $required = self::FIELD_PERMISSIONS[$field] ?? null;
+            if ($required !== null && ($user === null || !$this->auth->can($user, $required))) {
+                $forbidden[] = $field;
+                continue;
+            }
+
             $sets[] = "$field = :$field";
 
             if ($field === 'is_active') {
@@ -222,6 +248,16 @@ final readonly class AdminStoController
             } else {
                 $params[$field] = $data[$field];
             }
+        }
+
+        // 403 раніше за 400 і раніше за сам UPDATE: запит із закритим полем не має
+        // застосуватись частково, і "немає полів для оновлення" тут була б брехнею.
+        if ($forbidden !== []) {
+            return $this->json([
+                'status'  => 'error',
+                'message' => 'Немає права редагувати поле: ' . implode(', ', $forbidden),
+                'fields'  => $forbidden,
+            ], 403);
         }
 
         if ($sets === []) {

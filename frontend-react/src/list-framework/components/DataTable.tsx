@@ -1,9 +1,11 @@
 import { forwardRef, useImperativeHandle, useState } from 'react'
 import { useTableState } from '../hooks/useTableState'
+import { useColumnPrefs } from '../hooks/useColumnPrefs'
 import { useSavedFilters } from '@/hooks/useSavedFilters'
 import { useAuth } from '@/contexts/AuthContext'
 import { notify } from '@/hooks/useNotify'
 import { resolveCellType } from '../cellTypes'
+import ColumnSelector from './ColumnSelector'
 import Pagination from './Pagination'
 import SortIcon from './SortIcon'
 import SearchFilter from '../filters/SearchFilter'
@@ -103,14 +105,41 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
     setSelectedPreset('')
   }
 
+  // ── Вибір колонок (react-admin: SelectColumnsButton) ─────────────────────
+  // Колонка з прапорцем hideable: false ховатись не може. Експорт у CSV навмисно
+  // отримує повний columnsConfig — приховане в UI все одно попадає у вигрузку.
+  const {
+    isVisible: isColumnVisible,
+    toggle: toggleColumn,
+    reset: resetColumns,
+    hasHidden: hasHiddenColumns,
+  } = useColumnPrefs(apiList, columnsConfig)
+
+  const visibleColumns = columnsConfig.filter(c => isColumnVisible(c.key))
+
+  // Дії без права взагалі не показуємо — так само, як v-show у Vue-версії
+  const { can } = useAuth()
+
+  // Колонка редагована, якщо так сказано в конфізі І користувач має право хоч на
+  // один із перелічених editPermissions. Прапорця немає — достатньо editable.
+  // Порожній масив = редагувати не може ніхто.
+  // Дзеркало Vue: DataListPage.vue → isColumnEditable.
+  // ⚠️ Сервер перевіряє те саме окремо (AdminStoController::FIELD_PERMISSIONS) —
+  // тут лише UI, обійти його через DevTools тривіально.
+  const isColumnEditable = (col: ColumnConfig): boolean => {
+    if (!col.editable) return false
+    if (!col.editPermissions) return true
+    return col.editPermissions.some(p => can(p))
+  }
+
   // ── Масові операції ──────────────────────────────────────────────────────
-  const editableColumns = columnsConfig.filter(c => c.editable)
+  // Той самий предикат, що й для комірок: інакше поле, закрите правами, лишилось би
+  // доступним через "Змінити поле…" у масових операціях — і змінювалось би пачкою.
+  const editableColumns = columnsConfig.filter(isColumnEditable)
   const [bulkField, setBulkField] = useState('')
   const [bulkValue, setBulkValue] = useState<any>(null)
   const bulkFieldConfig = editableColumns.find(c => c.key === bulkField) ?? null
   const BulkCell = bulkFieldConfig ? resolveCellType(bulkFieldConfig.type) : null
-  // Дії без права взагалі не показуємо — так само, як v-show у Vue-версії
-  const { can } = useAuth()
   const visibleActions = actions.filter(a => !a.permission || can(a.permission))
   const deleteAction = visibleActions.find(a => a.type === 'delete')
   const canBulkDelete = Boolean(apiDelete && deleteAction)
@@ -135,7 +164,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
         <Cell
           field={col}
           value={row[col.key]}
-          readonly={!col.editable}
+          readonly={!isColumnEditable(col)}
           row={row}
           onChange={(v) => updateCell(row, col, v)}
         />
@@ -145,13 +174,15 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
   }
 
   const renderFilter = (f: typeof filterConfig[0]) => {
-    if (f.type === 'search') {
+    // 'text' — назва зі спільного конфіга (як у Vue-реєстрі filterTypes.js);
+    // 'search' лишається прийнятним псевдонімом для сумісності.
+    if (f.type === 'text' || f.type === 'search') {
       return (
         <SearchFilter
           key={f.key}
           value={filters[f.key] || ''}
           onChange={(v) => setFilter(f.key, v)}
-          placeholder={f.placeholder}
+          placeholder={f.placeholder ?? f.label}
         />
       )
     }
@@ -166,7 +197,8 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
           optionsUrl={f.optionsUrl}
           optionsValueKey={f.optionsValueKey}
           optionsLabelKey={f.optionsLabelKey}
-          placeholder={f.placeholder}
+          placeholderOption={f.placeholderOption}
+          label={f.label}
         />
       )
     }
@@ -228,6 +260,14 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
               : <i className="bi bi-download me-1" />}
             CSV
           </button>
+
+          <ColumnSelector
+            columns={columnsConfig}
+            isVisible={isColumnVisible}
+            hasHidden={hasHiddenColumns}
+            onToggle={toggleColumn}
+            onReset={resetColumns}
+          />
         </div>
       </div>
 
@@ -344,7 +384,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                         title="Вибрати всі на сторінці"
                       />
                     </th>
-                    {columnsConfig.map(col => (
+                    {visibleColumns.map(col => (
                       <th
                         key={col.key}
                         style={col.width ? { width: col.width } : undefined}
@@ -370,7 +410,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                           onChange={() => toggleSelect(row[rowKey])}
                         />
                       </td>
-                      {columnsConfig.map(col => (
+                      {visibleColumns.map(col => (
                         <td key={col.key} className={col.align ? `text-${col.align}` : ''}>
                           {renderCell(col, row)}
                         </td>
@@ -379,7 +419,9 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                         <td className="text-nowrap">
                           {visibleActions.map(action => (
                             <button
-                              key={action.type}
+                              // type сам по собі не унікальний: 'detail' може бути
+                              // кілька разів, по одному на вкладку картки
+                              key={`${action.type}:${action.tab ?? ''}`}
                               className={`btn btn-sm me-1 ${action.type === 'delete' ? 'btn-outline-danger' : 'btn-outline-secondary'}`}
                               title={action.label}
                               onClick={() => handleAction(action, row)}
@@ -394,7 +436,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                   {items.length === 0 && (
                     <tr>
                       <td
-                        colSpan={columnsConfig.length + 1 + (visibleActions.length ? 1 : 0)}
+                        colSpan={visibleColumns.length + 1 + (visibleActions.length ? 1 : 0)}
                         className="text-center text-muted py-4"
                       >
                         Немає даних

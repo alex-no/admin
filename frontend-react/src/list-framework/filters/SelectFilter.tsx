@@ -9,7 +9,10 @@ interface SelectFilterProps {
   optionsUrl?: string
   optionsValueKey?: string
   optionsLabelKey?: string
-  placeholder?: string
+  /** Порожня опція "Всі …". Дзеркало Vue-контракту, див. shared/page-configs/README.md */
+  placeholderOption?: Option
+  /** Підпис фільтра — fallback для порожньої опції */
+  label?: string
 }
 
 export default function SelectFilter({
@@ -19,7 +22,8 @@ export default function SelectFilter({
   optionsUrl,
   optionsValueKey,
   optionsLabelKey,
-  placeholder = 'Всі',
+  placeholderOption,
+  label,
 }: SelectFilterProps) {
   const remote = useRemoteOptions(optionsUrl, {
     valueKey: optionsValueKey,
@@ -27,6 +31,9 @@ export default function SelectFilter({
   })
 
   const list = optionsUrl ? remote.options : (options ?? [])
+  // Порожня опція завжди від рендерера — у конфіга її в options бути не має,
+  // інакше Vue-версія покаже її двічі.
+  const empty = placeholderOption ?? { value: '', label: label ?? 'Всі' }
 
   return (
     <select
@@ -36,7 +43,7 @@ export default function SelectFilter({
       disabled={optionsUrl ? remote.loading : false}
       onChange={(e) => onChange(e.target.value)}
     >
-      <option value="">{placeholder}</option>
+      <option value={String(empty.value)}>{empty.label}</option>
       {list.map(opt => (
         <option key={String(opt.value)} value={opt.value}>
           {opt.label}

@@ -51,6 +51,14 @@
           <span v-if="exporting" class="spinner-border spinner-border-sm me-1"></span>
           <i v-else class="bi bi-download me-1"></i>CSV
         </button>
+
+        <ColumnSelector
+          :columns="columnsConfig"
+          :is-visible="isColumnVisible"
+          :has-hidden="hasHiddenColumns"
+          @toggle="toggleColumn"
+          @reset="resetColumns"
+        />
       </div>
     </div>
 
@@ -128,7 +136,7 @@
                   />
                 </th>
                 <th
-                  v-for="col in columnsConfig"
+                  v-for="col in visibleColumns"
                   :key="col.key"
                   :style="col.width ? { width: col.width } : {}"
                   :class="[col.align ? `text-${col.align}` : '', col.sortable ? 'th-sortable' : '']"
@@ -151,12 +159,12 @@
                     @change="toggleSelect(row[rowKey])"
                   />
                 </td>
-                <td v-for="col in columnsConfig" :key="col.key" :class="col.align ? `text-${col.align}` : ''">
+                <td v-for="col in visibleColumns" :key="col.key" :class="col.align ? `text-${col.align}` : ''">
                   <component
                     :is="resolveCellComponent(col)"
                     :field="col"
                     :model-value="row[col.key]"
-                    :readonly="!col.editable"
+                    :readonly="!isColumnEditable(col)"
                     :row="row"
                     @update:model-value="(v) => handleCellUpdate(row, col, v)"
                   />
@@ -165,7 +173,7 @@
                   <button
                     v-for="a in actions"
                     v-show="!a.permission || auth.can(a.permission)"
-                    :key="a.type"
+                    :key="`${a.type}:${a.tab ?? ''}`"
                     class="btn btn-sm btn-outline-secondary me-1"
                     :class="a.type === 'delete' ? 'btn-outline-danger' : ''"
                     :title="a.label"
@@ -176,7 +184,7 @@
                 </td>
               </tr>
               <tr v-if="!items.length">
-                <td :colspan="columnsConfig.length + 1 + (actions.length ? 1 : 0)" class="text-center text-muted py-4">
+                <td :colspan="visibleColspan" class="text-center text-muted py-4">
                   Немає даних
                 </td>
               </tr>
@@ -213,10 +221,12 @@ import { useNotify } from '@/composables/useNotify'
 import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import { useUrlFilters } from '@/composables/useUrlFilters'
 import { useSavedFilters } from '@/composables/useSavedFilters'
+import { useColumnPrefs } from '@/composables/useColumnPrefs'
 import { useListCache } from '@/composables/useListCache'
 import { formatPhoneUA } from '@/utils/phone'
 import { rowsToCsv, downloadCsv } from '@/utils/csv'
 import Pagination from '@/components/Pagination.vue'
+import ColumnSelector from '@/components/ColumnSelector.vue'
 import SortIcon from '@/components/SortIcon.vue'
 import { resolveFilterType } from './filterTypes'
 import { resolveCellType } from './cellTypes'
@@ -281,7 +291,21 @@ const bulkApplying = ref(false)
 const isAllSelected = computed(
   () => items.value.length > 0 && items.value.every((r) => selected.value.includes(r[props.rowKey]))
 )
-const editableColumns = computed(() => props.columnsConfig.filter((c) => c.editable))
+// Колонка редагована, якщо так сказано в конфізі І користувач має право хоч на
+// один із перелічених editPermissions. Прапорця немає — достатньо editable.
+// Порожній масив = редагувати не може ніхто.
+// Дзеркало React: DataTable.tsx → isColumnEditable.
+// ⚠️ Сервер перевіряє те саме окремо (AdminStoController::FIELD_PERMISSIONS) —
+// тут лише UI, обійти його через DevTools тривіально.
+function isColumnEditable(col) {
+  if (!col.editable) return false
+  if (!col.editPermissions) return true
+  return col.editPermissions.some((p) => auth.can(p))
+}
+
+// Той самий предикат, що й для комірок: інакше поле, закрите правами, лишилось би
+// доступним через "Змінити поле…" у масових операціях — і змінювалось би пачкою.
+const editableColumns = computed(() => props.columnsConfig.filter(isColumnEditable))
 const bulkFieldConfig = computed(() => editableColumns.value.find((c) => c.key === bulkField.value) ?? null)
 const deleteAction = computed(() => props.actions.find((a) => a.type === 'delete'))
 const canBulkDelete = computed(
@@ -289,6 +313,23 @@ const canBulkDelete = computed(
 )
 
 watch(bulkField, () => { bulkValue.value = null })
+
+// ── Вибір колонок (react-admin: SelectColumnsButton) ──────────────────────
+// Колонка з прапорцем hideable: false ховатись не може. Експорт у CSV навмисно
+// працює з повним columnsConfig — приховане в UI все одно попадає у вигрузку.
+const {
+  isVisible: isColumnVisible,
+  toggle:    toggleColumn,
+  reset:     resetColumns,
+  hasHidden: hasHiddenColumns,
+} = useColumnPrefs(props.apiList, props.columnsConfig)
+
+const visibleColumns = computed(() => props.columnsConfig.filter((c) => isColumnVisible(c.key)))
+
+// +1 — колонка чекбоксів; ще +1, якщо є колонка дій рядка
+const visibleColspan = computed(
+  () => visibleColumns.value.length + 1 + (props.actions.length ? 1 : 0)
+)
 
 // Під час applyPreset() кілька refs (фільтри + сортування + perPage) міняються
 // одним синхронним блоком — без цього прапорця кожен watch нижче викликав би

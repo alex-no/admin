@@ -23,9 +23,11 @@
     /* Path aliases */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      /* Конфіги сторінок, спільні з Vue-версією — див. ../shared/page-configs/README.md */
+      "@configs/*": ["../shared/page-configs/*"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "../shared/page-configs"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

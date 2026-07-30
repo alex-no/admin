@@ -4,8 +4,8 @@
     "key": "sto_type",
     "type": "select",
     "label": "Тип",
+    "placeholderOption": { "value": "", "label": "Всі типи" },
     "options": [
-      { "value": "", "label": "Всі типи" },
       { "value": "service", "label": "СТО" },
       { "value": "tire", "label": "Шиномонтаж" },
       { "value": "wash", "label": "Автомийка" }
@@ -15,8 +15,8 @@
     "key": "status",
     "type": "select",
     "label": "Статус",
+    "placeholderOption": { "value": "", "label": "Всі статуси" },
     "options": [
-      { "value": "", "label": "Всі статуси" },
       { "value": "active", "label": "Активні" },
       { "value": "inactive", "label": "Неактивні" }
     ]

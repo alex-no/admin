@@ -21,6 +21,13 @@ const props = defineProps({
 })
 defineEmits(['update:modelValue'])
 
+// Порожня опція ("Всі …") — завжди від рендерера, а не з конфіга: у самому
+// field.options її бути не має, інакше React-версія покаже її двічі
+// (див. shared/page-configs/README.md, контракт фільтрів).
+const placeholderOption = computed(
+  () => props.field.placeholderOption ?? { value: '', label: props.field.label ?? 'Всі' }
+)
+
 // Або статичний field.options, або довантаження за field.optionsUrl (з кешем по URL)
 const remote = props.field.optionsUrl
   ? useRemoteOptions(props.field.optionsUrl, {
@@ -30,6 +37,10 @@ const remote = props.field.optionsUrl
     })
   : null
 
-const options = computed(() => remote ? remote.options.value : (props.field.options ?? []))
+// remote вже віддає список із порожньою опцією на початку — тут додаємо її лише
+// для статичного варіанту, щоб не задвоїти.
+const options = computed(() =>
+  remote ? remote.options.value : [placeholderOption.value, ...(props.field.options ?? [])]
+)
 const loading = computed(() => remote ? remote.loading.value : false)
 </script>

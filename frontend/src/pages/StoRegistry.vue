@@ -278,9 +278,11 @@ import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import { useUrlFilters } from '@/composables/useUrlFilters'
 import { useRemoteOptions } from '@/list-framework/composables/useRemoteOptions'
 import { normalizePhoneE164 } from '@/utils/phone'
-import filterConfig from './sto-registry.filter.json'
-import columnsConfig from './sto-registry.columns.json'
-import cfg from './sto-registry.config.json'
+// Конфіг спільний із React-версією (frontend-react/src/pages/DataRegistry.tsx) —
+// один екран описується одним конфігом. Див. shared/page-configs/README.md.
+import filterConfig from '@configs/sto-registry.filter.json'
+import columnsConfig from '@configs/sto-registry.columns.json'
+import cfg from '@configs/sto-registry.config.json'
 
 const auth = useAuth()
 const { deleteWithUndo } = useUndoableDelete()

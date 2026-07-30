@@ -21,6 +21,16 @@ export interface ColumnConfig {
   editable?: boolean
   width?: string
   align?: 'left' | 'center' | 'right'
+  /**
+   * Права на редагування саме цієї колонки — доповнення до `editable`.
+   * Відсутнє поле = достатньо `editable`. Порожній масив = не редагує ніхто.
+   * Сервер перевіряє те саме окремо; тут лише UI.
+   */
+  editPermissions?: string[]
+  /** false = колонку не можна приховати через ColumnSelector (id, назва, дії) */
+  hideable?: boolean
+  /** Прихована при першому відкритті — лише якщо адмін ще нічого не налаштовував */
+  defaultHidden?: boolean
   /** Тип комірки з реєстру cellTypes: text | select | boolean | number | phone-list */
   type?: string
   /** select: статичні варіанти */
@@ -52,14 +62,18 @@ export interface CellProps {
 
 export interface FilterConfig {
   key: string
-  type: 'search' | 'select' | 'date-range' | 'checkbox'
+  /** 'text' — канонічна назва зі спільного конфіга; 'search' — псевдонім для сумісності */
+  type: 'text' | 'search' | 'select' | 'date-range' | 'checkbox'
   placeholder?: string
   label?: string
+  /** Статичні варіанти — **без** порожнього елемента, його додає рендерер */
   options?: Option[]
-  /** select: варіанти з API */
+  /** select: варіанти з API. Повний шлях, разом із /api */
   optionsUrl?: string
   optionsValueKey?: string
   optionsLabelKey?: string
+  /** Порожня опція "Всі …"; якщо не задана — { value: '', label: label ?? 'Всі' } */
+  placeholderOption?: Option
   default?: any
 }
 
@@ -73,6 +87,8 @@ export interface ActionConfig {
   label: string
   icon: string
   permission?: string
+  /** Вкладка картки деталей, яку відкриває дія (кілька дій можуть мати type: 'detail') */
+  tab?: string
   /** Не обов'язковий для type: 'delete' — таблиця видаляє сама через apiDelete */
   handler?: (row: any) => void | Promise<void>
 }
