@@ -1,25 +1,34 @@
-import { forwardRef, useImperativeHandle, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
 import { useTableState } from '../hooks/useTableState'
 import { useColumnPrefs } from '../hooks/useColumnPrefs'
 import { useSavedFilters } from '@/hooks/useSavedFilters'
 import { useAuth } from '@/contexts/AuthContext'
 import { notify } from '@/hooks/useNotify'
+import { apiPost } from '@/utils/api'
+import type { ApiError } from '@/utils/api'
+import BaseModal from '@/components/BaseModal'
 import { resolveCellType } from '../cellTypes'
 import ColumnSelector from './ColumnSelector'
 import Pagination from './Pagination'
 import SortIcon from './SortIcon'
 import SearchFilter from '../filters/SearchFilter'
 import SelectFilter from '../filters/SelectFilter'
-import type { DataTableProps, DataTableHandle, ColumnConfig } from '../types'
+import type { DataTableProps, DataTableHandle, ColumnConfig, ActionConfig } from '../types'
 
 const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable({
   title,
   apiList,
   apiUpdate,
   apiDelete,
+  apiCreate,
+  createPermission,
+  createFields = [],
+  apiBulk,
+  bulkActions = [],
   filterConfig = [],
   columnsConfig,
   actions = [],
+  headerActions,
   rowKey = 'id',
   defaultPerPage = 50,
   onRowUpdated,
@@ -32,6 +41,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
     bulkApplying,
     exporting,
     applyBulkUpdate,
+    applyBulkAction,
     applyBulkDelete,
     exportCsv,
     error,
@@ -57,6 +67,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
     apiList,
     apiUpdate,
     apiDelete,
+    apiBulk,
     filterConfig,
     defaultPerPage,
     rowKey,
@@ -132,6 +143,56 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
     return col.editPermissions.some(p => can(p))
   }
 
+  // ── Створення запису ─────────────────────────────────────────────────────
+  // Форма збирається з конфіга: поля — createFields, контроли — з реєстру
+  // cellTypes (той самий, що малює комірки таблиці). Дзеркало Vue-версії.
+  const canCreate = Boolean(apiCreate) && (!createPermission || can(createPermission))
+  const createColumns = createFields
+    .map(key => columnsConfig.find(c => c.key === key))
+    .filter((c): c is ColumnConfig => Boolean(c))
+
+  const [createOpen, setCreateOpen] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [createForm, setCreateForm] = useState<Record<string, any>>({})
+  const [createErrors, setCreateErrors] = useState<Record<string, string>>({})
+
+  const blankForm = () => {
+    const form: Record<string, any> = {}
+    for (const col of createColumns) {
+      // select без явного вибору відправив би порожнє значення, хоч у списку
+      // візуально вибрано перший пункт — тому одразу беремо перший варіант
+      if (col.type === 'select') form[col.key] = col.options?.[0]?.value ?? ''
+      else if (col.type === 'boolean') form[col.key] = false
+      else form[col.key] = ''
+    }
+    return form
+  }
+
+  const openCreate = () => {
+    setCreateForm(blankForm())
+    setCreateErrors({})
+    setCreateOpen(true)
+  }
+
+  const submitCreate = async () => {
+    setCreating(true)
+    setCreateErrors({})
+    try {
+      await apiPost(apiCreate!, createForm)
+      setCreateOpen(false)
+      notify('Запис створено', { type: 'success' })
+      reload()
+    } catch (err) {
+      // Бекенд може повернути errors: { поле: "текст" } — показуємо біля поля,
+      // а не одним тостом "перевірте заповнення".
+      const apiErr = err as ApiError
+      if (apiErr?.errors) setCreateErrors(apiErr.errors)
+      notify(err instanceof Error ? err.message : 'Помилка створення', { type: 'error' })
+    } finally {
+      setCreating(false)
+    }
+  }
+
   // ── Масові операції ──────────────────────────────────────────────────────
   // Той самий предикат, що й для комірок: інакше поле, закрите правами, лишилось би
   // доступним через "Змінити поле…" у масових операціях — і змінювалось би пачкою.
@@ -139,10 +200,36 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
   const [bulkField, setBulkField] = useState('')
   const [bulkValue, setBulkValue] = useState<any>(null)
   const bulkFieldConfig = editableColumns.find(c => c.key === bulkField) ?? null
+  // У Vue вибране поле скидається разом із виділенням (clearSelection), бо це
+  // одна функція; тут стан живе в компоненті, а виділення — в хуку, тому
+  // прив'язуємось до порожнього виділення. Без цього після масової дії панель
+  // при наступному виділенні відкривалась би з попереднім полем — і два
+  // рендерери поводились би по-різному.
+  useEffect(() => {
+    if (selected.length === 0) {
+      setBulkField('')
+      setBulkValue(null)
+    }
+  }, [selected.length])
   const BulkCell = bulkFieldConfig ? resolveCellType(bulkFieldConfig.type) : null
+  // Видимість дії рядка: право (з JSON) плюс необовʼязковий предикат `visible(row)`,
+  // який сторінка додає до конфіга в коді — так само, як додає `handler`. Потрібен
+  // там, де правило залежить від рядка, а не лише від ролі: напр. запис, який
+  // користувач щойно створив, він може відкрити на редагування й без права
+  // редагування взагалі.
+  // Дзеркало Vue: DataListPage.vue → isActionVisible.
+  // Колонка дій показується, якщо хоч одна дія доступна цій ролі; `visible(row)`
+  // ховає кнопку в конкретному рядку, а не колонку цілком.
   const visibleActions = actions.filter(a => !a.permission || can(a.permission))
+  const isActionVisible = (action: ActionConfig, row: any) =>
+    action.visible ? Boolean(action.visible(row)) : true
   const deleteAction = visibleActions.find(a => a.type === 'delete')
   const canBulkDelete = Boolean(apiDelete && deleteAction)
+  // Дзеркало Vue: DataListPage.vue → visibleBulkActions. Сервер перевіряє те саме
+  // право повторно (AdminStoController::BULK_ACTIONS) — тут лише UI.
+  const visibleBulkActions = apiBulk
+    ? bulkActions.filter(a => !a.permission || can(a.permission))
+    : []
 
   // Дія рядка: 'delete' обробляє сама таблиця (як декларативний конфіг у Vue),
   // решта — власним handler'ом сторінки.
@@ -158,19 +245,23 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
   // Комірка: тип з реєстру (readonly/editable — один компонент),
   // інакше довільний format(), інакше просто значення.
   const renderCell = (col: ColumnConfig, row: any) => {
+    // displayKey: у рядку вже лежить приєднана назва (country_id → country_name),
+    // тому показуємо її замість голого FK, а сортування лишається по col.key.
+    // Дзеркало Vue: DataListPage.vue → :model-value="row[col.displayKey ?? col.key]".
+    const value = row[col.displayKey ?? col.key]
     const Cell = resolveCellType(col.type)
     if (Cell) {
       return (
         <Cell
           field={col}
-          value={row[col.key]}
+          value={value}
           readonly={!isColumnEditable(col)}
           row={row}
           onChange={(v) => updateCell(row, col, v)}
         />
       )
     }
-    return col.format ? col.format(row[col.key], row) : row[col.key] ?? '—'
+    return col.format ? col.format(value, row) : value ?? '—'
   }
 
   const renderFilter = (f: typeof filterConfig[0]) => {
@@ -199,6 +290,10 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
           optionsLabelKey={f.optionsLabelKey}
           placeholderOption={f.placeholderOption}
           label={f.label}
+          required={f.required}
+          defaultFirstOption={f.defaultFirstOption}
+          dependsOn={f.dependsOn}
+          filterValues={filters}
         />
       )
     }
@@ -268,8 +363,71 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
             onToggle={toggleColumn}
             onReset={resetColumns}
           />
+
+          {canCreate && (
+            <button type="button" className="btn btn-sm btn-success" onClick={openCreate}>
+              <i className="bi bi-plus-lg me-1" />Додати
+            </button>
+          )}
+
+          {/* Власні кнопки сторінки (створення через свою модалку, імпорт тощо).
+              Потрібен там, де вбудованої форми створення недостатньо: сторінка не
+              може домалювати кнопку до цієї панелі ззовні.
+              Дзеркало Vue: <slot name="actions" />. */}
+          {headerActions}
         </div>
       </div>
+
+      {/* Форма створення: поля з конфіга (createFields), контроли — з того самого
+          реєстру cellTypes, що й комірки таблиці. Дзеркало Vue-версії. */}
+      {canCreate && createOpen && (
+        <BaseModal
+          visible={createOpen}
+          onClose={() => setCreateOpen(false)}
+          storageKey="list-framework-create"
+          defaultWidth={520}
+          minWidth={380}
+          maxWidth={760}
+          defaultHeight={420}
+          minHeight={280}
+          maxHeight={700}
+          closeOnBackdrop={false}
+          title={<h5 className="mb-0">Створення запису</h5>}
+          footer={
+            <>
+              <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setCreateOpen(false)}>
+                Скасувати
+              </button>
+              <button type="button" className="btn btn-sm btn-primary" disabled={creating} onClick={submitCreate}>
+                {creating && <span className="spinner-border spinner-border-sm me-1" />}Створити
+              </button>
+            </>
+          }
+        >
+          <div className="px-1">
+            {createColumns.map(col => {
+              const Cell = resolveCellType(col.type)
+              return (
+                <div key={col.key} className="mb-3">
+                  <label className="form-label small text-muted mb-1">{col.label}</label>
+                  {Cell && (
+                    <Cell
+                      field={col}
+                      value={createForm[col.key]}
+                      readonly={false}
+                      row={{}}
+                      onChange={(v) => setCreateForm(f => ({ ...f, [col.key]: v }))}
+                    />
+                  )}
+                  {createErrors[col.key] && (
+                    <div className="text-danger small mt-1">{createErrors[col.key]}</div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </BaseModal>
+      )}
 
       {showSaveInput && (
         <div className="d-flex gap-2 align-items-center justify-content-end mb-3">
@@ -351,6 +509,20 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                 </button>
               )}
 
+              {/* Іменовані дії: одна кнопка = одна операція з фіксованим значенням
+                  (список — у конфізі сторінки, виконує bulk-роут одним запитом) */}
+              {visibleBulkActions.map(a => (
+                <button
+                  key={a.action}
+                  className={`btn btn-sm btn-${a.variant ?? 'outline-primary'}`}
+                  disabled={bulkApplying}
+                  onClick={() => applyBulkAction(a.action, a.label)}
+                >
+                  {a.icon && <i className={`bi me-1 ${a.icon}`} />}
+                  {a.label}
+                </button>
+              ))}
+
               {canBulkDelete && (
                 <button
                   className="btn btn-sm btn-outline-danger"
@@ -417,7 +589,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                       ))}
                       {visibleActions.length > 0 && (
                         <td className="text-nowrap">
-                          {visibleActions.map(action => (
+                          {visibleActions.filter(a => isActionVisible(a, row)).map(action => (
                             <button
                               // type сам по собі не унікальний: 'detail' може бути
                               // кілька разів, по одному на вкладку картки

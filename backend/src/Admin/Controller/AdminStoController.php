@@ -40,6 +40,23 @@ final readonly class AdminStoController
         'rating' => 'sto.edit.rating',
     ];
 
+    /**
+     * Іменовані масові дії: одна кнопка = одна дія з фіксованим значенням, на
+     * відміну від "Змінити поле…", де значення обирає користувач.
+     *
+     * `field`/`value` тут, а не на фронтенді, саме тому, що це список
+     * **дозволених** операцій: клієнт надсилає лише ім'я дії й не може
+     * підставити довільне поле. Дія без `field` (delete) працює зі всім рядком.
+     */
+    private const BULK_ACTIONS = [
+        'activate'   => ['permission' => 'sto.edit',   'field' => 'is_active', 'value' => 1],
+        'deactivate' => ['permission' => 'sto.edit',   'field' => 'is_active', 'value' => 0],
+        'delete'     => ['permission' => 'sto.delete'],
+    ];
+
+    /** Стеля пачки — та сама, що й максимальний per_page списку: більше за раз не вибереш */
+    private const BULK_MAX_IDS = 250;
+
     // Ті самі підписи, що і в options списку "sto_type" на фронтенді
     // (sto-registry.columns.json) — sto_type зберігається кодом (service/tire/wash),
     // але сортувати треба за словом, яке користувач бачить у таблиці, а не за кодом.
@@ -274,6 +291,191 @@ final readonly class AdminStoController
         $row = $this->fetchRow($id);
 
         return $this->json(['status' => 'success', 'data' => $this->format($row)]);
+    }
+
+    #[OA\Post(
+        path: '/api/admin/sto',
+        summary: 'Create STO',
+        description: 'Створення запису. Поля — той самий allow-list EDITABLE, що й в update(), включно з правами на рівні поля (FIELD_PERMISSIONS).',
+        security: [['BearerAuth' => []]],
+        tags: ['Admin - STO'],
+        responses: [
+            new OA\Response(response: 201, description: 'Created'),
+            new OA\Response(response: 400, description: 'Validation failed'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 403, description: 'Forbidden'),
+        ]
+    )]
+    public function create(ServerRequestInterface $request): ResponseInterface
+    {
+        if ($err = $this->auth->guard($request, 'sto.create')) {
+            return $this->json(['status' => 'error', 'message' => $err['message']], $err['status']);
+        }
+
+        $data = json_decode((string) $request->getBody(), true) ?? [];
+        $user = $this->auth->userFromRequest($request);
+
+        // Обов'язкові поля — ті, що NOT NULL у схемі (див. seed.php: CREATE TABLE sto)
+        $errors = [];
+        $name = trim((string) ($data['name_uk'] ?? ''));
+        if ($name === '') {
+            $errors['name_uk'] = 'Назва обов\'язкова';
+        }
+        $type = (string) ($data['sto_type'] ?? '');
+        if (!in_array($type, self::TYPES, true)) {
+            $errors['sto_type'] = 'Тип обов\'язковий: ' . implode(' | ', self::TYPES);
+        }
+        if ($errors !== []) {
+            return $this->json([
+                'status'  => 'error',
+                'message' => 'Перевірте заповнення полів',
+                'errors'  => $errors,
+            ], 400);
+        }
+
+        // Той самий allow-list і ті самі права на рівні поля, що й в update():
+        // інакше поле, закрите для редагування, можна було б проставити при створенні.
+        $columns   = [];
+        $params    = [];
+        $forbidden = [];
+
+        foreach (self::EDITABLE as $field) {
+            if (!array_key_exists($field, $data)) {
+                continue;
+            }
+
+            $required = self::FIELD_PERMISSIONS[$field] ?? null;
+            if ($required !== null && ($user === null || !$this->auth->can($user, $required))) {
+                $forbidden[] = $field;
+                continue;
+            }
+
+            $columns[] = $field;
+            $params[$field] = match ($field) {
+                'is_active' => (int) (bool) $data[$field],
+                'phones'    => implode(';', array_filter(array_map('trim', (array) $data[$field]), static fn ($p) => $p !== '')),
+                default     => $data[$field],
+            };
+        }
+
+        if ($forbidden !== []) {
+            return $this->json([
+                'status'  => 'error',
+                'message' => 'Немає права заповнювати поле: ' . implode(', ', $forbidden),
+                'fields'  => $forbidden,
+            ], 403);
+        }
+
+        // is_active має DEFAULT 1 у схемі, але клієнт може його не надіслати —
+        // лишаємо рішення схемі, а не дублюємо значення тут.
+        $placeholders = array_map(static fn ($c) => ":$c", $columns);
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO sto (' . implode(', ', $columns) . ') VALUES (' . implode(', ', $placeholders) . ')'
+        );
+        $stmt->execute($params);
+
+        $row = $this->fetchRow((int) $this->pdo->lastInsertId());
+
+        return $this->json(['status' => 'success', 'data' => $this->format($row)], 201);
+    }
+
+    #[OA\Post(
+        path: '/api/admin/sto/bulk',
+        summary: 'Bulk action over selected STOs',
+        description: 'Іменована масова дія: { ids: [1,2], action: "activate" }. Перелік дозволених дій — BULK_ACTIONS, клієнт передає лише ім\'я дії.',
+        security: [['BearerAuth' => []]],
+        tags: ['Admin - STO'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'ids', type: 'array', items: new OA\Items(type: 'integer'), example: [1, 2, 3]),
+                    new OA\Property(property: 'action', type: 'string', enum: ['activate', 'deactivate', 'delete']),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Done; affected = кількість змінених рядків'),
+            new OA\Response(response: 400, description: 'Unknown action / empty or too large ids'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 403, description: 'Forbidden'),
+        ]
+    )]
+    public function bulk(ServerRequestInterface $request): ResponseInterface
+    {
+        // Аутентифікація перша: тіло запиту від анонімного викликача не розбираємо.
+        // Право на саму дію перевіряється нижче — воно різне для різних дій.
+        if ($err = $this->auth->guard($request, 'sto.view')) {
+            return $this->json(['status' => 'error', 'message' => $err['message']], $err['status']);
+        }
+
+        $data   = json_decode((string) $request->getBody(), true) ?? [];
+        $action = (string) ($data['action'] ?? '');
+
+        if (!isset(self::BULK_ACTIONS[$action])) {
+            return $this->json([
+                'status'  => 'error',
+                'message' => 'Невідома масова дія: ' . implode(' | ', array_keys(self::BULK_ACTIONS)),
+            ], 400);
+        }
+        $spec = self::BULK_ACTIONS[$action];
+
+        if ($err = $this->auth->guard($request, $spec['permission'])) {
+            return $this->json(['status' => 'error', 'message' => $err['message']], $err['status']);
+        }
+
+        // Права на рівні поля діють і тут: інакше масова дія стала б обхідним
+        // шляхом до поля, закритого в update() і create().
+        if (isset($spec['field'], self::FIELD_PERMISSIONS[$spec['field']])) {
+            $user = $this->auth->userFromRequest($request);
+            $required = self::FIELD_PERMISSIONS[$spec['field']];
+            if ($user === null || !$this->auth->can($user, $required)) {
+                return $this->json([
+                    'status'  => 'error',
+                    'message' => 'Немає права редагувати поле: ' . $spec['field'],
+                    'fields'  => [$spec['field']],
+                ], 403);
+            }
+        }
+
+        // Тільки додатні цілі й без дублікатів — id прилітають із чекбоксів
+        // фронтенду, але роут публічний, тож перевіряємо самі.
+        $ids = array_values(array_unique(array_filter(
+            array_map('intval', (array) ($data['ids'] ?? [])),
+            static fn (int $id) => $id > 0
+        )));
+
+        if ($ids === []) {
+            return $this->json(['status' => 'error', 'message' => 'Не передано жодного id'], 400);
+        }
+        if (count($ids) > self::BULK_MAX_IDS) {
+            return $this->json([
+                'status'  => 'error',
+                'message' => 'Забагато записів за раз: максимум ' . self::BULK_MAX_IDS,
+            ], 400);
+        }
+
+        $placeholders = implode(', ', array_map(static fn (int $i) => ":id$i", array_keys($ids)));
+        $params = [];
+        foreach ($ids as $i => $id) {
+            $params["id$i"] = $id;
+        }
+
+        if (isset($spec['field'])) {
+            $params['value'] = $spec['value'];
+            $sql = "UPDATE sto SET {$spec['field']} = :value WHERE id IN ($placeholders)";
+        } else {
+            $sql = "DELETE FROM sto WHERE id IN ($placeholders)";
+        }
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return $this->json([
+            'status'   => 'success',
+            'action'   => $action,
+            'affected' => $stmt->rowCount(),
+        ]);
     }
 
     #[OA\Delete(

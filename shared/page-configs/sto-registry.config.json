@@ -2,8 +2,16 @@
   "apiList": "/api/admin/sto",
   "apiUpdate": "/api/admin/sto",
   "apiDelete": "/api/admin/sto",
+  "apiCreate": "/api/admin/sto",
+  "apiBulk": "/api/admin/sto/bulk",
   "viewPermission": "sto.view",
+  "createPermission": "sto.create",
   "deletePermission": "sto.delete",
+  "createFields": ["name_uk", "sto_type", "address"],
+  "bulkActions": [
+    { "action": "activate", "label": "Активувати", "icon": "bi-check-circle", "variant": "outline-success", "permission": "sto.edit" },
+    { "action": "deactivate", "label": "Деактивувати", "icon": "bi-slash-circle", "variant": "outline-secondary", "permission": "sto.edit" }
+  ],
   "actions": [
     { "type": "detail", "icon": "bi-eye", "label": "Деталі" },
     { "type": "detail", "icon": "bi-telephone", "label": "Контактні дані", "tab": "contacts" },

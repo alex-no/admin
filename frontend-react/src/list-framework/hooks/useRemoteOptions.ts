@@ -4,7 +4,21 @@ import type { Option } from '../types'
 
 // Спільний кеш на весь застосунок: один і той самий optionsUrl не тягнеться
 // повторно для кожної комірки/фільтра (аналог useRemoteOptions у Vue-версії).
-const cache = new Map<string, Promise<Option[]>>()
+// Кешуються **сирі рядки**, а мапінг у value/label робиться поверх — інакше той
+// самий довідник із іншими valueKey/labelKey пішов би другим запитом.
+const cache = new Map<string, Promise<any[]>>()
+
+function fetchRows(url: string): Promise<any[]> {
+  if (!cache.has(url)) {
+    cache.set(
+      url,
+      apiGet(url)
+        .then((res) => res.data ?? [])
+        .catch(() => [])
+    )
+  }
+  return cache.get(url)!
+}
 
 /**
  * Проміс зі списком варіантів. Поза React — щоб ним могли скористатись і хук нижче,
@@ -18,23 +32,13 @@ export function fetchOptions(
   opts: { valueKey?: string; labelKey?: string } = {}
 ): Promise<Option[]> {
   const { valueKey = 'id', labelKey = 'name_uk' } = opts
-  const key = `${url}|${valueKey}|${labelKey}`
 
-  if (!cache.has(key)) {
-    cache.set(
-      key,
-      apiGet(url)
-        .then((res) =>
-          (res.data ?? []).map((item: any) => ({
-            value: item[valueKey],
-            label: item[labelKey],
-          }))
-        )
-        .catch(() => [])
-    )
-  }
-
-  return cache.get(key)!
+  return fetchRows(url).then((rows) =>
+    rows.map((item: any) => ({
+      value: item[valueKey],
+      label: item[labelKey],
+    }))
+  )
 }
 
 export function useRemoteOptions(
@@ -43,6 +47,9 @@ export function useRemoteOptions(
 ) {
   const { valueKey = 'id', labelKey = 'name_uk' } = opts
   const [options, setOptions] = useState<Option[]>([])
+  // Сирі рядки відповіді — потрібні там, де мало value/label (напр. модалка
+  // фільтрує райони по region_in_area_id). Дзеркало Vue: `rows` у композаблі.
+  const [rows, setRows] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -51,9 +58,10 @@ export function useRemoteOptions(
     let alive = true
     setLoading(true)
 
-    fetchOptions(url, { valueKey, labelKey }).then((opts) => {
+    fetchRows(url).then((list) => {
       if (!alive) return
-      setOptions(opts)
+      setRows(list)
+      setOptions(list.map((item: any) => ({ value: item[valueKey], label: item[labelKey] })))
       setLoading(false)
     })
 
@@ -62,5 +70,5 @@ export function useRemoteOptions(
     }
   }, [url, valueKey, labelKey])
 
-  return { options, loading }
+  return { options, rows, loading }
 }

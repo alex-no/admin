@@ -18,11 +18,26 @@ function url(path: string): string {
  * дістаємо саме їх, а не безлике "HTTP 400", інакше користувач не дізнається,
  * що саме не так (напр. "Підтримуються лише JPG, PNG, WebP").
  */
+/** Помилка запиту з тілом відповіді — щоб виклик міг дістати не лише текст. */
+export interface ApiError extends Error {
+  status: number
+  /** Помилки по полях: { поле: 'текст' } — валідація створення/оновлення */
+  errors?: Record<string, string>
+  /** Поля, на які немає прав (403) */
+  fields?: string[]
+}
+
 async function parse<T>(res: Response): Promise<T> {
   const json: any = await res.json().catch(() => null)
 
   if (!res.ok || json?.status === 'error') {
-    throw new Error(json?.message ?? `HTTP ${res.status}`)
+    // Без цього викликач бачить лише message, і показати помилку біля
+    // конкретного поля форми нічим — а бекенд її повертає.
+    const err = new Error(json?.message ?? `HTTP ${res.status}`) as ApiError
+    err.status = res.status
+    if (json?.errors) err.errors = json.errors
+    if (json?.fields) err.fields = json.fields
+    throw err
   }
   return json as T
 }

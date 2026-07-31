@@ -20,6 +20,18 @@ export function registerCellType(type, component) {
   registry.set(type, component)
 }
 
+/**
+ * Тип не вказаний або невідомий — показуємо як text, а не порожню комірку.
+ * Раніше повертався null, і `<component :is="null">` мовчки малював нічого:
+ * рядки в таблиці є, чекбокси й кнопки дій є, а значень немає. Помилку в
+ * конфігу видно лише очима, тому невідомий тип ще й пишемо в консоль.
+ */
 export function resolveCellType(type) {
-  return registry.get(type) ?? null
+  if (!type) return TextCell
+
+  const found = registry.get(type)
+  if (found) return found
+
+  console.warn(`[list-framework] Невідомий тип комірки "${type}" — показано як text`)
+  return TextCell
 }

@@ -31,6 +31,10 @@ return [
 
             Route::get('/api/admin/sto')
                 ->action([AdminStoController::class, 'list']),
+            Route::post('/api/admin/sto')
+                ->action([AdminStoController::class, 'create']),
+            Route::post('/api/admin/sto/bulk')
+                ->action([AdminStoController::class, 'bulk']),
             Route::get('/api/admin/sto/{id:\d+}')
                 ->action([AdminStoController::class, 'show']),
             Route::methods(['PUT', 'PATCH'], '/api/admin/sto/{id:\d+}')

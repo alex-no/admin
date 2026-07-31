@@ -18,22 +18,27 @@ export function useRemoteOptions(url, opts = {}) {
   const { authHeaders } = useAuth()
 
   if (!url) {
-    return { options: ref([]), loading: ref(false), error: ref(null) }
+    return { options: ref([]), rows: ref([]), loading: ref(false), error: ref(null) }
   }
 
   if (!cache.has(url)) {
     const options = ref([])
+    // Сирі рядки відповіді — потрібні там, де мало value/label: напр. модалка
+    // фільтрує райони по region_in_area_id. Без цього сторінка тягнула б той
+    // самий довідник другим запитом, повз кеш.
+    const rows = ref([])
     const loading = ref(true)
     const error = ref(null)
 
-    cache.set(url, { options, loading, error })
+    cache.set(url, { options, rows, loading, error })
 
     fetch(url, { headers: authHeaders() })
       .then(async (res) => {
         const json = await res.json().catch(() => ({}))
         if (!res.ok) throw new Error(json.message ?? `Помилка завантаження списку (HTTP ${res.status})`)
-        const rows = json.data ?? []
-        options.value = rows.map((row) => ({
+        const list = json.data ?? []
+        rows.value = list
+        options.value = list.map((row) => ({
           value: row[valueKey],
           label: row[labelKey],
         }))
@@ -56,6 +61,7 @@ export function useRemoteOptions(url, opts = {}) {
 
   return {
     options: computed(() => [placeholderOption, ...entry.options.value]),
+    rows: entry.rows,
     loading: entry.loading,
     error: entry.error,
   }

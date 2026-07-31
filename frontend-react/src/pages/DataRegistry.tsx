@@ -1,7 +1,13 @@
 import { useRef, useState, useCallback } from 'react'
 import { DataTable } from '@/list-framework'
 import DataRegistryDetail from './DataRegistryDetail'
-import type { ColumnConfig, FilterConfig, ActionConfig, DataTableHandle } from '@/list-framework'
+import type {
+  ColumnConfig,
+  FilterConfig,
+  ActionConfig,
+  BulkActionConfig,
+  DataTableHandle,
+} from '@/list-framework'
 
 // Той самий конфіг, що читає Vue-версія (frontend/src/pages/StoRegistry.vue) —
 // один екран описується одним конфігом, а не двома копіями.
@@ -41,6 +47,11 @@ export default function DataRegistry() {
         apiList={cfg.apiList}
         apiUpdate={cfg.apiUpdate}
         apiDelete={cfg.apiDelete}
+        apiCreate={cfg.apiCreate}
+        createPermission={cfg.createPermission}
+        createFields={cfg.createFields}
+        apiBulk={cfg.apiBulk}
+        bulkActions={cfg.bulkActions as BulkActionConfig[]}
         filterConfig={filterConfig as FilterConfig[]}
         columnsConfig={columnsConfig as ColumnConfig[]}
         actions={actions}

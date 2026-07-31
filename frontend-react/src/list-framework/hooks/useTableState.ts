@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
-import { apiGet, apiPatch, apiDelete as apiDeleteRequest } from '@/utils/api'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { apiGet, apiPatch, apiPost, apiDelete as apiDeleteRequest } from '@/utils/api'
 import { notify } from '@/hooks/useNotify'
 import { deleteWithUndo, deleteManyWithUndo } from '@/hooks/useUndoableDelete'
 import { getCached, setCached } from './useListCache'
@@ -45,6 +45,8 @@ interface UseTableStateOptions {
   apiList: string
   apiUpdate?: string
   apiDelete?: string
+  /** Роут іменованих масових дій: POST { ids, action } */
+  apiBulk?: string
   filterConfig?: FilterConfig[]
   defaultPerPage?: number
   rowKey?: string
@@ -56,6 +58,7 @@ export function useTableState({
   apiList,
   apiUpdate,
   apiDelete,
+  apiBulk,
   filterConfig = [],
   defaultPerPage = 50,
   rowKey = 'id',
@@ -78,6 +81,8 @@ export function useTableState({
   const [selected, setSelected] = useState<(string | number)[]>([])
   const [reloadToken, setReloadToken] = useState(0)
   const [revalidating, setRevalidating] = useState(false)
+  // Фільтри з `defaultFirstOption`, які вже підставили своє значення (одноразово)
+  const firstOptionApplied = useRef<Set<string>>(new Set())
   const [bulkApplying, setBulkApplying] = useState(false)
   const [exporting, setExporting] = useState(false)
 
@@ -204,16 +209,53 @@ export function useTableState({
       return
     }
 
+    // Обовʼязковий фільтр (`required: true`) ще порожній — варіанти довідника
+    // вантажаться. Запит без нього показав би чужі рядки, які через мить самі
+    // змінились би; SelectFilter підставить перший варіант і ефект спрацює знову.
+    // Дзеркало Vue: DataListPage.vue → filtersReady.
+    const missingRequired = filterConfig.some(f => {
+      if (!f.required) return false
+      const v = filters[f.key]
+      return v === '' || v === null || v === undefined
+    })
+    if (missingRequired) {
+      return
+    }
+
+    // `defaultFirstOption` — чекання одноразове: щойно фільтр підставив своє
+    // значення, користувач може повернутись до «Всі», і це вже нормальний стан.
+    const pendingFirstOption = filterConfig.some(f => {
+      if (!f.defaultFirstOption || firstOptionApplied.current.has(f.key)) return false
+      const v = filters[f.key]
+      if (v === '' || v === null || v === undefined) return true
+      firstOptionApplied.current.add(f.key)
+      return false
+    })
+    if (pendingFirstOption) {
+      return
+    }
+
     const params = new URLSearchParams({
       page: page.toString(),
       per_page: perPage.toString(),
     })
 
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== '' && value !== null && value !== undefined) {
-        params.append(key, String(value))
+    // Порядок конфіга, а не обʼєкта: кілька фільтрів можуть писати в один
+    // query-параметр (`param`), і виграє останній непорожній — тому set, не append.
+    // Дзеркало Vue: DataListPage.vue → params.set(f.param ?? f.key, v).
+    for (const f of filterConfig) {
+      const value = filters[f.key]
+      if (value !== '' && value !== null && value !== undefined && value !== false) {
+        params.set(f.param ?? f.key, String(value))
       }
-    })
+    }
+    // Фільтри без опису в конфізі (задані сторінкою напряму) — як і раніше
+    for (const [key, value] of Object.entries(filters)) {
+      if (filterConfig.some(f => f.key === key)) continue
+      if (value !== '' && value !== null && value !== undefined) {
+        params.set(key, String(value))
+      }
+    }
 
     // Add sort (Vue admin format: separate sort_by and sort_dir)
     if (sortItems.length > 0) {
@@ -306,6 +348,26 @@ export function useTableState({
     }
   }, [apiUpdate, selected, reload])
 
+  // Іменована масова дія — одним запитом на bulk-роут (на відміну від
+  // applyBulkUpdate, який шле PATCH на кожен id). Undo тут немає навмисно:
+  // activate/deactivate не деструктивні й скасовуються зворотною дією.
+  const applyBulkAction = useCallback(async (action: string, label: string) => {
+    if (!apiBulk || selected.length === 0) return
+
+    const ids = [...selected]
+    setBulkApplying(true)
+    try {
+      const res = await apiPost<{ affected?: number }>(apiBulk, { ids, action })
+      notify(`${label}: ${res.affected ?? ids.length} запис(ів)`, { type: 'success' })
+      setSelected([])
+      reload()
+    } catch (err) {
+      notify(err instanceof Error ? err.message : 'Помилка виконання дії', { type: 'error' })
+    } finally {
+      setBulkApplying(false)
+    }
+  }, [apiBulk, selected, reload])
+
   const applyBulkDelete = useCallback(() => {
     if (!apiDelete || selected.length === 0) return
 
@@ -370,7 +432,16 @@ export function useTableState({
         params.set('sort_by', sortItems.map(s => s.key).join(','))
         params.set('sort_dir', sortItems.map(s => s.dir).join(','))
       }
+      // Той самий порядок і той самий `param`, що й у списку — інакше експорт
+      // вивантажив би не те, що показано на екрані.
+      for (const f of filterConfig) {
+        const value = filters[f.key]
+        if (value !== '' && value !== null && value !== undefined && value !== false) {
+          params.set(f.param ?? f.key, String(value))
+        }
+      }
       for (const [key, value] of Object.entries(filters)) {
+        if (filterConfig.some(f => f.key === key)) continue
         if (value !== '' && value !== null && value !== undefined && value !== false) {
           params.set(key, String(value))
         }
@@ -418,6 +489,7 @@ export function useTableState({
     bulkApplying,
     exporting,
     applyBulkUpdate,
+    applyBulkAction,
     applyBulkDelete,
     exportCsv,
     error,

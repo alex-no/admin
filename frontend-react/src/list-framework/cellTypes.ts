@@ -21,7 +21,19 @@ export function registerCellType(type: string, component: ComponentType<CellProp
   registry.set(type, component)
 }
 
-export function resolveCellType(type?: string): ComponentType<CellProps> | null {
-  if (!type) return null
-  return registry.get(type) ?? null
+/**
+ * Тип не вказаний або невідомий — показуємо як text, а не порожню комірку.
+ * Раніше повертався null, і комірка мовчки не малювала нічого: рядки в таблиці
+ * є, чекбокси й кнопки дій є, а значень немає. Помилку в конфігу видно лише
+ * очима, тому невідомий тип ще й пишемо в консоль.
+ * Дзеркало Vue: cellTypes.js → resolveCellType.
+ */
+export function resolveCellType(type?: string): ComponentType<CellProps> {
+  if (!type) return TextCell
+
+  const found = registry.get(type)
+  if (found) return found
+
+  console.warn(`[list-framework] Невідомий тип комірки "${type}" — показано як text`)
+  return TextCell
 }

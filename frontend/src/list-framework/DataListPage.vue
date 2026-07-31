@@ -10,6 +10,7 @@
           :key="f.key"
           v-model="filters[f.key].value"
           :field="f"
+          :filter-values="filterValues"
         />
 
         <div v-if="filterConfig.length" class="d-flex align-items-center gap-1">
@@ -59,6 +60,16 @@
           @toggle="toggleColumn"
           @reset="resetColumns"
         />
+
+        <button v-if="canCreate" type="button" class="btn btn-sm btn-success" @click="openCreate">
+          <i class="bi bi-plus-lg me-1"></i>Додати
+        </button>
+
+        <!-- Власні кнопки сторінки (створення через свою модалку, імпорт тощо).
+             Потрібен там, де вбудованої форми створення недостатньо: сторінка не
+             може домалювати кнопку до цієї панелі ззовні.
+             Дзеркало React: проп headerActions. -->
+        <slot name="actions" />
       </div>
     </div>
 
@@ -107,6 +118,19 @@
           @click="applyBulkUpdate"
         >
           <span v-if="bulkApplying" class="spinner-border spinner-border-sm me-1"></span>Застосувати
+        </button>
+
+        <!-- Іменовані дії: одна кнопка = одна операція з фіксованим значенням
+             (список — у конфізі сторінки, виконує bulk-роут одним запитом) -->
+        <button
+          v-for="a in visibleBulkActions"
+          :key="a.action"
+          class="btn btn-sm"
+          :class="`btn-${a.variant ?? 'outline-primary'}`"
+          :disabled="bulkApplying"
+          @click="applyNamedBulk(a)"
+        >
+          <i v-if="a.icon" class="bi me-1" :class="a.icon"></i>{{ a.label }}
         </button>
 
         <button
@@ -160,10 +184,12 @@
                   />
                 </td>
                 <td v-for="col in visibleColumns" :key="col.key" :class="col.align ? `text-${col.align}` : ''">
+                  <!-- displayKey: у рядку вже лежить приєднана назва (country_id → country_name),
+                       тому показуємо її замість голого FK, а сортування лишається по col.key -->
                   <component
                     :is="resolveCellComponent(col)"
                     :field="col"
-                    :model-value="row[col.key]"
+                    :model-value="row[col.displayKey ?? col.key]"
                     :readonly="!isColumnEditable(col)"
                     :row="row"
                     @update:model-value="(v) => handleCellUpdate(row, col, v)"
@@ -172,7 +198,7 @@
                 <td v-if="actions.length" class="text-nowrap">
                   <button
                     v-for="a in actions"
-                    v-show="!a.permission || auth.can(a.permission)"
+                    v-show="isActionVisible(a, row)"
                     :key="`${a.type}:${a.tab ?? ''}`"
                     class="btn btn-sm btn-outline-secondary me-1"
                     :class="a.type === 'delete' ? 'btn-outline-danger' : ''"
@@ -211,6 +237,45 @@
         </div>
       </div>
     </div>
+
+    <!-- Форма створення: поля беруться з конфіга (createFields), а контроли — з
+         того самого реєстру cellTypes, що й комірки таблиці. Тобто новий тип
+         поля автоматично працює і в таблиці, і у формі. -->
+    <BaseModal
+      v-if="canCreate"
+      v-model:visible="createOpen"
+      storage-key="list-framework-create"
+      :default-width="520"
+      :min-width="380"
+      :max-width="760"
+      :default-height="420"
+      :min-height="280"
+      :max-height="700"
+      :close-on-backdrop="false"
+    >
+      <template #title><h5 class="mb-0">Створення запису</h5></template>
+
+      <div class="px-1">
+        <div v-for="col in createColumns" :key="col.key" class="mb-3">
+          <label class="form-label small text-muted mb-1">{{ col.label }}</label>
+          <component
+            :is="resolveCellComponent(col)"
+            v-model="createForm[col.key]"
+            :field="col"
+            :readonly="false"
+            :row="{}"
+          />
+          <div v-if="createErrors[col.key]" class="text-danger small mt-1">{{ createErrors[col.key] }}</div>
+        </div>
+      </div>
+
+      <template #footer>
+        <button type="button" class="btn btn-sm btn-outline-secondary" @click="createOpen = false">Скасувати</button>
+        <button type="button" class="btn btn-sm btn-primary ms-2" :disabled="creating" @click="submitCreate">
+          <span v-if="creating" class="spinner-border spinner-border-sm me-1"></span>Створити
+        </button>
+      </template>
+    </BaseModal>
   </div>
 </template>
 
@@ -227,6 +292,7 @@ import { formatPhoneUA } from '@/utils/phone'
 import { rowsToCsv, downloadCsv } from '@/utils/csv'
 import Pagination from '@/components/Pagination.vue'
 import ColumnSelector from '@/components/ColumnSelector.vue'
+import BaseModal from '@/components/BaseModal.vue'
 import SortIcon from '@/components/SortIcon.vue'
 import { resolveFilterType } from './filterTypes'
 import { resolveCellType } from './cellTypes'
@@ -237,6 +303,16 @@ const props = defineProps({
   apiList: { type: String, required: true },
   apiUpdate: { type: String, default: null },
   apiDelete: { type: String, default: null },
+  // Створення записів. Без apiCreate кнопки "Додати" немає взагалі.
+  apiCreate: { type: String, default: null },
+  createPermission: { type: String, default: null },
+  // Ключі колонок, які показувати у формі створення (порядок = порядок полів).
+  // Поле, якого тут немає, бере значення за замовчуванням із схеми БД.
+  createFields: { type: Array, default: () => [] },
+  // Іменовані масові дії: bulk-роут приймає { ids, action }. Без apiBulk
+  // кнопок немає — видалення пачкою працює окремо, через apiDelete з undo.
+  apiBulk: { type: String, default: null },
+  bulkActions: { type: Array, default: () => [] },
   filterConfig: { type: Array, default: () => [] },
   columnsConfig: { type: Array, required: true },
   actions: { type: Array, default: () => [] },
@@ -311,6 +387,11 @@ const deleteAction = computed(() => props.actions.find((a) => a.type === 'delete
 const canBulkDelete = computed(
   () => !!props.apiDelete && !!deleteAction.value && (!deleteAction.value.permission || auth.can(deleteAction.value.permission))
 )
+// Дзеркало React: DataTable.tsx → visibleBulkActions. Сервер перевіряє те саме
+// право повторно (AdminStoController::BULK_ACTIONS) — тут лише UI.
+const visibleBulkActions = computed(
+  () => (props.apiBulk ? props.bulkActions.filter((a) => !a.permission || auth.can(a.permission)) : [])
+)
 
 watch(bulkField, () => { bulkValue.value = null })
 
@@ -337,9 +418,59 @@ const visibleColspan = computed(
 // замість одного.
 let applyingPreset = false
 
+// Обовʼязковий фільтр (`required: true`) — той, без значення якого запит не має
+// сенсу: напр. довідник, що існує лише в межах обраної країни. Поки такий фільтр
+// порожній (варіанти ще вантажаться), список не запитуємо взагалі — інакше перший
+// запит пішов би без нього й показав чужі рядки, які через мить самі змінились би.
+// Поточні значення всіх фільтрів одним обʼєктом — потрібні залежним фільтрам
+// (`dependsOn`), щоб підставити значення батька в свій optionsUrl.
+const filterValues = computed(() =>
+  Object.fromEntries(props.filterConfig.map((f) => [f.key, filters[f.key].value]))
+)
+
+// Каскад: при зміні батьківського фільтра дочірній скидається — інакше в запиті
+// лишився б район із попередньої області.
+for (const f of props.filterConfig) {
+  for (const parentKey of f.dependsOn ?? []) {
+    if (!filters[parentKey]) continue
+    watch(filters[parentKey], () => {
+      if (filters[f.key].value !== '') filters[f.key].value = ''
+    })
+  }
+}
+
+const requiredFilters = props.filterConfig.filter((f) => f.required)
+
+// `defaultFirstOption` — фільтр не обовʼязковий (порожній варіант «Всі» лишається),
+// але при відкритті сторінки має бути обраний перший зі списку. Чекання тут
+// одноразове: щойно фільтр підставив своє значення, користувач може повернутись
+// до «Всі», і це вже нормальний стан, а не «ще не готово».
+const pendingFilters = ref(
+  new Set(props.filterConfig.filter((f) => f.defaultFirstOption).map((f) => f.key))
+)
+for (const f of props.filterConfig) {
+  if (!f.defaultFirstOption) continue
+  watch(filters[f.key], (v) => {
+    if (v === '' || v === null || v === undefined) return
+    if (!pendingFilters.value.has(f.key)) return
+    const next = new Set(pendingFilters.value)
+    next.delete(f.key)
+    pendingFilters.value = next
+  })
+}
+
+const filtersReady = computed(() =>
+  pendingFilters.value.size === 0 &&
+  requiredFilters.every((f) => {
+    const v = filters[f.key].value
+    return v !== '' && v !== null && v !== undefined
+  })
+)
+
 let debounceTimer = null
 function scheduleLoad(immediate) {
   clearTimeout(debounceTimer)
+  if (!filtersReady.value) return
   if (immediate) {
     load(1)
   } else {
@@ -352,6 +483,69 @@ for (const f of props.filterConfig) {
 }
 watch(sortItems, () => { if (!applyingPreset) load(1) }, { deep: true })
 watch(perPage, () => { if (!applyingPreset) load(1) })
+
+// ── Створення запису ─────────────────────────────────────────────────────
+// Форма збирається з конфіга: поля — createFields, контроли — з реєстру
+// cellTypes (той самий, що малює комірки таблиці). Нового коду на кожен тип
+// поля не потрібно.
+const canCreate = computed(
+  () => !!props.apiCreate && (!props.createPermission || auth.can(props.createPermission))
+)
+
+const createColumns = computed(() =>
+  props.createFields
+    .map((key) => props.columnsConfig.find((c) => c.key === key))
+    .filter(Boolean)
+)
+
+const createOpen   = ref(false)
+const creating     = ref(false)
+const createForm   = ref({})
+const createErrors = ref({})
+
+function blankForm() {
+  const form = {}
+  for (const col of createColumns.value) {
+    // select без явного вибору відправив би порожнє значення, хоч у списку
+    // візуально вибрано перший пункт — тому одразу беремо перший варіант
+    if (col.type === 'select') form[col.key] = col.options?.[0]?.value ?? ''
+    else if (col.type === 'boolean') form[col.key] = false
+    else form[col.key] = ''
+  }
+  return form
+}
+
+function openCreate() {
+  createForm.value = blankForm()
+  createErrors.value = {}
+  createOpen.value = true
+}
+
+async function submitCreate() {
+  creating.value = true
+  createErrors.value = {}
+  try {
+    const res = await fetch(props.apiCreate, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...auth.authHeaders() },
+      body: JSON.stringify(createForm.value),
+    })
+    const json = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      // Бекенд може повернути errors: { поле: "текст" } — показуємо біля поля,
+      // а не одним тостом "перевірте заповнення".
+      if (json.errors && typeof json.errors === 'object') createErrors.value = json.errors
+      throw new Error(json.message ?? `Помилка створення (HTTP ${res.status})`)
+    }
+    createOpen.value = false
+    notify('Запис створено', { type: 'success' })
+    await load(1)
+  } catch (e) {
+    notify(e.message, { type: 'error' })
+  } finally {
+    creating.value = false
+  }
+}
 
 // ── Saved filters (react-admin: "Saved Queries") ────────────────────────
 const { presets: savedPresets, save: savePresetToStorage, remove: removePresetFromStorage } =
@@ -456,7 +650,7 @@ async function exportCsv() {
     for (const f of props.filterConfig) {
       const v = filters[f.key].value
       if (v !== '' && v !== null && v !== undefined && v !== false) {
-        params.set(f.key, v)
+        params.set(f.param ?? f.key, v)
       }
     }
 
@@ -510,7 +704,7 @@ async function load(p = 1) {
   for (const f of props.filterConfig) {
     const v = filters[f.key].value
     if (v !== '' && v !== null && v !== undefined && v !== false) {
-      params.set(f.key, v)
+      params.set(f.param ?? f.key, v)
     }
   }
   const cacheKey = `${props.apiList}?${params}`
@@ -670,6 +864,33 @@ async function applyBulkUpdate() {
   }
 }
 
+// Іменована масова дія — одним запитом на bulk-роут (на відміну від
+// applyBulkUpdate, який шле PATCH на кожен id). Undo тут немає навмисно:
+// activate/deactivate не деструктивні й скасовуються зворотною дією.
+async function applyNamedBulk(action) {
+  if (!props.apiBulk || !selected.value.length) return
+
+  const ids = [...selected.value]
+  bulkApplying.value = true
+  try {
+    const res = await fetch(props.apiBulk, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...auth.authHeaders() },
+      body: JSON.stringify({ ids, action: action.action }),
+    })
+    const json = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(json.message ?? `Помилка виконання дії (HTTP ${res.status})`)
+
+    notify(`${action.label}: ${json.affected ?? ids.length} запис(ів)`, { type: 'success' })
+    clearSelection()
+    await load(page.value)
+  } catch (e) {
+    notify(e.message, { type: 'error' })
+  } finally {
+    bulkApplying.value = false
+  }
+}
+
 async function applyBulkDelete() {
   if (!props.apiDelete || !selected.value.length) return
 
@@ -709,6 +930,17 @@ async function applyBulkDelete() {
   })
 }
 
+// Видимість дії рядка: право (з JSON) плюс необовʼязковий предикат `visible(row)`,
+// який сторінка додає до конфіга в коді — так само, як React додає `handler`.
+// Потрібен там, де правило залежить від рядка, а не лише від ролі: напр. запис,
+// який користувач щойно створив, він може відкрити на редагування й без права
+// редагування взагалі.
+// Дзеркало React: DataTable.tsx → isActionVisible.
+function isActionVisible(action, row) {
+  if (action.permission && !auth.can(action.permission)) return false
+  return action.visible ? !!action.visible(row) : true
+}
+
 function handleAction(action, row) {
   if (action.type === 'delete') return handleDelete(row)
   emit('row-action', { type: action.type, row, tab: action.tab ?? null })
@@ -728,7 +960,9 @@ defineExpose({ reload: () => load(page.value) })
 
 onMounted(() => {
   urlFilters.initFromUrl()
-  load(page.value)
+  // Якщо обовʼязковий фільтр ще порожній — перший запит зробить watch на ньому,
+  // щойно фільтр підставить своє значення (див. filtersReady вище).
+  if (filtersReady.value) load(page.value)
 })
 </script>
 

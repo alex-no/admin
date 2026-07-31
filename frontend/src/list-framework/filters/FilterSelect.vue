@@ -4,7 +4,7 @@
     :value="modelValue"
     class="form-select form-select-sm"
     style="width:auto"
-    :disabled="loading"
+    :disabled="disabled"
     @change="$emit('update:modelValue', $event.target.value)"
   >
     <option v-for="opt in options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
@@ -12,14 +12,46 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useRemoteOptions } from '../composables/useRemoteOptions'
 
 const props = defineProps({
   field: { type: Object, required: true },
   modelValue: { type: [String, Number], default: '' },
+  // Значення решти фільтрів — для залежних (`dependsOn`) списків
+  filterValues: { type: Object, default: () => ({}) },
 })
-defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue'])
+
+// Залежний фільтр: `dependsOn: ["country_id"]` + `{country_id}` в optionsUrl.
+// Поки батько порожній — список не запитуємо і селект вимкнений: варіантів для
+// «усіх країн» тут не буває, а тягнути весь довідник немає сенсу.
+const dependsOn = computed(() => props.field.dependsOn ?? [])
+const parentsFilled = computed(() =>
+  dependsOn.value.every((k) => {
+    const v = props.filterValues[k]
+    return v !== '' && v !== null && v !== undefined
+  })
+)
+
+const resolvedUrl = computed(() => {
+  if (!props.field.optionsUrl) return null
+  if (!parentsFilled.value) return null
+  return props.field.optionsUrl.replace(
+    /\{(\w+)\}/g,
+    (_, key) => encodeURIComponent(props.filterValues[key] ?? '')
+  )
+})
+
+// `required: true` — фільтр, у якого не буває стану "всі": довідник існує лише в
+// межах обраного значення (напр. типи населених пунктів у межах країни). Тоді
+// порожньої опції немає, а перший варіант підставляється сам.
+const isRequired = computed(() => props.field.required === true)
+
+// `defaultFirstOption: true` — порожній варіант лишається, але при відкритті
+// сторінки обирається перший зі списку (напр. регіони: показувати одразу всі
+// країни немає сенсу, але повернутись до «Всі країни» користувач може).
+const autoFirst = computed(() => isRequired.value || props.field.defaultFirstOption === true)
 
 // Порожня опція ("Всі …") — завжди від рендерера, а не з конфіга: у самому
 // field.options її бути не має, інакше React-версія покаже її двічі
@@ -28,19 +60,51 @@ const placeholderOption = computed(
   () => props.field.placeholderOption ?? { value: '', label: props.field.label ?? 'Всі' }
 )
 
-// Або статичний field.options, або довантаження за field.optionsUrl (з кешем по URL)
-const remote = props.field.optionsUrl
-  ? useRemoteOptions(props.field.optionsUrl, {
-      valueKey: props.field.optionsValueKey ?? 'id',
-      labelKey: props.field.optionsLabelKey ?? 'name_uk',
-      placeholderOption: props.field.placeholderOption ?? { value: '', label: props.field.label ?? 'Всі' },
-    })
-  : null
-
-// remote вже віддає список із порожньою опцією на початку — тут додаємо її лише
-// для статичного варіанту, щоб не задвоїти.
-const options = computed(() =>
-  remote ? remote.options.value : [placeholderOption.value, ...(props.field.options ?? [])]
+// Або статичний field.options, або довантаження за field.optionsUrl (з кешем по URL).
+// Порожню опцію тут навмисно **не** просимо: тримаємо справжні варіанти окремо,
+// інакше "перший варіант" для autoFirst виявився б самою опцією «Всі».
+// Через computed, а не один виклик на setup: у залежного фільтра URL міняється
+// разом зі значенням батька. useRemoteOptions кешує по URL, тому повторний
+// виклик для того самого URL — це той самий ref, без нового запиту.
+const remote = computed(() =>
+  resolvedUrl.value
+    ? useRemoteOptions(resolvedUrl.value, {
+        valueKey: props.field.optionsValueKey ?? 'id',
+        labelKey: props.field.optionsLabelKey ?? 'name_uk',
+      })
+    : null
 )
-const loading = computed(() => remote ? remote.loading.value : false)
+
+const realOptions = computed(() =>
+  remote.value ? remote.value.options.value : (props.field.optionsUrl ? [] : (props.field.options ?? []))
+)
+
+// Порожня опція додається рендерером — і лише якщо фільтр не обовʼязковий
+const options = computed(() =>
+  isRequired.value ? realOptions.value : [placeholderOption.value, ...realOptions.value]
+)
+const loading = computed(() => (remote.value ? remote.value.loading.value : false))
+
+// Батько не обраний — вибирати нема з чого; або довідник ще вантажиться
+const disabled = computed(() => loading.value || !parentsFilled.value)
+
+// Підстановка першого варіанта. Для `required` — щоразу, коли значення порожнє
+// (порожнього стану в такого фільтра не буває взагалі). Для `defaultFirstOption`
+// — лише один раз при відкритті: далі порожнє значення означає свідоме «Всі».
+let firstOptionApplied = false
+watch(
+  [realOptions, () => props.modelValue],
+  ([opts, value]) => {
+    if (!autoFirst.value) return
+    if (value !== '' && value !== null && value !== undefined) {
+      firstOptionApplied = true
+      return
+    }
+    if (!isRequired.value && firstOptionApplied) return
+    if (!opts.length) return
+    firstOptionApplied = true
+    emit('update:modelValue', opts[0].value)
+  },
+  { immediate: true }
+)
 </script>
