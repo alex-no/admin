@@ -990,3 +990,46 @@ prop `readonly`. Точка розширення — `registerCellType(type, com
 | Дата | Що змінилось |
 |---|---|
 | 2026-07-30 | Пакет перенесено з `allsto` й адаптовано під `admin`: додано задачу **00** (уніфікація на `list-framework`), розділено статуси Vue / React / → allsto, зафіксовано, що **05** (клієнт) і **20** уже закриті фреймворком, знято дві побічні знахідки (`useRemoteOptions` без `per_page`, послідовний bulk-PATCH без транзакції) |
+
+### 07 — Skeleton замість спінера
+
+**Vue:** ✅ зроблено
+**React:** ✅ зроблено
+**→ allsto:** ✅ перенесено
+**Дата:** 2026-08-01
+**Хто:** Claude
+**Примітки / причина:**
+
+#### Що зроблено
+
+Новий компонент `TableSkeleton.vue` / `TableSkeleton.tsx`:
+- Малює skeleton-рядки з тією самою структурою колонок
+- Кількість рядків = `min(perPage, 15)` (не малює 250 skeleton при `per_page=250`)
+- `<tbody>`, а не `<div>` — HTML-валідний всередині `<table>`
+- CSS `@keyframes sk-pulse` з пульсацією (opacity 1 → 0.45 → 1)
+- `@media (prefers-reduced-motion)` — анімація вимикається
+
+Зміни в `DataListPage` / `DataTable`:
+- Повноекранний spinner видалено (`<div v-if="loading">` з спінером)
+- `error` тепер показується завжди, а не `v-else-if`
+- Skeleton вставлений всередину `<table>` замість `<tbody>`
+- `visibleColumns` використовується для skeleton — приховані колонки не малюються
+- `skeletonColumns` передає `width`, `align`, `skeletonWidth` з конфіга колонок
+
+Додано в `ColumnConfig`:
+- `skeletonWidth?: string` — ширина плейсхолдера (напр. '60%'), за замовчуванням '80%'
+
+**Перевірено:**
+- `tsc --noEmit` — 0 помилок
+- Skeleton з'являється при завантаженні
+- Таблична структура (`<thead>`) залишається на місці
+- Кількість skeleton-рядків відповідає `perPage` (але не більше 15)
+
+**Коміти:**
+- admin: `d372648` "Add TableSkeleton loading state"
+- allsto: `26b65f2` "Add TableSkeleton loading state (allsto)"
+
+**Не перевірено — потрібен браузер:**
+- Layout shift візуально зник (висота контенту не стрибає)
+- Ширини skeleton збігаються з реальними колонками
+- Пульсація працює
