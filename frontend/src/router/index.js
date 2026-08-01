@@ -55,6 +55,9 @@ const routes = [
 
   // Dev Tools
   { path: '/api-docs-admin', name: 'ApiDocsAdmin', component: () => import('../pages/ApiDocsAdmin.vue') },
+
+  // 404 catch-all
+  { path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import('../pages/NotImplemented.vue') },
 ]
 
 const router = createRouter({
