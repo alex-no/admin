@@ -27,6 +27,13 @@ final readonly class AdminStoController
     private const EDITABLE = ['name_uk', 'sto_type', 'is_active', 'address', 'phones', 'rating', 'description', 'country_id'];
 
     /**
+     * Поля, дозволені для масового оновлення (bulk update). Підмножина EDITABLE:
+     * не всяке редаговане поле безпечно міняти пачкою (напр. name_uk — масова
+     * заміна назв не має сенсу). Клієнт передає { action: "update", field: X, value: Y }.
+     */
+    private const BULK_EDITABLE = ['sto_type', 'is_active', 'country_id'];
+
+    /**
      * Права на рівні окремого поля — доповнення до загального sto.edit, який
      * перевіряє guard() на вході в update(). Поле, якого тут немає, вимагає
      * лише sto.edit.
@@ -412,30 +419,63 @@ final readonly class AdminStoController
         $data   = json_decode((string) $request->getBody(), true) ?? [];
         $action = (string) ($data['action'] ?? '');
 
-        if (!isset(self::BULK_ACTIONS[$action])) {
-            return $this->json([
-                'status'  => 'error',
-                'message' => 'Невідома масова дія: ' . implode(' | ', array_keys(self::BULK_ACTIONS)),
-            ], 400);
-        }
-        $spec = self::BULK_ACTIONS[$action];
+        // Дві категорії дій: іменовані (activate/deactivate/delete) з фіксованими
+        // field/value, та динамічна "update", де field і value передає клієнт.
+        if ($action === 'update') {
+            $field = (string) ($data['field'] ?? '');
+            $value = $data['value'] ?? null;
 
-        if ($err = $this->auth->guard($request, $spec['permission'])) {
-            return $this->json(['status' => 'error', 'message' => $err['message']], $err['status']);
-        }
-
-        // Права на рівні поля діють і тут: інакше масова дія стала б обхідним
-        // шляхом до поля, закритого в update() і create().
-        if (isset($spec['field'], self::FIELD_PERMISSIONS[$spec['field']])) {
-            $user = $this->auth->userFromRequest($request);
-            $required = self::FIELD_PERMISSIONS[$spec['field']];
-            if ($user === null || !$this->auth->can($user, $required)) {
+            // Whitelist полів: тільки ті, що явно дозволені для bulk-оновлення
+            if (!in_array($field, self::BULK_EDITABLE, true)) {
                 return $this->json([
                     'status'  => 'error',
-                    'message' => 'Немає права редагувати поле: ' . $spec['field'],
-                    'fields'  => [$spec['field']],
-                ], 403);
+                    'message' => 'Поле недоступне для масового оновлення: ' . $field,
+                ], 400);
             }
+
+            // Права на рівні поля (якщо є тонке право)
+            if (isset(self::FIELD_PERMISSIONS[$field])) {
+                $user = $this->auth->userFromRequest($request);
+                $required = self::FIELD_PERMISSIONS[$field];
+                if ($user === null || !$this->auth->can($user, $required)) {
+                    return $this->json([
+                        'status'  => 'error',
+                        'message' => 'Немає права редагувати поле: ' . $field,
+                        'fields'  => [$field],
+                    ], 403);
+                }
+            } else {
+                // Загальне право на редагування
+                if ($err = $this->auth->guard($request, 'sto.edit')) {
+                    return $this->json(['status' => 'error', 'message' => $err['message']], $err['status']);
+                }
+            }
+
+            $spec = ['field' => $field, 'value' => $value];
+        } elseif (isset(self::BULK_ACTIONS[$action])) {
+            $spec = self::BULK_ACTIONS[$action];
+
+            if ($err = $this->auth->guard($request, $spec['permission'])) {
+                return $this->json(['status' => 'error', 'message' => $err['message']], $err['status']);
+            }
+
+            // Права на рівні поля для іменованих дій
+            if (isset($spec['field'], self::FIELD_PERMISSIONS[$spec['field']])) {
+                $user = $this->auth->userFromRequest($request);
+                $required = self::FIELD_PERMISSIONS[$spec['field']];
+                if ($user === null || !$this->auth->can($user, $required)) {
+                    return $this->json([
+                        'status'  => 'error',
+                        'message' => 'Немає права редагувати поле: ' . $spec['field'],
+                        'fields'  => [$spec['field']],
+                    ], 403);
+                }
+            }
+        } else {
+            return $this->json([
+                'status'  => 'error',
+                'message' => 'Невідома масова дія: ' . implode(' | ', array_merge(['update'], array_keys(self::BULK_ACTIONS))),
+            ], 400);
         }
 
         // Тільки додатні цілі й без дублікатів — id прилітають із чекбоксів
