@@ -46,7 +46,7 @@ allsto**. Не переносити, доки не закрито в обох м
 | [04](04-clone-record.md) | Клонування запису | S | front+back | — | 🔲 | 🔲 | 🔲 | у `admin` немає POST-створення — див. задачу |
 | [05](05-bulk-field-update.md) | Bulk-оновлення поля | S | back | — | ✅ | ✅ | 🔲 | клієнт **уже є**; лишається серверний bulk-ендпоінт |
 | [06](06-row-expand.md) | Розкривні рядки | M | front | — | 🔲 | 🔲 | 🔲 | |
-| [07](07-loading-skeletons.md) | Skeleton замість спінера | S | front | 01 (колонки) | 🔲 | 🔲 | 🔲 | |
+| [07](07-loading-skeletons.md) | Skeleton замість спінера | S | front | 01 (колонки) | ✅ | ✅ | ✅ | `TableSkeleton` — skeleton-рядки замість повноекранного спінера; layout shift зникає |
 | [08](08-select-all-across-pages.md) | Виділення всіх за фільтром | M | front+back | 05 (bulk-ендпоінт) | 🔲 | 🔲 | 🔲 | |
 | [09](09-async-reference-autocomplete.md) | Async-автокомпліт довідника | M | front+back | — | 🔲 | 🔲 | 🔲 | **закриває баг**: `useRemoteOptions` без `per_page` |
 | [10](10-undoable-save.md) | Undoable-збереження | M | front | — | 🔲 | 🔲 | 🔲 | у `admin` inline-PATCH уже оптимістичний з відкатом |
