@@ -4,6 +4,10 @@ import SelectCell from './cells/SelectCell'
 import BooleanCell from './cells/BooleanCell'
 import NumberCell from './cells/NumberCell'
 import PhoneListCell from './cells/PhoneListCell'
+import DateTimeCell from './cells/DateTimeCell'
+import BadgeCell from './cells/BadgeCell'
+import LinkCell from './cells/LinkCell'
+import ImageCell from './cells/ImageCell'
 import type { CellProps } from './types'
 
 // Реєстр компонентів комірки таблиці за їх "type" з конфігу колонок.
@@ -15,6 +19,10 @@ const registry = new Map<string, ComponentType<CellProps>>([
   ['boolean', BooleanCell],
   ['number', NumberCell],
   ['phone-list', PhoneListCell],
+  ['datetime', DateTimeCell],
+  ['badge', BadgeCell],
+  ['link', LinkCell],
+  ['image', ImageCell],
 ])
 
 export function registerCellType(type: string, component: ComponentType<CellProps>) {

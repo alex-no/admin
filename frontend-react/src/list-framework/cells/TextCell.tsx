@@ -1,8 +1,17 @@
 import type { CellProps } from '../types'
 
-export default function TextCell({ value, readonly, onChange }: CellProps) {
+export default function TextCell({ field, value, readonly, onChange }: CellProps) {
   if (readonly) {
-    return <span>{value ?? '—'}</span>
+    // maxWidth: довгий текст (повідомлення, опис) обрізається, повний — у title.
+    // Дзеркало Vue: cells/TextCell.vue.
+    if (field.maxWidth) {
+      return (
+        <div className="text-truncate" style={{ maxWidth: field.maxWidth }} title={value ?? ''}>
+          {value ?? field.emptyLabel ?? '—'}
+        </div>
+      )
+    }
+    return <span>{value ?? field.emptyLabel ?? '—'}</span>
   }
 
   return (

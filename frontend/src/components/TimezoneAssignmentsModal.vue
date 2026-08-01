@@ -156,8 +156,8 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import { useAuth } from '@/composables/useAuth'
-import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import BaseModal from './BaseModal.vue'
+import { useUndoableDelete } from '@/composables/useUndoableDelete'
 
 const { can, authHeaders } = useAuth()
 const { deleteWithUndo } = useUndoableDelete()
@@ -302,26 +302,29 @@ async function addAssignment() {
   }
 }
 
-async function deleteAssignment(asgn) {
+function deleteAssignment(asgn) {
+  const tzId = asgnTz.value.id
   const index = asgnList.value.findIndex(a => a.id === asgn.id)
   if (index === -1) return
-
   deleteWithUndo({
-    message: "Прив'язку видалено",
+    message: `Прив'язку «${asgn.name}» видалено`,
     remove: () => { asgnList.value.splice(index, 1) },
     restore: () => { asgnList.value.splice(index, 0, asgn) },
     commit: async () => {
       const res = await fetch(
-        `/api/admin/geography/timezones/${asgnTz.value.id}/assignments/${asgn.id}`,
+        `/api/admin/geography/timezones/${tzId}/assignments/${asgn.id}`,
         { method: 'DELETE', headers: authHeaders() }
       )
       if (!res.ok) {
-        const json = await res.json().catch(() => ({}))
+        const json = await res.json()
         throw new Error(json.message ?? 'Помилка')
       }
-      // Notify parent to update counter — лише після реального видалення на сервері.
-      window.dispatchEvent(new CustomEvent('timezone-assignment-deleted', { detail: { timezone_id: asgnTz.value.id } }))
+      // Лічильник у списку рахує сервер, тому подія — лише після реального
+      // видалення. Якби вона летіла з remove(), сторінка перечитала б список
+      // ще під час вікна undo і показала стару цифру, яка вже не оновиться.
+      window.dispatchEvent(new CustomEvent('timezone-assignment-deleted', { detail: { timezone_id: tzId } }))
     },
+    onCommitError: () => loadAssignments(),
   })
 }
 

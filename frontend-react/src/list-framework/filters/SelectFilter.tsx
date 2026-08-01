@@ -10,6 +10,8 @@ interface SelectFilterProps {
   optionsUrl?: string
   optionsValueKey?: string
   optionsLabelKey?: string
+  /** Підпис з кількох полів, напр. "{utc_offset} ({count})"; має пріоритет над optionsLabelKey */
+  optionsLabelTemplate?: string
   /** Порожня опція "Всі …". Дзеркало Vue-контракту, див. shared/page-configs/README.md */
   placeholderOption?: Option
   /** Підпис фільтра — fallback для порожньої опції */
@@ -38,6 +40,7 @@ export default function SelectFilter({
   optionsUrl,
   optionsValueKey,
   optionsLabelKey,
+  optionsLabelTemplate,
   placeholderOption,
   label,
   required,
@@ -59,6 +62,7 @@ export default function SelectFilter({
   const remote = useRemoteOptions(resolvedUrl, {
     valueKey: optionsValueKey,
     labelKey: optionsLabelKey,
+    labelTemplate: optionsLabelTemplate,
   })
 
   const list = optionsUrl ? remote.options : (options ?? [])
@@ -83,6 +87,22 @@ export default function SelectFilter({
     onChange(String(list[0].value))
   }, [required, defaultFirstOption, value, list])
 
+  // Довгий список зручніше читати розділами (напр. типи клієнтів в аналітиці).
+  // Розділ задається полем `group` у варіанті; без нього список лишається плоским.
+  // Дзеркало Vue: FilterSelect.vue → ungroupedOptions / groupedOptions.
+  const ungrouped = list.filter(o => !o.group)
+  const grouped: { label: string; options: Option[] }[] = []
+  const byLabel = new Map<string, { label: string; options: Option[] }>()
+  for (const opt of list) {
+    if (!opt.group) continue
+    if (!byLabel.has(opt.group)) {
+      const entry = { label: opt.group, options: [] as Option[] }
+      byLabel.set(opt.group, entry)
+      grouped.push(entry)
+    }
+    byLabel.get(opt.group)!.options.push(opt)
+  }
+
   return (
     <select
       className="form-select form-select-sm"
@@ -92,10 +112,20 @@ export default function SelectFilter({
       onChange={(e) => onChange(e.target.value)}
     >
       {!required && <option value={String(empty.value)}>{empty.label}</option>}
-      {list.map(opt => (
+      {ungrouped.map(opt => (
         <option key={String(opt.value)} value={opt.value}>
           {opt.label}
         </option>
+      ))}
+      {/* Варіанти з `group` збираються в <optgroup> у порядку першої появи */}
+      {grouped.map(g => (
+        <optgroup key={g.label} label={g.label}>
+          {g.options.map(opt => (
+            <option key={String(opt.value)} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </optgroup>
       ))}
     </select>
   )

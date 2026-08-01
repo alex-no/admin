@@ -2,6 +2,7 @@
 import FilterText from './filters/FilterText.vue'
 import FilterSelect from './filters/FilterSelect.vue'
 import FilterCheckbox from './filters/FilterCheckbox.vue'
+import FilterDate from './filters/FilterDate.vue'
 
 // Реєстр компонентів фільтра за їх "type" з JSON-конфігу.
 // Кастомні типи реєструються сторінкою через registerFilterType()
@@ -10,6 +11,7 @@ const registry = new Map([
   ['text', FilterText],
   ['select', FilterSelect],
   ['checkbox', FilterCheckbox],
+  ['date', FilterDate],
 ])
 
 export function registerFilterType(type, component) {

@@ -12,7 +12,7 @@ export default function SelectCell({ field, value, readonly, onChange }: CellPro
 
   if (readonly) {
     const found = options.find((o) => String(o.value) === String(value))
-    return <span>{found ? found.label : (value ?? '—')}</span>
+    return <span>{found ? found.label : (value ?? field.emptyLabel ?? '—')}</span>
   }
 
   return (

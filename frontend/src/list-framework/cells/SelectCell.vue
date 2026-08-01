@@ -29,6 +29,7 @@ const remote = props.field.optionsUrl
   ? useRemoteOptions(props.field.optionsUrl, {
       valueKey: props.field.optionsValueKey ?? 'id',
       labelKey: props.field.optionsLabelKey ?? 'name_uk',
+      labelTemplate: props.field.optionsLabelTemplate ?? null,
     })
   : null
 
@@ -37,6 +38,6 @@ const loading = computed(() => remote ? remote.loading.value : false)
 
 const currentLabel = computed(() => {
   const found = options.value.find(o => String(o.value) === String(props.modelValue))
-  return found ? found.label : (props.modelValue ?? '—')
+  return found ? found.label : (props.modelValue ?? props.field.emptyLabel ?? '—')
 })
 </script>

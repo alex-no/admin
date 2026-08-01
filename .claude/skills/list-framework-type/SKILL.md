@@ -1,6 +1,6 @@
 ---
 name: list-framework-type
-description: Add a new reusable cell type or filter type to frontend/src/list-framework itself (cellTypes.js / filterTypes.js), as opposed to just consuming an existing type in a new page's JSON config (that's the admin-data-page skill). Use when the built-in types (text/select/boolean/number/phone-list for cells; text/select/checkbox for filters) can't represent a column or filter a new page needs — e.g. a new structured value, a custom widget, a new remote-loaded control. Higher-stakes than adding a page: these registries are shared by every existing page through DataListPage.vue.
+description: Add a new reusable cell type or filter type to frontend/src/list-framework itself (cellTypes.js / filterTypes.js), as opposed to just consuming an existing type in a new page's JSON config (that's the admin-data-page skill). Use when the built-in types (text/select/boolean/number/datetime/badge/link/image/phone-list for cells; text/select/date/checkbox for filters) can't represent a column or filter a new page needs — e.g. a new structured value, a custom widget, a new remote-loaded control. Higher-stakes than adding a page: these registries are shared by every existing page through DataListPage.vue.
 ---
 
 # Extending list-framework's cell/filter type registry

@@ -4,6 +4,10 @@ import SelectCell from './cells/SelectCell.vue'
 import BooleanCell from './cells/BooleanCell.vue'
 import NumberCell from './cells/NumberCell.vue'
 import PhoneListCell from './cells/PhoneListCell.vue'
+import DateTimeCell from './cells/DateTimeCell.vue'
+import BadgeCell from './cells/BadgeCell.vue'
+import LinkCell from './cells/LinkCell.vue'
+import ImageCell from './cells/ImageCell.vue'
 
 // Реєстр компонентів комірки таблиці за їх "type" з JSON-конфігу.
 // Один компонент відповідає і за readonly, і за editable режим
@@ -14,6 +18,10 @@ const registry = new Map([
   ['boolean', BooleanCell],
   ['number', NumberCell],
   ['phone-list', PhoneListCell],
+  ['datetime', DateTimeCell],
+  ['badge', BadgeCell],
+  ['link', LinkCell],
+  ['image', ImageCell],
 ])
 
 export function registerCellType(type, component) {

@@ -1,6 +1,13 @@
 <!-- Copyright (c) 2026 Oleksandr Nosov. MIT License. -->
 <template>
-  <span v-if="readonly">{{ modelValue ?? '—' }}</span>
+  <!-- maxWidth: довгий текст (повідомлення, опис) обрізається, повний — у title -->
+  <div
+    v-if="readonly && field.maxWidth"
+    class="text-truncate"
+    :style="{ maxWidth: field.maxWidth }"
+    :title="modelValue ?? ''"
+  >{{ modelValue ?? field.emptyLabel ?? '—' }}</div>
+  <span v-else-if="readonly">{{ modelValue ?? field.emptyLabel ?? '—' }}</span>
   <input
     v-else
     :value="modelValue"

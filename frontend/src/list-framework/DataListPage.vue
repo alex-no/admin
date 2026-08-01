@@ -97,7 +97,9 @@
       <div v-if="selected.length > 0" class="alert alert-info d-flex align-items-center gap-2 flex-wrap mb-3">
         <span><strong>{{ selected.length }}</strong> обрано</span>
 
-        <select v-model="bulkField" class="form-select form-select-sm" style="width:auto">
+        <!-- Без жодної редагованої колонки (напр. сторінка лише з іменованими
+             діями) селект був би порожнім рядком «Змінити поле...» ні про що -->
+        <select v-if="editableColumns.length" v-model="bulkField" class="form-select form-select-sm" style="width:auto">
           <option value="">Змінити поле...</option>
           <option v-for="col in editableColumns" :key="col.key" :value="col.key">{{ col.label }}</option>
         </select>
@@ -174,7 +176,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in items" :key="row[rowKey]">
+              <tr v-for="row in items" :key="row[rowKey]" :class="rowClass ? rowClass(row) : ''">
                 <td>
                   <input
                     type="checkbox"
@@ -316,6 +318,12 @@ const props = defineProps({
   filterConfig: { type: Array, default: () => [] },
   columnsConfig: { type: Array, required: true },
   actions: { type: Array, default: () => [] },
+  // Сортування при першому відкритті, напр. [{ key: 'created_at', dir: 'DESC' }].
+  // Значення з URL має пріоритет — посилання відтворює саме те, що бачив автор.
+  defaultSort: { type: Array, default: () => [] },
+  // Клас рядка за його вмістом, напр. підсвітити критичні помилки.
+  // Функція, тому в JSON її бути не може — сторінка передає в коді.
+  rowClass: { type: Function, default: null },
   rowKey: { type: String, default: 'id' },
   perPage: { type: Number, default: 50 },
   // Мапи "ім'я типу з JSON" -> компонент, для field.type === 'custom'
@@ -337,7 +345,7 @@ for (const f of props.filterConfig) {
 
 // Мульти-сортування: масив [{ key, dir }], порядок елементів = пріоритет
 // (спочатку по type, потім по name — саме в такому порядку, як клікав користувач).
-const sortItems = ref([])
+const sortItems = ref(props.defaultSort.map((s) => ({ ...s })))
 
 // Кількість записів на сторінці — теж звичайний "фільтр" для useUrlFilters
 // (той самий generic-механізм: число в URL парситься само, без додаткової мапи).
@@ -608,6 +616,7 @@ async function ensureColumnOptionsLoaded() {
     .map((c) => useRemoteOptions(c.optionsUrl, {
       valueKey: c.optionsValueKey ?? 'id',
       labelKey: c.optionsLabelKey ?? 'name_uk',
+      labelTemplate: c.optionsLabelTemplate ?? null,
     }))
   const start = Date.now()
   while (pending.some((p) => p.loading.value) && Date.now() - start < 3000) {
@@ -628,6 +637,7 @@ function formatValueForExport(col, row) {
       ? useRemoteOptions(col.optionsUrl, {
           valueKey: col.optionsValueKey ?? 'id',
           labelKey: col.optionsLabelKey ?? 'name_uk',
+          labelTemplate: col.optionsLabelTemplate ?? null,
         }).options.value
       : (col.options ?? [])
     const found = options.find((o) => String(o.value) === String(v))
@@ -956,7 +966,19 @@ function resolveCellComponent(field) {
   return resolveCellType(field.type)
 }
 
-defineExpose({ reload: () => load(page.value) })
+/**
+ * Змінити значення фільтра ззовні — напр. клік по IP в комірці ставить цей IP
+ * у фільтр. Перезавантаження запускає той самий watch, що й ручна зміна поля.
+ */
+function setFilter(key, value) {
+  if (!(key in filters)) {
+    console.warn(`[list-framework] setFilter: фільтра "${key}" немає в конфігу`)
+    return
+  }
+  filters[key].value = value
+}
+
+defineExpose({ reload: () => load(page.value), setFilter })
 
 onMounted(() => {
   urlFilters.initFromUrl()

@@ -7,7 +7,7 @@ export default function NumberCell({ field, value, readonly, onChange }: CellPro
     return (
       <span className="d-inline-flex align-items-center gap-1">
         {value != null && icon}
-        {value ?? '—'}
+        {value ?? field.emptyLabel ?? '—'}
       </span>
     )
   }

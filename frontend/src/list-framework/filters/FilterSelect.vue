@@ -7,7 +7,11 @@
     :disabled="disabled"
     @change="$emit('update:modelValue', $event.target.value)"
   >
-    <option v-for="opt in options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+    <option v-for="opt in ungroupedOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+    <!-- Варіанти з `group` збираються в <optgroup> у порядку першої появи -->
+    <optgroup v-for="g in groupedOptions" :key="g.label" :label="g.label">
+      <option v-for="opt in g.options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+    </optgroup>
   </select>
 </template>
 
@@ -71,6 +75,7 @@ const remote = computed(() =>
     ? useRemoteOptions(resolvedUrl.value, {
         valueKey: props.field.optionsValueKey ?? 'id',
         labelKey: props.field.optionsLabelKey ?? 'name_uk',
+        labelTemplate: props.field.optionsLabelTemplate ?? null,
       })
     : null
 )
@@ -83,6 +88,25 @@ const realOptions = computed(() =>
 const options = computed(() =>
   isRequired.value ? realOptions.value : [placeholderOption.value, ...realOptions.value]
 )
+
+// Довгий список зручніше читати розділами (напр. типи клієнтів в аналітиці:
+// люди / пошуковики / SEO / моніторинг / погані боти). Розділ задається полем
+// `group` у варіанті; без нього все лишається як було — плоским списком.
+const ungroupedOptions = computed(() => options.value.filter((o) => !o.group))
+const groupedOptions = computed(() => {
+  const groups = []
+  const byLabel = new Map()
+  for (const opt of options.value) {
+    if (!opt.group) continue
+    if (!byLabel.has(opt.group)) {
+      const entry = { label: opt.group, options: [] }
+      byLabel.set(opt.group, entry)
+      groups.push(entry)
+    }
+    byLabel.get(opt.group).options.push(opt)
+  }
+  return groups
+})
 const loading = computed(() => (remote.value ? remote.value.loading.value : false))
 
 // Батько не обраний — вибирати нема з чого; або довідник ще вантажиться

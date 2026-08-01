@@ -13,6 +13,7 @@ import Pagination from './Pagination'
 import SortIcon from './SortIcon'
 import SearchFilter from '../filters/SearchFilter'
 import SelectFilter from '../filters/SelectFilter'
+import DateFilter from '../filters/DateFilter'
 import type { DataTableProps, DataTableHandle, ColumnConfig, ActionConfig } from '../types'
 
 const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable({
@@ -31,6 +32,8 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
   headerActions,
   rowKey = 'id',
   defaultPerPage = 50,
+  defaultSort,
+  rowClassName,
   onRowUpdated,
 }: DataTableProps, ref) {
   const {
@@ -70,12 +73,13 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
     apiBulk,
     filterConfig,
     defaultPerPage,
+    defaultSort,
     rowKey,
     onRowUpdated,
   })
 
   // Сторінка може перезавантажити список після збереження в картці (як listRef.reload() у Vue)
-  useImperativeHandle(ref, () => ({ reload }), [reload])
+  useImperativeHandle(ref, () => ({ reload, setFilter }), [reload, setFilter])
 
   // ── Збережені фільтри ────────────────────────────────────────────────────
   const { presets, save: savePreset, remove: removePreset } = useSavedFilters(apiList)
@@ -278,6 +282,17 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
       )
     }
 
+    if (f.type === 'date') {
+      return (
+        <DateFilter
+          key={f.key}
+          value={filters[f.key] || ''}
+          onChange={(v) => setFilter(f.key, v)}
+          label={f.label}
+        />
+      )
+    }
+
     if (f.type === 'select' && (f.options || f.optionsUrl)) {
       return (
         <SelectFilter
@@ -288,6 +303,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
           optionsUrl={f.optionsUrl}
           optionsValueKey={f.optionsValueKey}
           optionsLabelKey={f.optionsLabelKey}
+          optionsLabelTemplate={f.optionsLabelTemplate}
           placeholderOption={f.placeholderOption}
           label={f.label}
           required={f.required}
@@ -476,17 +492,21 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
             <div className="alert alert-info d-flex align-items-center gap-2 flex-wrap mb-3">
               <span><strong>{selected.length}</strong> обрано</span>
 
-              <select
-                value={bulkField}
-                onChange={(e) => { setBulkField(e.target.value); setBulkValue(null) }}
-                className="form-select form-select-sm"
-                style={{ width: 'auto' }}
-              >
-                <option value="">Змінити поле...</option>
-                {editableColumns.map(col => (
-                  <option key={col.key} value={col.key}>{col.label}</option>
-                ))}
-              </select>
+              {/* Без жодної редагованої колонки (напр. сторінка лише з іменованими
+                  діями) селект був би порожнім рядком «Змінити поле...» ні про що */}
+              {editableColumns.length > 0 && (
+                <select
+                  value={bulkField}
+                  onChange={(e) => { setBulkField(e.target.value); setBulkValue(null) }}
+                  className="form-select form-select-sm"
+                  style={{ width: 'auto' }}
+                >
+                  <option value="">Змінити поле...</option>
+                  {editableColumns.map(col => (
+                    <option key={col.key} value={col.key}>{col.label}</option>
+                  ))}
+                </select>
+              )}
 
               {bulkFieldConfig && BulkCell && (
                 <BulkCell
@@ -573,7 +593,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                 </thead>
                 <tbody>
                   {items.map(row => (
-                    <tr key={row[rowKey]}>
+                    <tr key={row[rowKey]} className={rowClassName ? rowClassName(row) : undefined}>
                       <td>
                         <input
                           type="checkbox"

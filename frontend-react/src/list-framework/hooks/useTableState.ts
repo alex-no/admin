@@ -49,6 +49,7 @@ interface UseTableStateOptions {
   apiBulk?: string
   filterConfig?: FilterConfig[]
   defaultPerPage?: number
+  defaultSort?: SortItem[]
   rowKey?: string
   /** Рядок успішно змінено інлайн — щоб сторінка могла оновити відкриту картку */
   onRowUpdated?: (row: any) => void
@@ -61,6 +62,7 @@ export function useTableState({
   apiBulk,
   filterConfig = [],
   defaultPerPage = 50,
+  defaultSort = [],
   rowKey = 'id',
   onRowUpdated,
 }: UseTableStateOptions) {
@@ -74,9 +76,11 @@ export function useTableState({
   const [page, setPage] = useState(() => readFiltersFromUrl({ page: 1 }).page)
   const [perPage, setPerPage] = useState(defaultPerPage)
   const [totalPages, setTotalPages] = useState(0)
-  const [sortItems, setSortItems] = useState<SortItem[]>(
-    () => readMultiSortFromUrl() as SortItem[]
-  )
+  const [sortItems, setSortItems] = useState<SortItem[]>(() => {
+    // URL має пріоритет над defaultSort — посилання відтворює побачене
+    const fromUrl = readMultiSortFromUrl() as SortItem[]
+    return fromUrl.length ? fromUrl : defaultSort.map(s => ({ ...s }))
+  })
   const [filters, setFilters] = useState<Record<string, any>>({})
   const [selected, setSelected] = useState<(string | number)[]>([])
   const [reloadToken, setReloadToken] = useState(0)
@@ -422,6 +426,7 @@ export function useTableState({
             remoteOptions.set(c.key, await fetchOptions(c.optionsUrl!, {
               valueKey: c.optionsValueKey,
               labelKey: c.optionsLabelKey,
+              labelTemplate: c.optionsLabelTemplate,
             }))
           })
       )

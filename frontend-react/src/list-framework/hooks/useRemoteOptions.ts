@@ -8,6 +8,11 @@ import type { Option } from '../types'
 // самий довідник із іншими valueKey/labelKey пішов би другим запитом.
 const cache = new Map<string, Promise<any[]>>()
 
+// "{utc_offset} ({count})" -> "+03:00 (12)". Дзеркало Vue: composables/useRemoteOptions.js
+function formatLabel(template: string, row: any): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) => row[key] ?? '')
+}
+
 function fetchRows(url: string): Promise<any[]> {
   if (!cache.has(url)) {
     cache.set(
@@ -29,23 +34,23 @@ function fetchRows(url: string): Promise<any[]> {
  */
 export function fetchOptions(
   url: string,
-  opts: { valueKey?: string; labelKey?: string } = {}
+  opts: { valueKey?: string; labelKey?: string; labelTemplate?: string } = {}
 ): Promise<Option[]> {
-  const { valueKey = 'id', labelKey = 'name_uk' } = opts
+  const { valueKey = 'id', labelKey = 'name_uk', labelTemplate } = opts
 
   return fetchRows(url).then((rows) =>
     rows.map((item: any) => ({
       value: item[valueKey],
-      label: item[labelKey],
+      label: labelTemplate ? formatLabel(labelTemplate, item) : item[labelKey],
     }))
   )
 }
 
 export function useRemoteOptions(
   url: string | undefined,
-  opts: { valueKey?: string; labelKey?: string } = {}
+  opts: { valueKey?: string; labelKey?: string; labelTemplate?: string } = {}
 ) {
-  const { valueKey = 'id', labelKey = 'name_uk' } = opts
+  const { valueKey = 'id', labelKey = 'name_uk', labelTemplate } = opts
   const [options, setOptions] = useState<Option[]>([])
   // Сирі рядки відповіді — потрібні там, де мало value/label (напр. модалка
   // фільтрує райони по region_in_area_id). Дзеркало Vue: `rows` у композаблі.
@@ -61,14 +66,19 @@ export function useRemoteOptions(
     fetchRows(url).then((list) => {
       if (!alive) return
       setRows(list)
-      setOptions(list.map((item: any) => ({ value: item[valueKey], label: item[labelKey] })))
+      setOptions(
+        list.map((item: any) => ({
+          value: item[valueKey],
+          label: labelTemplate ? formatLabel(labelTemplate, item) : item[labelKey],
+        }))
+      )
       setLoading(false)
     })
 
     return () => {
       alive = false
     }
-  }, [url, valueKey, labelKey])
+  }, [url, valueKey, labelKey, labelTemplate])
 
   return { options, rows, loading }
 }

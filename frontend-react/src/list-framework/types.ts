@@ -12,6 +12,8 @@ export interface PaginatedResponse<T> {
 export interface Option {
   value: any
   label: string
+  /** Розділ у випадаючому списку (<optgroup>); без нього — плоский список */
+  group?: string
 }
 
 export interface ColumnConfig {
@@ -44,6 +46,8 @@ export interface ColumnConfig {
   optionsUrl?: string
   optionsValueKey?: string
   optionsLabelKey?: string
+  /** Підпис з кількох полів довідника, напр. "{utc_offset} ({count})" — має пріоритет над optionsLabelKey */
+  optionsLabelTemplate?: string
   /** number: обмеження вводу */
   min?: number
   max?: number
@@ -53,6 +57,22 @@ export interface ColumnConfig {
   /** boolean: підписи станів */
   trueLabel?: string
   falseLabel?: string
+  /** text: обрізати до цієї ширини, повний текст — у title (напр. '400px') */
+  maxWidth?: string
+  /**
+   * Що показувати замість «—», коли значення порожнє: іноді порожньо саме по собі
+   * щось означає (порожній рік закінчення випуску = «н.в.», модель ще випускають).
+   * Підтримують text, number, select, badge, link.
+   */
+  emptyLabel?: string
+  /** image: сторона мініатюри, напр. '40px' (за замовчуванням 40px) */
+  imageSize?: string
+  /** datetime: без часу, лише дата */
+  dateOnly?: boolean
+  /** badge: колір Bootstrap на значення, напр. { create: 'success' } */
+  variants?: Record<string, string>
+  /** badge: колір, якщо у variants збігу немає */
+  variant?: string
   /** Довільний рендер (має пріоритет нижче за `type`) */
   format?: (value: any, row: any) => string | React.ReactNode
 }
@@ -68,7 +88,7 @@ export interface CellProps {
 export interface FilterConfig {
   key: string
   /** 'text' — канонічна назва зі спільного конфіга; 'search' — псевдонім для сумісності */
-  type: 'text' | 'search' | 'select' | 'date-range' | 'checkbox'
+  type: 'text' | 'search' | 'select' | 'date' | 'date-range' | 'checkbox'
   placeholder?: string
   label?: string
   /** Статичні варіанти — **без** порожнього елемента, його додає рендерер */
@@ -77,6 +97,8 @@ export interface FilterConfig {
   optionsUrl?: string
   optionsValueKey?: string
   optionsLabelKey?: string
+  /** Підпис з кількох полів довідника, напр. "{utc_offset} ({count})" — має пріоритет над optionsLabelKey */
+  optionsLabelTemplate?: string
   /** Порожня опція "Всі …"; якщо не задана — { value: '', label: label ?? 'Всі' } */
   placeholderOption?: Option
   /**
@@ -167,9 +189,11 @@ export interface TableState {
   selected: (string | number)[]
 }
 
-/** Імперативний API таблиці (аналог defineExpose({ reload }) у Vue) */
+/** Імперативний API таблиці (аналог defineExpose у Vue) */
 export interface DataTableHandle {
   reload: () => void
+  /** Змінити значення фільтра ззовні — напр. клік по IP в комірці */
+  setFilter: (key: string, value: any) => void
 }
 
 export interface DataTableProps {
@@ -198,6 +222,17 @@ export interface DataTableProps {
   headerActions?: React.ReactNode
   rowKey?: string
   defaultPerPage?: number
+  /**
+   * Сортування при першому відкритті, напр. [{ key: 'created_at', dir: 'desc' }].
+   * Значення з URL має пріоритет — посилання відтворює саме те, що бачив автор.
+   */
+  defaultSort?: SortItem[]
+  /**
+   * Клас рядка за його вмістом, напр. підсвітити критичні помилки.
+   * Функція, тому в JSON її бути не може — сторінка передає в коді.
+   * Дзеркало Vue: проп rowClass.
+   */
+  rowClassName?: (row: any) => string
   /** Рядок успішно змінено інлайн — щоб сторінка могла оновити відкриту картку */
   onRowUpdated?: (row: any) => void
 }
