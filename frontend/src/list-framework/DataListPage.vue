@@ -935,23 +935,25 @@ function clearSelection() {
   bulkValue.value = null
 }
 
-// Той самий PATCH /{id}, що й для inline-редагування — тут просто по черзі
-// (не паралельно: SQLite-подібні бекенди погано переносять пачку одночасних
-// записів) для кожного вибраного id.
+// Використовує bulk-ендпоінт для одночасного оновлення обраного поля у всіх
+// вибраних записах, замість N окремих PATCH запитів.
 async function applyBulkUpdate() {
-  if (!bulkFieldConfig.value || !props.apiUpdate || !selected.value.length) return
+  if (!bulkFieldConfig.value || !props.apiBulk || !selected.value.length) return
   bulkApplying.value = true
   try {
-    for (const id of selected.value) {
-      const res = await fetch(`${props.apiUpdate}/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', ...auth.authHeaders() },
-        body: JSON.stringify({ [bulkField.value]: bulkValue.value }),
-      })
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}))
-        throw new Error(json.message ?? `Помилка оновлення запису #${id}`)
-      }
+    const res = await fetch(props.apiBulk, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...auth.authHeaders() },
+      body: JSON.stringify({
+        action: 'update',
+        field: bulkField.value,
+        value: bulkValue.value,
+        ids: selected.value,
+      }),
+    })
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}))
+      throw new Error(json.message ?? 'Помилка масового оновлення')
     }
     clearSelection()
     await load(page.value)
@@ -962,8 +964,7 @@ async function applyBulkUpdate() {
   }
 }
 
-// Іменована масова дія — одним запитом на bulk-роут (на відміну від
-// applyBulkUpdate, який шле PATCH на кожен id). Undo тут немає навмисно:
+// Іменована масова дія (activate/deactivate/archive тощо). Undo тут немає навмисно:
 // activate/deactivate не деструктивні й скасовуються зворотною дією.
 async function applyNamedBulk(action) {
   if (!props.apiBulk || !selected.value.length) return

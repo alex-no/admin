@@ -331,29 +331,28 @@ export function useTableState({
     })
   }, [apiDelete, rowKey, items])
 
-  // Масова зміна одного поля: той самий PATCH /{id}, що й для inline-редагування,
-  // але по черзі — SQLite-подібні бекенди погано переносять пачку одночасних записів.
+  // Використовує bulk-ендпоінт для одночасного оновлення обраного поля у всіх
+  // вибраних записах, замість N окремих PATCH запитів.
   const applyBulkUpdate = useCallback(async (field: string, value: any) => {
-    if (!apiUpdate || selected.length === 0) return
+    if (!apiBulk || selected.length === 0) return
     setBulkApplying(true)
     try {
-      for (const id of selected) {
-        const url = apiUpdate.includes('{id}')
-          ? apiUpdate.replace('{id}', String(id))
-          : `${apiUpdate}/${id}`
-        await apiPatch(url, { [field]: value })
-      }
+      await apiPost(apiBulk, {
+        action: 'update',
+        field,
+        value,
+        ids: selected,
+      })
       setSelected([])
       reload()
     } catch (err) {
-      notify(err instanceof Error ? err.message : 'Помилка оновлення', { type: 'error' })
+      notify(err instanceof Error ? err.message : 'Помилка масового оновлення', { type: 'error' })
     } finally {
       setBulkApplying(false)
     }
-  }, [apiUpdate, selected, reload])
+  }, [apiBulk, selected, reload])
 
-  // Іменована масова дія — одним запитом на bulk-роут (на відміну від
-  // applyBulkUpdate, який шле PATCH на кожен id). Undo тут немає навмисно:
+  // Іменована масова дія (activate/deactivate/archive тощо). Undo тут немає навмисно:
   // activate/deactivate не деструктивні й скасовуються зворотною дією.
   const applyBulkAction = useCallback(async (action: string, label: string) => {
     if (!apiBulk || selected.length === 0) return
