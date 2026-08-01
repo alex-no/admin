@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import menuConfig from '@/config/menu.json'
+import { findMenuLocation } from '@/utils/menuLocation'
 
 interface MenuItem {
   label: string
@@ -35,9 +36,9 @@ export default function TopNav() {
     s => can(s.permission) || s.items.some(i => can(i.permission))
   )
 
-  const activeSection = visibleMenu.find(s =>
-    s.items.some(i => location.pathname.startsWith(i.to))
-  )?.id || null
+  // Через findMenuLocation, а не голий startsWith: `/sto-managers` збігався б із
+  // `/sto` і підсвічував чужий розділ (див. utils/menuLocation.ts).
+  const activeSection = findMenuLocation(location.pathname)?.section.id ?? null
 
   const handleLogout = async () => {
     logout()

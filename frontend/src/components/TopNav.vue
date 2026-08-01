@@ -78,6 +78,7 @@ import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import menu from '@/config/menu.json'
+import { findMenuLocation } from '@/utils/menuLocation'
 
 const auth   = useAuth()
 const route  = useRoute()
@@ -90,13 +91,9 @@ const visibleMenu = computed(() =>
   menu.filter(s => auth.can(s.permission))
 )
 
-const activeSection = computed(() => {
-  const path = route.path
-  for (const s of menu) {
-    if (s.items.some(i => path.startsWith(i.to))) return s.id
-  }
-  return null
-})
+// Через findMenuLocation, а не голий startsWith: `/sto-managers` збігався б із
+// `/sto` і підсвічував чужий розділ (див. utils/menuLocation.js).
+const activeSection = computed(() => findMenuLocation(route.path)?.section.id ?? null)
 
 async function doLogout() {
   auth.logout()

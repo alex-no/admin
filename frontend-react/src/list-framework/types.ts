@@ -34,6 +34,12 @@ export interface ColumnConfig {
    * назву (`country_id` → `country_name`). Сортування лишається по `key`.
    */
   displayKey?: string
+  /**
+   * На полі є UNIQUE-індекс у БД. Впливає лише на клонування: текстове поле
+   * копіюється з суфіксом « (копія)», решта лишається порожньою — інакше
+   * збереження копії впало б на duplicate key.
+   */
+  unique?: boolean
   /** false = колонку не можна приховати через ColumnSelector (id, назва, дії) */
   hideable?: boolean
   /** Прихована при першому відкритті — лише якщо адмін ще нічого не налаштовував */
@@ -222,6 +228,9 @@ export interface DataTableProps {
   headerActions?: React.ReactNode
   rowKey?: string
   defaultPerPage?: number
+  /** Порожній список: «Ще немає {entityLabel}» — родовий відмінок множини */
+  entityLabel?: string
+  emptyIcon?: string
   /**
    * Сортування при першому відкритті, напр. [{ key: 'created_at', dir: 'desc' }].
    * Значення з URL має пріоритет — посилання відтворює саме те, що бачив автор.

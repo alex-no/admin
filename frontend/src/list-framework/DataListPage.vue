@@ -212,8 +212,16 @@
                 </td>
               </tr>
               <tr v-if="!items.length">
-                <td :colspan="visibleColspan" class="text-center text-muted py-4">
-                  Немає даних
+                <!-- p-0: власний padding у EmptyState, інакше подвійний -->
+                <td :colspan="visibleColspan" class="p-0">
+                  <EmptyState
+                    :filtered="hasActiveFilters"
+                    :entity-label="entityLabel"
+                    :can-create="canCreate"
+                    :icon="emptyIcon"
+                    @create="openCreate"
+                    @reset-filters="resetFilters"
+                  />
                 </td>
               </tr>
             </tbody>
@@ -255,7 +263,12 @@
       :max-height="700"
       :close-on-backdrop="false"
     >
-      <template #title><h5 class="mb-0">Створення запису</h5></template>
+      <template #title>
+        <h5 class="mb-0">
+          Створення запису
+          <span v-if="cloneSourceId" class="text-muted fw-normal fs-6">(копія #{{ cloneSourceId }})</span>
+        </h5>
+      </template>
 
       <div class="px-1">
         <div v-for="col in createColumns" :key="col.key" class="mb-3">
@@ -284,6 +297,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useAuth } from '@/composables/useAuth'
+import EmptyState from '@/components/EmptyState.vue'
 import { useNotify } from '@/composables/useNotify'
 import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import { useUrlFilters } from '@/composables/useUrlFilters'
@@ -329,6 +343,9 @@ const props = defineProps({
   // Мапи "ім'я типу з JSON" -> компонент, для field.type === 'custom'
   customFilterTypes: { type: Object, default: () => ({}) },
   customCellTypes: { type: Object, default: () => ({}) },
+  // Порожній список: «Ще немає {entityLabel}» — родовий відмінок множини
+  entityLabel: { type: String, default: 'записів' },
+  emptyIcon: { type: String, default: 'bi-inbox' },
 })
 
 const emit = defineEmits(['row-action'])
@@ -416,6 +433,29 @@ const {
 const visibleColumns = computed(() => props.columnsConfig.filter((c) => isColumnVisible(c.key)))
 
 // +1 — колонка чекбоксів; ще +1, якщо є колонка дій рядка
+/**
+ * Чи звузив користувач вибірку. Фільтри з `required`/`defaultFirstOption`
+ * не рахуються: їх значення проставляє сам список (перша країна тощо), і це не
+ * «фільтр, який ввів адмін» — інакше порожня вибірка завжди виглядала б як
+ * «нічого не знайдено», хоча записів і справді може не бути.
+ */
+const hasActiveFilters = computed(() =>
+  props.filterConfig.some((f) => {
+    if (f.required || f.defaultFirstOption) return false
+    const def = f.default ?? (f.type === 'checkbox' ? false : '')
+    const v = filters[f.key].value
+    return v !== def && v !== '' && v !== null && v !== undefined && v !== false
+  })
+)
+
+/** Скидання фільтрів разом з URL — сторінка повертається до першої. */
+function resetFilters() {
+  for (const f of props.filterConfig) {
+    if (f.required || f.defaultFirstOption) continue
+    filters[f.key].value = f.default ?? (f.type === 'checkbox' ? false : '')
+  }
+}
+
 const visibleColspan = computed(
   () => visibleColumns.value.length + 1 + (props.actions.length ? 1 : 0)
 )
@@ -523,8 +563,39 @@ function blankForm() {
   return form
 }
 
+// Джерело копії — лише для заголовка. Обовʼязково обнуляється у звичайному
+// openCreate(), інакше наступне створення показало б «(копія #42)».
+const cloneSourceId = ref(null)
+
 function openCreate() {
+  cloneSourceId.value = null
   createForm.value = blankForm()
+  createErrors.value = {}
+  createOpen.value = true
+}
+
+/**
+ * Клонування (react-admin: CloneButton) — той самий create-флоу, лише форма
+ * заповнена з рядка. Нового ендпоінта не треба: іде звичайний POST.
+ *
+ * Переносяться тільки поля форми створення (createFields) — у рядку є ще й
+ * приєднані з бекенду (`country_name` тощо), яким у create-ендпоінті не місце.
+ * Колонка з `"unique": true` не копіюється як є: текст отримує суфікс, решта
+ * лишається порожньою — інакше збереження впало б на duplicate key.
+ */
+function openClone(row) {
+  const form = blankForm()
+  for (const col of createColumns.value) {
+    const v = row[col.key]
+    if (v === undefined || v === null) continue
+    if (col.unique) {
+      form[col.key] = col.type === 'text' || col.type === undefined ? `${v} (копія)` : form[col.key]
+      continue
+    }
+    form[col.key] = v
+  }
+  cloneSourceId.value = row[props.rowKey]
+  createForm.value = form
   createErrors.value = {}
   createOpen.value = true
 }
@@ -953,6 +1024,10 @@ function isActionVisible(action, row) {
 
 function handleAction(action, row) {
   if (action.type === 'delete') return handleDelete(row)
+  // `clone` обробляє саме ядро — коли створення йде його ж вбудованою формою.
+  // Якщо форма створення в сторінки своя (apiCreate не заданий), подія летить
+  // назовні, і сторінка відкриває власну модалку з тим самим рядком.
+  if (action.type === 'clone' && canCreate.value) return openClone(row)
   emit('row-action', { type: action.type, row, tab: action.tab ?? null })
 }
 

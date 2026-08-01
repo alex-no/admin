@@ -7,6 +7,7 @@ import { notify } from '@/hooks/useNotify'
 import { apiPost } from '@/utils/api'
 import type { ApiError } from '@/utils/api'
 import BaseModal from '@/components/BaseModal'
+import EmptyState from '@/components/EmptyState'
 import { resolveCellType } from '../cellTypes'
 import ColumnSelector from './ColumnSelector'
 import Pagination from './Pagination'
@@ -32,6 +33,8 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
   headerActions,
   rowKey = 'id',
   defaultPerPage = 50,
+  entityLabel = 'записів',
+  emptyIcon = 'bi-inbox',
   defaultSort,
   rowClassName,
   onRowUpdated,
@@ -151,6 +154,26 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
   // Форма збирається з конфіга: поля — createFields, контроли — з реєстру
   // cellTypes (той самий, що малює комірки таблиці). Дзеркало Vue-версії.
   const canCreate = Boolean(apiCreate) && (!createPermission || can(createPermission))
+
+  /**
+   * Чи звузив користувач вибірку. Фільтри з `required`/`defaultFirstOption`
+   * не рахуються: їх значення проставляє сам список, і це не «фільтр, який ввів
+   * адмін». Дзеркало Vue: DataListPage.vue → hasActiveFilters.
+   */
+  const hasActiveFilters = filterConfig.some(f => {
+    if (f.required || f.defaultFirstOption) return false
+    const def = f.default ?? (f.type === 'checkbox' ? false : '')
+    const v = filters[f.key]
+    return v !== def && v !== '' && v !== null && v !== undefined && v !== false
+  })
+
+  /** Скидання фільтрів разом з URL — сторінка повертається до першої. */
+  const resetFilters = () => {
+    for (const f of filterConfig) {
+      if (f.required || f.defaultFirstOption) continue
+      setFilter(f.key, f.default ?? (f.type === 'checkbox' ? false : ''))
+    }
+  }
   const createColumns = createFields
     .map(key => columnsConfig.find(c => c.key === key))
     .filter((c): c is ColumnConfig => Boolean(c))
@@ -158,6 +181,8 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
   const [createOpen, setCreateOpen] = useState(false)
   const [creating, setCreating] = useState(false)
   const [createForm, setCreateForm] = useState<Record<string, any>>({})
+  // Джерело копії — лише для заголовка; обнуляється у звичайному openCreate().
+  const [cloneSourceId, setCloneSourceId] = useState<any>(null)
   const [createErrors, setCreateErrors] = useState<Record<string, string>>({})
 
   const blankForm = () => {
@@ -173,7 +198,35 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
   }
 
   const openCreate = () => {
+    setCloneSourceId(null)
     setCreateForm(blankForm())
+    setCreateErrors({})
+    setCreateOpen(true)
+  }
+
+  /**
+   * Клонування (react-admin: CloneButton) — той самий create-флоу, лише форма
+   * заповнена з рядка. Нового ендпоінта не треба: іде звичайний POST.
+   * Дзеркало Vue: DataListPage.vue → openClone.
+   *
+   * Переносяться тільки поля форми створення (createFields) — у рядку є ще й
+   * приєднані з бекенду, яким у create-ендпоінті не місце. Колонка з
+   * `"unique": true` не копіюється як є: текст отримує суфікс, решта лишається
+   * порожньою — інакше збереження впало б на duplicate key.
+   */
+  const openClone = (row: any) => {
+    const form = blankForm()
+    for (const col of createColumns) {
+      const v = row[col.key]
+      if (v === undefined || v === null) continue
+      if (col.unique) {
+        if (col.type === 'text' || col.type === undefined) form[col.key] = `${v} (копія)`
+        continue
+      }
+      form[col.key] = v
+    }
+    setCloneSourceId(row[rowKey])
+    setCreateForm(form)
     setCreateErrors({})
     setCreateOpen(true)
   }
@@ -241,6 +294,11 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
     // Підтвердження не питаємо навмисно — замість нього 5 секунд на "Скасувати" в тості.
     if (action.type === 'delete' && apiDelete && !action.handler) {
       deleteRow(row)
+      return
+    }
+    // `clone` обробляє сама таблиця — коли створення йде її ж вбудованою формою.
+    if (action.type === 'clone' && canCreate && !action.handler) {
+      openClone(row)
       return
     }
     action.handler?.(row)
@@ -408,7 +466,14 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
           minHeight={280}
           maxHeight={700}
           closeOnBackdrop={false}
-          title={<h5 className="mb-0">Створення запису</h5>}
+          title={
+            <h5 className="mb-0">
+              Створення запису
+              {cloneSourceId != null && (
+                <span className="text-muted fw-normal fs-6"> (копія #{cloneSourceId})</span>
+              )}
+            </h5>
+          }
           footer={
             <>
               <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setCreateOpen(false)}>
@@ -627,11 +692,19 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                   ))}
                   {items.length === 0 && (
                     <tr>
+                      {/* p-0: власний padding у EmptyState, інакше подвійний */}
                       <td
                         colSpan={visibleColumns.length + 1 + (visibleActions.length ? 1 : 0)}
-                        className="text-center text-muted py-4"
+                        className="p-0"
                       >
-                        Немає даних
+                        <EmptyState
+                          filtered={hasActiveFilters}
+                          entityLabel={entityLabel}
+                          canCreate={canCreate}
+                          icon={emptyIcon}
+                          onCreate={() => setCreateOpen(true)}
+                          onResetFilters={resetFilters}
+                        />
                       </td>
                     </tr>
                   )}
