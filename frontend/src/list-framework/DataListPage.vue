@@ -87,10 +87,7 @@
       <button type="button" class="btn btn-sm btn-outline-secondary" @click="showSaveFilterInput = false">Скасувати</button>
     </div>
 
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status"></div>
-    </div>
-    <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
+    <div v-if="error" class="alert alert-danger">{{ error }}</div>
 
     <div v-else>
       <!-- Масові операції — з'являються, коли вибрано хоч один рядок -->
@@ -175,7 +172,15 @@
                 <th v-if="actions.length" style="width:100px"></th>
               </tr>
             </thead>
-            <tbody>
+
+            <TableSkeleton
+              v-if="loading"
+              :rows="skeletonRows"
+              :columns="skeletonColumns"
+              :has-checkbox="true"
+            />
+
+            <tbody v-else>
               <tr v-for="row in items" :key="row[rowKey]" :class="rowClass ? rowClass(row) : ''">
                 <td>
                   <input
@@ -298,6 +303,7 @@
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 import EmptyState from '@/components/EmptyState.vue'
+import TableSkeleton from '@/components/TableSkeleton.vue'
 import { useNotify } from '@/composables/useNotify'
 import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import { useUrlFilters } from '@/composables/useUrlFilters'
@@ -431,6 +437,17 @@ const {
 } = useColumnPrefs(props.apiList, props.columnsConfig)
 
 const visibleColumns = computed(() => props.columnsConfig.filter((c) => isColumnVisible(c.key)))
+
+// Skeleton: малюємо стільки рядків, скільки запитали, але не більше 15
+// (250 skeleton-рядків безглуздо й дорого для рендера).
+const skeletonRows = computed(() => Math.min(perPage.value, 15))
+const skeletonColumns = computed(() =>
+  visibleColumns.value.map((c) => ({
+    width: c.width,
+    align: c.align,
+    skeletonWidth: c.skeletonWidth,
+  }))
+)
 
 // +1 — колонка чекбоксів; ще +1, якщо є колонка дій рядка
 /**

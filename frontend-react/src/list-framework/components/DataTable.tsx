@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useState, useMemo } from 'react'
 import { useTableState } from '../hooks/useTableState'
 import { useColumnPrefs } from '../hooks/useColumnPrefs'
 import { useSavedFilters } from '@/hooks/useSavedFilters'
@@ -8,6 +8,7 @@ import { apiPost } from '@/utils/api'
 import type { ApiError } from '@/utils/api'
 import BaseModal from '@/components/BaseModal'
 import EmptyState from '@/components/EmptyState'
+import TableSkeleton from '@/components/TableSkeleton'
 import { resolveCellType } from '../cellTypes'
 import ColumnSelector from './ColumnSelector'
 import Pagination from './Pagination'
@@ -134,6 +135,17 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
   } = useColumnPrefs(apiList, columnsConfig)
 
   const visibleColumns = columnsConfig.filter(c => isColumnVisible(c.key))
+
+  // Skeleton: малюємо стільки рядків, скільки запитали, але не більше 15
+  const skeletonRows = Math.min(perPage, 15)
+  const skeletonColumns = useMemo(
+    () => visibleColumns.map(c => ({
+      width: c.width ? parseInt(c.width, 10) : undefined,
+      align: c.align === 'left' || c.align === 'right' ? c.align : undefined,
+      skeletonWidth: c.skeletonWidth,
+    })),
+    [visibleColumns]
+  )
 
   // Дії без права взагалі не показуємо — так само, як v-show у Vue-версії
   const { can } = useAuth()
@@ -537,20 +549,13 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
         </div>
       )}
 
-      {/* Loading */}
-      {loading && (
-        <div className="text-center py-5">
-          <div className="spinner-border text-primary" role="status"></div>
-        </div>
-      )}
-
       {/* Error */}
-      {error && !loading && (
+      {error && (
         <div className="alert alert-danger">{error}</div>
       )}
 
       {/* Table */}
-      {!loading && !error && (
+      {!error && (
         <>
           {/* Масові операції — з'являються, коли вибрано хоч один рядок */}
           {selected.length > 0 && (
@@ -656,7 +661,15 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                     {visibleActions.length > 0 && <th style={{ width: '100px' }}></th>}
                   </tr>
                 </thead>
-                <tbody>
+
+                {loading ? (
+                  <TableSkeleton
+                    rows={skeletonRows}
+                    columns={skeletonColumns}
+                    hasCheckbox={true}
+                  />
+                ) : (
+                  <tbody>
                   {items.map(row => (
                     <tr key={row[rowKey]} className={rowClassName ? rowClassName(row) : undefined}>
                       <td>
@@ -708,7 +721,8 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                       </td>
                     </tr>
                   )}
-                </tbody>
+                  </tbody>
+                )}
               </table>
             </div>
           </div>

@@ -79,6 +79,8 @@ export interface ColumnConfig {
   variants?: Record<string, string>
   /** badge: колір, якщо у variants збігу немає */
   variant?: string
+  /** Ширина skeleton плейсхолдера (напр. '60%' або '200px'); за замовчуванням '80%' */
+  skeletonWidth?: string
   /** Довільний рендер (має пріоритет нижче за `type`) */
   format?: (value: any, row: any) => string | React.ReactNode
 }
