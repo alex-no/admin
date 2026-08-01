@@ -125,6 +125,7 @@ export default function DataRegistry() {
         createFields={cfg.createFields}
         apiBulk={cfg.apiBulk}
         bulkActions={cfg.bulkActions as BulkActionConfig[]}
+        bulkEditableFields={cfg.bulkEditableFields}
         filterConfig={filterConfig as FilterConfig[]}
         columnsConfig={columnsConfig as ColumnConfig[]}
         actions={actions}

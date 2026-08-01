@@ -335,6 +335,9 @@ const props = defineProps({
   // кнопок немає — видалення пачкою працює окремо, через apiDelete з undo.
   apiBulk: { type: String, default: null },
   bulkActions: { type: Array, default: () => [] },
+  // Білий список полів для bulk-редагування (має збігатись із серверним BULK_EDITABLE).
+  // Якщо не заданий, показує всі editable колонки — але сервер може відхилити.
+  bulkEditableFields: { type: Array, default: () => [] },
   filterConfig: { type: Array, default: () => [] },
   columnsConfig: { type: Array, required: true },
   actions: { type: Array, default: () => [] },
@@ -412,7 +415,12 @@ function isColumnEditable(col) {
 
 // Той самий предикат, що й для комірок: інакше поле, закрите правами, лишилось би
 // доступним через "Змінити поле…" у масових операціях — і змінювалось би пачкою.
-const editableColumns = computed(() => props.columnsConfig.filter(isColumnEditable))
+// + фільтр по bulkEditableFields: серверний BULK_EDITABLE білий список.
+const editableColumns = computed(() => {
+  const cols = props.columnsConfig.filter(isColumnEditable)
+  if (!props.bulkEditableFields || props.bulkEditableFields.length === 0) return cols
+  return cols.filter(c => props.bulkEditableFields.includes(c.key))
+})
 const bulkFieldConfig = computed(() => editableColumns.value.find((c) => c.key === bulkField.value) ?? null)
 const deleteAction = computed(() => props.actions.find((a) => a.type === 'delete'))
 const canBulkDelete = computed(

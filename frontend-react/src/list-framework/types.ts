@@ -223,6 +223,11 @@ export interface DataTableProps {
    */
   apiBulk?: string
   bulkActions?: BulkActionConfig[]
+  /**
+   * Білий список полів для bulk-редагування (має збігатись із серверним BULK_EDITABLE).
+   * Якщо не заданий, показує всі editable колонки — але сервер може відхилити.
+   */
+  bulkEditableFields?: string[]
   filterConfig?: FilterConfig[]
   columnsConfig: ColumnConfig[]
   actions?: ActionConfig[]

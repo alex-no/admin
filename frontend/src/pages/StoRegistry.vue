@@ -12,6 +12,7 @@
       :create-fields="cfg.createFields"
       :api-bulk="cfg.apiBulk"
       :bulk-actions="cfg.bulkActions"
+      :bulk-editable-fields="cfg.bulkEditableFields"
       :filter-config="filterConfig"
       :columns-config="columnsConfig"
       :actions="cfg.actions"

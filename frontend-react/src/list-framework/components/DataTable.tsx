@@ -28,6 +28,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
   createFields = [],
   apiBulk,
   bulkActions = [],
+  bulkEditableFields = [],
   filterConfig = [],
   columnsConfig,
   actions = [],
@@ -265,7 +266,12 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
   // ── Масові операції ──────────────────────────────────────────────────────
   // Той самий предикат, що й для комірок: інакше поле, закрите правами, лишилось би
   // доступним через "Змінити поле…" у масових операціях — і змінювалось би пачкою.
-  const editableColumns = columnsConfig.filter(isColumnEditable)
+  // + фільтр по bulkEditableFields: серверний BULK_EDITABLE білий список.
+  const editableColumns = useMemo(() => {
+    const cols = columnsConfig.filter(isColumnEditable)
+    if (!bulkEditableFields || bulkEditableFields.length === 0) return cols
+    return cols.filter(c => bulkEditableFields.includes(c.key))
+  }, [columnsConfig, bulkEditableFields])
   const [bulkField, setBulkField] = useState('')
   const [bulkValue, setBulkValue] = useState<any>(null)
   const bulkFieldConfig = editableColumns.find(c => c.key === bulkField) ?? null

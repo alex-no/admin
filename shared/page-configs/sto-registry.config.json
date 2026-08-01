@@ -8,6 +8,7 @@
   "createPermission": "sto.create",
   "deletePermission": "sto.delete",
   "createFields": ["name_uk", "sto_type", "address"],
+  "bulkEditableFields": ["sto_type", "is_active", "country_id"],
   "bulkActions": [
     { "action": "activate", "label": "Активувати", "icon": "bi-check-circle", "variant": "outline-success", "permission": "sto.edit" },
     { "action": "deactivate", "label": "Деактивувати", "icon": "bi-slash-circle", "variant": "outline-secondary", "permission": "sto.edit" }
