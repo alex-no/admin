@@ -47,6 +47,18 @@ export default function DataRegistry() {
     setSearchParams(params, { replace: true })
   }
 
+  const handleTabChange = (tab: string) => {
+    setDetailTab(tab)
+    // Оновлюємо tab в URL
+    const params = new URLSearchParams(searchParams)
+    if (tab && tab !== 'general') {
+      params.set('tab', tab)
+    } else {
+      params.delete('tab')
+    }
+    setSearchParams(params, { replace: true })
+  }
+
   // Відновлення з URL при завантаженні або зміні ?detail=
   useEffect(() => {
     const detailId = searchParams.get('detail')
@@ -127,6 +139,7 @@ export default function DataRegistry() {
           initialTab={detailTab}
           onClose={closeDetail}
           onSaved={() => listRef.current?.reload()}
+          onTabChange={handleTabChange}
         />
       )}
     </div>

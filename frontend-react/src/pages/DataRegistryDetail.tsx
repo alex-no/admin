@@ -14,6 +14,8 @@ interface DataRegistryDetailProps {
   onClose: () => void
   /** Викликається після успішного збереження, щоб сторінка перезавантажила список */
   onSaved?: () => void
+  /** Викликається при зміні вкладки, щоб синхронізувати з URL */
+  onTabChange?: (tab: string) => void
 }
 
 const STO_TYPES = [
@@ -61,8 +63,14 @@ export default function DataRegistryDetail({
   initialTab = 'general',
   onClose,
   onSaved,
+  onTabChange,
 }: DataRegistryDetailProps) {
   const [activeTab, setActiveTab] = useState(initialTab)
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab)
+    onTabChange?.(tab)
+  }
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [form, setForm] = useState(() => formFromRow(row))
@@ -134,7 +142,7 @@ export default function DataRegistryDetail({
         <li key={tab.key} className="nav-item">
           <button
             className={`nav-link py-2 px-2 small text-nowrap ${activeTab === tab.key ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => handleTabChange(tab.key)}
           >
             <i className={`bi ${tab.icon} me-1`} />
             {tab.label}
