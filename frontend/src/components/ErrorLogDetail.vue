@@ -149,6 +149,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { authHeaders } from '@/utils/api'
 import { useNotify } from '@/composables/useNotify'
 
 const { notify } = useNotify()
@@ -165,10 +166,6 @@ const loading = ref(false)
 const error = ref('')
 const contextFormatted = ref(true)
 
-function authHeaders() {
-  const token = localStorage.getItem('admin_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
 
 async function load() {
   loading.value = true

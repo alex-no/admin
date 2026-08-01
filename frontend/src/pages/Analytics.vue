@@ -291,6 +291,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { authHeaders } from '@/utils/api'
 import { useNotify } from '../composables/useNotify'
 import { useUrlFilters } from '../composables/useUrlFilters'
 import { formatDate } from '../utils/date'
@@ -355,10 +356,6 @@ const isAllSelected = computed(() => {
   return items.value.length > 0 && items.value.every(row => selected.value.includes(row.id))
 })
 
-function authHeaders() {
-  const token = localStorage.getItem('admin_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
 
 async function load(p = 1) {
   loading.value = true

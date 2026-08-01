@@ -42,6 +42,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { authHeaders } from '@/utils/api'
 
 // Component state
 const visible = ref(false)
@@ -50,10 +51,6 @@ const cleaningUp = ref(false)
 const cleanupError = ref('')
 const cleanupSuccess = ref('')
 
-function authHeaders() {
-  const token = localStorage.getItem('admin_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
 
 async function doCleanup() {
   cleaningUp.value = true

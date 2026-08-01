@@ -120,6 +120,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { authHeaders } from '@/utils/api'
 import ListPageWrapper from '../components/ListPageWrapper.vue'
 import SortIcon from '../components/SortIcon.vue'
 import Pagination from '../components/Pagination.vue'
@@ -166,10 +167,6 @@ const { initFromUrl } = useUrlFilters({
 
 const totalPages = computed(() => Math.ceil(total.value / perPage.value))
 
-function authHeaders() {
-  const token = localStorage.getItem('admin_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
 
 async function load(p = 1) {
   loading.value = true

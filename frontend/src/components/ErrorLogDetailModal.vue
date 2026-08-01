@@ -170,6 +170,7 @@
 
 <script setup>
 import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { authHeaders } from '@/utils/api'
 import BaseModal from './BaseModal.vue'
 import { useNotify } from '@/composables/useNotify'
 
@@ -197,10 +198,6 @@ watch(visible, (val, wasVisible) => {
   }
 })
 
-function authHeaders() {
-  const token = localStorage.getItem('admin_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
 
 async function load() {
   loading.value = true

@@ -1,4 +1,4 @@
-function authHeaders() {
+export function authHeaders() {
   const token = localStorage.getItem('admin_token')
   return token ? { Authorization: `Bearer ${token}` } : {}
 }

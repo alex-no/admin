@@ -123,6 +123,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { authHeaders } from '@/utils/api'
 import BaseLayout from '../layouts/BaseLayout.vue'
 import TrendChart from '../components/TrendChart.vue'
 import PieChart from '../components/PieChart.vue'
@@ -197,10 +198,6 @@ const botCategoriesForChart = computed(() => {
   }))
 })
 
-function authHeaders() {
-  const token = localStorage.getItem('admin_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
 
 async function load() {
   loading.value = true
