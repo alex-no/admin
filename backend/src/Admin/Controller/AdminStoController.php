@@ -64,6 +64,9 @@ final readonly class AdminStoController
     /** Стеля пачки — та сама, що й максимальний per_page списку: більше за раз не вибереш */
     private const BULK_MAX_IDS = 250;
 
+    /** Ліміт для bulk all: true — захист від "застосувати до всієї таблиці" без фільтра */
+    private const BULK_ALL_LIMIT = 5000;
+
     // Ті самі підписи, що і в options списку "sto_type" на фронтенді
     // (sto-registry.columns.json) — sto_type зберігається кодом (service/tire/wash),
     // але сортувати треба за словом, яке користувач бачить у таблиці, а не за кодом.
@@ -121,32 +124,10 @@ final readonly class AdminStoController
         $params  = $request->getQueryParams();
         $page    = max(1, (int) ($params['page'] ?? 1));
         $perPage = min(250, max(1, (int) ($params['per_page'] ?? 50)));
-        $search  = trim((string) ($params['search'] ?? ''));
 
         $order = $this->buildOrderClause((string) ($params['sort_by'] ?? ''), (string) ($params['sort_dir'] ?? ''));
 
-        $conditions = ['1=1'];
-        $binds      = [];
-
-        if ($search !== '') {
-            $conditions[]    = 'name_uk LIKE :search';
-            $binds['search'] = "%$search%";
-        }
-        if (($params['sto_type'] ?? '') !== '' && in_array($params['sto_type'], self::TYPES, true)) {
-            $conditions[]      = 'sto_type = :sto_type';
-            $binds['sto_type'] = $params['sto_type'];
-        }
-        if (($params['status'] ?? '') === 'active') {
-            $conditions[] = 'is_active = 1';
-        } elseif (($params['status'] ?? '') === 'inactive') {
-            $conditions[] = 'is_active = 0';
-        }
-        if (($params['country_id'] ?? '') !== '') {
-            $conditions[]        = 'country_id = :country_id';
-            $binds['country_id'] = (int) $params['country_id'];
-        }
-
-        $where = 'WHERE ' . implode(' AND ', $conditions);
+        [$where, $binds] = $this->buildListWhere($params);
 
         $countStmt = $this->pdo->prepare("SELECT COUNT(*) FROM sto $where");
         $countStmt->execute($binds);
@@ -478,8 +459,53 @@ final readonly class AdminStoController
             ], 400);
         }
 
-        // Тільки додатні цілі й без дублікатів — id прилітають із чекбоксів
-        // фронтенду, але роут публічний, тож перевіряємо самі.
+        $all = (bool) ($data['all'] ?? false);
+
+        // Масове видалення за фільтром — надто небезпечно, залишаємо тільки за явним списком id
+        if ($all && $action === 'delete') {
+            return $this->json([
+                'status'  => 'error',
+                'message' => 'Масове видалення за фільтром недоступне — виділіть записи вручну',
+            ], 400);
+        }
+
+        if ($all) {
+            // Режим "виділити всі за фільтром" — фільтри передаються замість ids
+            $filters = (array) ($data['filters'] ?? []);
+            [$where, $binds] = $this->buildListWhere($filters);
+
+            // Захисний COUNT перед виконанням
+            $countStmt = $this->pdo->prepare("SELECT COUNT(*) FROM sto $where");
+            $countStmt->execute($binds);
+            $matched = (int) $countStmt->fetchColumn();
+
+            if ($matched > self::BULK_ALL_LIMIT) {
+                return $this->json([
+                    'status'  => 'error',
+                    'message' => "Занадто багато записів ($matched) — звузьте фільтр",
+                ], 422);
+            }
+
+            // UPDATE за фільтром
+            if (isset($spec['field'])) {
+                $binds['value'] = $spec['value'];
+                $sql = "UPDATE sto SET {$spec['field']} = :value $where";
+            } else {
+                // delete заборонений вище, але на всяк випадок
+                return $this->json(['status' => 'error', 'message' => 'Невідома дія'], 400);
+            }
+
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($binds);
+
+            return $this->json([
+                'status'   => 'success',
+                'action'   => $action,
+                'affected' => $stmt->rowCount(),
+            ]);
+        }
+
+        // Стандартний режим з явним списком ids
         $ids = array_values(array_unique(array_filter(
             array_map('intval', (array) ($data['ids'] ?? [])),
             static fn (int $id) => $id > 0
@@ -547,6 +573,45 @@ final readonly class AdminStoController
         $this->pdo->prepare('DELETE FROM sto WHERE id = :id')->execute(['id' => $id]);
 
         return $this->json(['status' => 'success']);
+    }
+
+    /**
+     * Спільна побудова WHERE для list() і bulk(all: true).
+     * Дублювати умови в bulk неможливо: будь-яке розходження означало б, що масова
+     * дія застосувалась не до тих записів, які адмін бачив у списку.
+     *
+     * @return array{0: string, 1: array<string, mixed>} [whereClause, bind]
+     */
+    private function buildListWhere(array $params): array
+    {
+        $conditions = ['1=1'];
+        $binds      = [];
+
+        $search = trim((string) ($params['search'] ?? ''));
+        if ($search !== '') {
+            $conditions[]    = 'name_uk LIKE :search';
+            $binds['search'] = "%$search%";
+        }
+
+        if (($params['sto_type'] ?? '') !== '' && in_array($params['sto_type'], self::TYPES, true)) {
+            $conditions[]      = 'sto_type = :sto_type';
+            $binds['sto_type'] = $params['sto_type'];
+        }
+
+        if (($params['status'] ?? '') === 'active') {
+            $conditions[] = 'is_active = 1';
+        } elseif (($params['status'] ?? '') === 'inactive') {
+            $conditions[] = 'is_active = 0';
+        }
+
+        if (($params['country_id'] ?? '') !== '') {
+            $conditions[]        = 'country_id = :country_id';
+            $binds['country_id'] = (int) $params['country_id'];
+        }
+
+        $where = 'WHERE ' . implode(' AND ', $conditions);
+
+        return [$where, $binds];
     }
 
     /**

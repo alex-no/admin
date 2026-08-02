@@ -91,57 +91,82 @@
 
     <div v-else>
       <!-- Масові операції — з'являються, коли вибрано хоч один рядок -->
-      <div v-if="selected.length > 0" class="alert alert-info d-flex align-items-center gap-2 flex-wrap mb-3">
-        <span><strong>{{ selected.length }}</strong> обрано</span>
+      <div v-if="selectedCount > 0" class="alert alert-info d-flex flex-column gap-2 mb-3">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <span class="fw-semibold small">
+            <template v-if="selectAllMatching">Обрано всі {{ selectedCount }} за фільтром</template>
+            <template v-else>Обрано: {{ selectedCount }}</template>
+          </span>
+          <button
+            v-if="canSelectAllMatching"
+            type="button"
+            class="btn btn-sm btn-link p-0 small text-decoration-none"
+            @click="selectAllMatchingOn"
+          >
+            Виділити всі {{ total }}
+          </button>
+          <button
+            v-if="selectAllMatching"
+            type="button"
+            class="btn btn-sm btn-link p-0 small text-decoration-none"
+            @click="clearSelection"
+          >
+            Зняти виділення
+          </button>
+        </div>
 
-        <!-- Без жодної редагованої колонки (напр. сторінка лише з іменованими
-             діями) селект був би порожнім рядком «Змінити поле...» ні про що -->
-        <select v-if="editableColumns.length" v-model="bulkField" class="form-select form-select-sm" style="width:auto">
-          <option value="">Змінити поле...</option>
-          <option v-for="col in editableColumns" :key="col.key" :value="col.key">{{ col.label }}</option>
-        </select>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
 
-        <component
-          :is="resolveCellComponent(bulkFieldConfig)"
-          v-if="bulkFieldConfig"
-          v-model="bulkValue"
-          :field="bulkFieldConfig"
-          :readonly="false"
-          :row="{}"
-        />
+          <!-- Без жодної редагованої колонки (напр. сторінка лише з іменованими
+               діями) селект був би порожнім рядком «Змінити поле...» ні про що -->
+          <select v-if="editableColumns.length" v-model="bulkField" class="form-select form-select-sm" style="width:auto">
+            <option value="">Змінити поле...</option>
+            <option v-for="col in editableColumns" :key="col.key" :value="col.key">{{ col.label }}</option>
+          </select>
 
-        <button
-          v-if="bulkFieldConfig"
-          class="btn btn-sm btn-primary"
-          :disabled="bulkApplying"
-          @click="applyBulkUpdate"
-        >
-          <span v-if="bulkApplying" class="spinner-border spinner-border-sm me-1"></span>Застосувати
-        </button>
+          <component
+            :is="resolveCellComponent(bulkFieldConfig)"
+            v-if="bulkFieldConfig"
+            v-model="bulkValue"
+            :field="bulkFieldConfig"
+            :readonly="false"
+            :row="{}"
+          />
 
-        <!-- Іменовані дії: одна кнопка = одна операція з фіксованим значенням
-             (список — у конфізі сторінки, виконує bulk-роут одним запитом) -->
-        <button
-          v-for="a in visibleBulkActions"
-          :key="a.action"
-          class="btn btn-sm"
-          :class="`btn-${a.variant ?? 'outline-primary'}`"
-          :disabled="bulkApplying"
-          @click="applyNamedBulk(a)"
-        >
-          <i v-if="a.icon" class="bi me-1" :class="a.icon"></i>{{ a.label }}
-        </button>
+          <button
+            v-if="bulkFieldConfig"
+            class="btn btn-sm btn-primary"
+            :disabled="bulkApplying"
+            @click="applyBulkUpdate"
+          >
+            <span v-if="bulkApplying" class="spinner-border spinner-border-sm me-1"></span>Застосувати
+          </button>
 
-        <button
-          v-if="canBulkDelete"
-          class="btn btn-sm btn-outline-danger"
-          :disabled="bulkApplying"
-          @click="applyBulkDelete"
-        >
-          <i class="bi bi-trash"></i> Видалити
-        </button>
+          <!-- Іменовані дії: одна кнопка = одна операція з фіксованим значенням
+               (список — у конфізі сторінки, виконує bulk-роут одним запитом) -->
+          <button
+            v-for="a in visibleBulkActions"
+            :key="a.action"
+            class="btn btn-sm"
+            :class="`btn-${a.variant ?? 'outline-primary'}`"
+            :disabled="bulkApplying"
+            @click="applyNamedBulk(a)"
+          >
+            <i v-if="a.icon" class="bi me-1" :class="a.icon"></i>{{ a.label }}
+          </button>
 
-        <button class="btn btn-sm btn-outline-secondary ms-auto" @click="clearSelection">Скасувати</button>
+          <button
+            v-if="canBulkDelete"
+            class="btn btn-sm btn-outline-danger"
+            :disabled="bulkApplying || selectAllMatching"
+            :title="selectAllMatching ? 'Масове видалення за фільтром недоступне — виділіть записи вручну' : ''"
+            @click="applyBulkDelete"
+          >
+            <i class="bi bi-trash"></i> Видалити
+          </button>
+
+          <button class="btn btn-sm btn-outline-secondary ms-auto" @click="clearSelection">Скасувати</button>
+        </div>
       </div>
 
       <div class="card shadow-sm">
@@ -153,7 +178,7 @@
                   <input
                     type="checkbox"
                     class="form-check-input"
-                    :checked="isAllSelected"
+                    :checked="allOnPageSelected"
                     title="Вибрати всі на сторінці"
                     @change="toggleSelectAll"
                   />
@@ -186,7 +211,7 @@
                   <input
                     type="checkbox"
                     class="form-check-input"
-                    :checked="selected.includes(row[rowKey])"
+                    :checked="selectedIds.has(row[rowKey])"
                     @change="toggleSelect(row[rowKey])"
                   />
                 </td>
@@ -309,6 +334,7 @@ import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import { useUrlFilters } from '@/composables/useUrlFilters'
 import { useSavedFilters } from '@/composables/useSavedFilters'
 import { useColumnPrefs } from '@/composables/useColumnPrefs'
+import { useRowSelection } from '@/composables/useRowSelection'
 import { useListCache } from '@/composables/useListCache'
 import { formatPhoneUA } from '@/utils/phone'
 import { rowsToCsv, downloadCsv } from '@/utils/csv'
@@ -391,16 +417,33 @@ const page = ref(1)
 const total = ref(0)
 const totalPages = ref(1)
 
-// ── Bulk selection (тільки в межах поточної завантаженої сторінки —
-// скидається при кожному load(), щоб не тримати "невидимі" вибрані рядки) ──
-const selected = ref([])
 const bulkField = ref('')
 const bulkValue = ref(null)
 const bulkApplying = ref(false)
 
-const isAllSelected = computed(
-  () => items.value.length > 0 && items.value.every((r) => selected.value.includes(r[props.rowKey]))
-)
+// ── Bulk selection (react-admin: bulk selection + SelectAllButton) ──
+// Виділення рядків: явний список id або selectAllMatching ("всі за фільтром").
+// Скидається автоматично при зміні фільтрів/сортування/per_page.
+// Ініціалізується після filters/sortItems/perPage, щоб вони були доступні.
+const {
+  selectedIds,
+  selectAllMatching,
+  selectedCount,
+  allOnPageSelected,
+  canSelectAllMatching,
+  clear: clearRowSelection,
+  toggleSelectAll,
+  toggleSelectRow,
+  selectAllMatchingOn,
+} = useRowSelection({
+  items,
+  total,
+  resetOn: [
+    ...Object.values(filters), // кожен фільтр окремо
+    sortItems,                 // сортування
+    perPage,                   // per_page
+  ],
+})
 // Колонка редагована, якщо так сказано в конфізі І користувач має право хоч на
 // один із перелічених editPermissions. Прапорця немає — достатньо editable.
 // Порожній масив = редагувати не може ніхто.
@@ -925,44 +968,60 @@ async function handleDelete(row) {
 
 // ── Bulk selection + bulk actions ───────────────────────────────────────
 function toggleSelect(id) {
-  const idx = selected.value.indexOf(id)
-  if (idx > -1) {
-    selected.value = selected.value.filter((_, i) => i !== idx)
-  } else {
-    selected.value = [...selected.value, id]
-  }
-}
-
-function toggleSelectAll() {
-  selected.value = isAllSelected.value ? [] : items.value.map((r) => r[props.rowKey])
+  toggleSelectRow(id)
 }
 
 function clearSelection() {
-  selected.value = []
+  clearRowSelection()
   bulkField.value = ''
   bulkValue.value = null
 }
 
+// Збирає фільтри для bulk all: true — ті самі, що і для list()
+function buildBulkFilters() {
+  const result = {}
+  for (const f of props.filterConfig) {
+    const v = filters[f.key].value
+    if (v !== '' && v !== null && v !== undefined && v !== false) {
+      result[f.key] = v
+    }
+  }
+  return result
+}
+
 // Використовує bulk-ендпоінт для одночасного оновлення обраного поля у всіх
-// вибраних записах, замість N окремих PATCH запитів.
+// вибраних записах. Режим selectAllMatching надсилає фільтри замість ids.
 async function applyBulkUpdate() {
-  if (!bulkFieldConfig.value || !props.apiBulk || !selected.value.length) return
+  if (!bulkFieldConfig.value || !props.apiBulk) return
+  if (!selectAllMatching.value && selectedIds.value.size === 0) return
+
   bulkApplying.value = true
   try {
+    const body = {
+      action: 'update',
+      field: bulkField.value,
+      value: bulkValue.value,
+    }
+
+    if (selectAllMatching.value) {
+      body.all = true
+      body.filters = buildBulkFilters()
+    } else {
+      body.ids = Array.from(selectedIds.value)
+    }
+
     const res = await fetch(props.apiBulk, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...auth.authHeaders() },
-      body: JSON.stringify({
-        action: 'update',
-        field: bulkField.value,
-        value: bulkValue.value,
-        ids: selected.value,
-      }),
+      body: JSON.stringify(body),
     })
+
+    const json = await res.json().catch(() => ({}))
     if (!res.ok) {
-      const json = await res.json().catch(() => ({}))
       throw new Error(json.message ?? 'Помилка масового оновлення')
     }
+
+    notify(`Оновлено: ${json.affected ?? 0} запис(ів)`, { type: 'success' })
     clearSelection()
     await load(page.value)
   } catch (e) {
@@ -975,20 +1034,29 @@ async function applyBulkUpdate() {
 // Іменована масова дія (activate/deactivate/archive тощо). Undo тут немає навмисно:
 // activate/deactivate не деструктивні й скасовуються зворотною дією.
 async function applyNamedBulk(action) {
-  if (!props.apiBulk || !selected.value.length) return
+  if (!props.apiBulk) return
+  if (!selectAllMatching.value && selectedIds.value.size === 0) return
 
-  const ids = [...selected.value]
   bulkApplying.value = true
   try {
+    const body = { action: action.action }
+
+    if (selectAllMatching.value) {
+      body.all = true
+      body.filters = buildBulkFilters()
+    } else {
+      body.ids = Array.from(selectedIds.value)
+    }
+
     const res = await fetch(props.apiBulk, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...auth.authHeaders() },
-      body: JSON.stringify({ ids, action: action.action }),
+      body: JSON.stringify(body),
     })
     const json = await res.json().catch(() => ({}))
     if (!res.ok) throw new Error(json.message ?? `Помилка виконання дії (HTTP ${res.status})`)
 
-    notify(`${action.label}: ${json.affected ?? ids.length} запис(ів)`, { type: 'success' })
+    notify(`${action.label}: ${json.affected ?? 0} запис(ів)`, { type: 'success' })
     clearSelection()
     await load(page.value)
   } catch (e) {
@@ -999,9 +1067,9 @@ async function applyNamedBulk(action) {
 }
 
 async function applyBulkDelete() {
-  if (!props.apiDelete || !selected.value.length) return
+  if (!props.apiDelete || selectedIds.value.size === 0) return
 
-  const removed = selected.value
+  const removed = Array.from(selectedIds.value)
     .map((id) => ({ id, index: items.value.findIndex((r) => r[props.rowKey] === id) }))
     .filter(({ index }) => index !== -1)
     .map(({ index }) => ({ row: items.value[index], index }))
