@@ -829,7 +829,7 @@ VehicleTypes, ServiceGroups. Перевірено складанням і 19 п�
 
 ### 08 — Виділення всіх за фільтром
 
-**Vue:** 🔄 · **React:** 🔲 · **→ allsto:** 🔲
+**Vue:** ✅ · **React:** 🔄 · **→ allsto:** 🔲
 **Дата:** 2026-08-02   **Хто:** Claude
 **Примітки / причина:**
 
@@ -849,15 +849,17 @@ VehicleTypes, ServiceGroups. Перевірено складанням і 19 п�
 - ✅ UI: "Виділити всі N" / "Обрано всі N за фільтром"
 - ✅ Масові операції надсилають `all: true` + `filters` замість `ids`
 - ✅ Кнопка "Видалити" disabled у режимі `selectAllMatching`
+- ✅ **ПРОТЕСТОВАНО в браузері** — все працює
 
 **Frontend React (hooks/useRowSelection.ts):**
 - ✅ Створено `hooks/useRowSelection.ts`
-- ⏸️ Інтеграція в `useTableState.ts` — не почато
-- ⏸️ Оновлення UI в `DataTable.tsx` — не почато
+- 🔄 Інтеграція в `useTableState.ts` — в роботі
+- 🔲 Оновлення UI в `DataTable.tsx` — не почато
 
-**Не перевірено — потрібен браузер:**
-- Vue: http://localhost:5173/sto-registry — білий екран (див. Task 01)
-- React: не завершено
+**Коміти:**
+- `c01ffe6` Task 08: Add select all across pages (Vue + backend)
+- `848e9c2` Fix: move useRowSelection after dependencies
+- `9a39708` Fix: remove old selected.value reference
 
 ---
 
