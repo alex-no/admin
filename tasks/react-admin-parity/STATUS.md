@@ -829,7 +829,7 @@ VehicleTypes, ServiceGroups. Перевірено складанням і 19 п�
 
 ### 08 — Виділення всіх за фільтром
 
-**Vue:** ✅ · **React:** ✅ · **→ allsto:** 🔲
+**Vue:** ✅ · **React:** ✅ · **→ allsto:** ⚠️
 **Дата:** 2026-08-02   **Хто:** Claude
 **Примітки / причина:**
 
@@ -860,12 +860,27 @@ VehicleTypes, ServiceGroups. Перевірено складанням і 19 п�
 - ✅ Кнопка "Видалити" disabled у режимі `selectAllMatching`
 - ✅ **ПРОТЕСТОВАНО в браузері** — все працює
 
-**Коміти:**
+**Коміти (admin):**
 - `c01ffe6` Task 08: Add select all across pages (Vue + backend)
 - `848e9c2` Fix: move useRowSelection after dependencies
 - `9a39708` Fix: remove old selected.value reference
 - `6db1ee5` Update STATUS: Task 08 Vue ✅ tested
 - `9b162cd` Task 08: Complete React integration
+- `ffa119e` Update STATUS: Task 08 ✅ complete
+
+**Коміти (allsto):**
+- `47b27ba` Task 08: backend (AdminStoController)
+- `ac078c0` Refactoring (useRowSelection.js + import)
+
+**→ allsto:** ⚠️ Частково перенесено
+- ✅ Backend повністю готовий
+- ✅ useRowSelection.js скопійовано
+- ✅ Імпорт додано в DataListPage.vue  
+- ⏸️ **TODO:** інтегрувати useRowSelection в DataListPage.vue (аналогічно admin версії)
+  - Замінити `const selected = ref([])` на виклик `useRowSelection`
+  - Оновити template (масові операції, чекбокси)
+  - Оновити `applyBulkUpdate`, `applyNamedBulk`
+  - Видалити старі функції
 
 ---
 
