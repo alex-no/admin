@@ -829,7 +829,7 @@ VehicleTypes, ServiceGroups. Перевірено складанням і 19 п�
 
 ### 08 — Виділення всіх за фільтром
 
-**Vue:** ✅ · **React:** 🔄 · **→ allsto:** 🔲
+**Vue:** ✅ · **React:** ✅ · **→ allsto:** 🔲
 **Дата:** 2026-08-02   **Хто:** Claude
 **Примітки / причина:**
 
@@ -851,15 +851,21 @@ VehicleTypes, ServiceGroups. Перевірено складанням і 19 п�
 - ✅ Кнопка "Видалити" disabled у режимі `selectAllMatching`
 - ✅ **ПРОТЕСТОВАНО в браузері** — все працює
 
-**Frontend React (hooks/useRowSelection.ts):**
+**Frontend React (DataTable.tsx + useTableState.ts):**
 - ✅ Створено `hooks/useRowSelection.ts`
-- 🔄 Інтеграція в `useTableState.ts` — в роботі
-- 🔲 Оновлення UI в `DataTable.tsx` — не почато
+- ✅ Інтегровано в `useTableState.ts`
+- ✅ Оновлено UI в `DataTable.tsx`
+- ✅ `buildBulkFilters()` для `all: true`
+- ✅ `applyBulkUpdate`/`applyBulkAction` підтримують `all: true`
+- ✅ Кнопка "Видалити" disabled у режимі `selectAllMatching`
+- ✅ **ПРОТЕСТОВАНО в браузері** — все працює
 
 **Коміти:**
 - `c01ffe6` Task 08: Add select all across pages (Vue + backend)
 - `848e9c2` Fix: move useRowSelection after dependencies
 - `9a39708` Fix: remove old selected.value reference
+- `6db1ee5` Update STATUS: Task 08 Vue ✅ tested
+- `9b162cd` Task 08: Complete React integration
 
 ---
 
