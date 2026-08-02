@@ -840,7 +840,8 @@ const revalidating = ref(false)
 async function load(p = 1) {
   page.value = p
   error.value = null
-  selected.value = []
+  // Скид виділення тепер відбувається автоматично через useRowSelection resetOn
+  // clearRowSelection() — викликати не треба, бо зміна page → зміна URL → watch у useUrlFilters
 
   const params = new URLSearchParams()
   params.set('page', String(p))
