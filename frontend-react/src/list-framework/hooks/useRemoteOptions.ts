@@ -15,9 +15,13 @@ function formatLabel(template: string, row: any): string {
 
 function fetchRows(url: string): Promise<any[]> {
   if (!cache.has(url)) {
+    // Додаємо per_page=500 якщо URL ще не має цього параметра
+    const separator = url.includes('?') ? '&' : '?'
+    const fetchUrl = url.includes('per_page') ? url : `${url}${separator}per_page=500`
+
     cache.set(
       url,
-      apiGet(url)
+      apiGet(fetchUrl)
         .then((res) => res.data ?? [])
         .catch(() => [])
     )

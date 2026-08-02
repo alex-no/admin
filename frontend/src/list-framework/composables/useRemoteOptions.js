@@ -43,14 +43,22 @@ export function useRemoteOptions(url, opts = {}) {
     const rows = ref([])
     const loading = ref(true)
     const error = ref(null)
+    const total = ref(0)
+    const truncated = ref(false)
 
-    cache.set(url, { rows, loading, error })
+    cache.set(url, { rows, loading, error, total, truncated })
 
-    fetch(url, { headers: authHeaders() })
+    // Додаємо per_page=500 якщо URL ще не має цього параметра
+    const separator = url.includes('?') ? '&' : '?'
+    const fetchUrl = url.includes('per_page') ? url : `${url}${separator}per_page=500`
+
+    fetch(fetchUrl, { headers: authHeaders() })
       .then(async (res) => {
         const json = await res.json().catch(() => ({}))
         if (!res.ok) throw new Error(json.message ?? `Помилка завантаження списку (HTTP ${res.status})`)
         rows.value = json.data ?? []
+        total.value = json.pagination?.total ?? rows.value.length
+        truncated.value = total.value > rows.value.length
       })
       .catch((e) => {
         error.value = e.message
@@ -69,8 +77,25 @@ export function useRemoteOptions(url, opts = {}) {
       value: row[valueKey],
       label: labelTemplate ? formatLabel(labelTemplate, row) : row[labelKey],
     }))
+
+    // Якщо довідник обрізаний — додаємо інформаційний рядок
+    if (entry.truncated?.value && entry.total?.value) {
+      mapped.push({
+        value: '',
+        label: `▸ Показано ${mapped.length} з ${entry.total.value} — для пошуку потрібен автокомпліт`,
+        disabled: true,
+      })
+    }
+
     return placeholderOption ? [placeholderOption, ...mapped] : mapped
   })
 
-  return { options, rows: entry.rows, loading: entry.loading, error: entry.error }
+  return {
+    options,
+    rows: entry.rows,
+    loading: entry.loading,
+    error: entry.error,
+    total: entry.total || ref(0),
+    truncated: entry.truncated || ref(false),
+  }
 }
