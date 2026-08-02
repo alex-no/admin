@@ -829,9 +829,35 @@ VehicleTypes, ServiceGroups. Перевірено складанням і 19 п�
 
 ### 08 — Виділення всіх за фільтром
 
-**Vue:** 🔲 · **React:** 🔲 · **→ allsto:** 🔲
-**Дата:**   **Хто:**
+**Vue:** 🔄 · **React:** 🔲 · **→ allsto:** 🔲
+**Дата:** 2026-08-02   **Хто:** Claude
 **Примітки / причина:**
+
+#### Що зроблено
+
+**Backend (AdminStoController):**
+- ✅ Додано константу `BULK_ALL_LIMIT = 5000`
+- ✅ Витягнуто `buildListWhere()` метод із `list()` — одна WHERE-логіка для list і bulk
+- ✅ Додано підтримку `all: true` у `bulk()` методі
+- ✅ Валідація `COUNT(*)` перед виконанням — якщо > 5000 → 422
+- ✅ Заборона `all: true` для `action: "delete"` → 400
+
+**Frontend Vue (DataListPage.vue):**
+- ✅ Створено `composables/useRowSelection.js`
+- ✅ Замінено стару логіку виділення на `useRowSelection`
+- ✅ Автоматичний скид при зміні `filters`, `sortItems`, `perPage`
+- ✅ UI: "Виділити всі N" / "Обрано всі N за фільтром"
+- ✅ Масові операції надсилають `all: true` + `filters` замість `ids`
+- ✅ Кнопка "Видалити" disabled у режимі `selectAllMatching`
+
+**Frontend React (hooks/useRowSelection.ts):**
+- ✅ Створено `hooks/useRowSelection.ts`
+- ⏸️ Інтеграція в `useTableState.ts` — не почато
+- ⏸️ Оновлення UI в `DataTable.tsx` — не почато
+
+**Не перевірено — потрібен браузер:**
+- Vue: http://localhost:5173/sto-registry — білий екран (див. Task 01)
+- React: не завершено
 
 ---
 
