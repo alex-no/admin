@@ -4,6 +4,7 @@ import { notify } from '@/hooks/useNotify'
 import { deleteWithUndo, deleteManyWithUndo } from '@/hooks/useUndoableDelete'
 import { getCached, setCached } from './useListCache'
 import { fetchOptions } from './useRemoteOptions'
+import { useRowSelection } from './useRowSelection'
 import { rowsToCsv, downloadCsv } from '@/utils/csv'
 import { formatPhoneUA } from '@/utils/phone'
 import {
@@ -82,7 +83,6 @@ export function useTableState({
     return fromUrl.length ? fromUrl : defaultSort.map(s => ({ ...s }))
   })
   const [filters, setFilters] = useState<Record<string, any>>({})
-  const [selected, setSelected] = useState<(string | number)[]>([])
   const [reloadToken, setReloadToken] = useState(0)
   const [revalidating, setRevalidating] = useState(false)
   // Фільтри з `defaultFirstOption`, які вже підставили своє значення (одноразово)
@@ -102,6 +102,25 @@ export function useTableState({
   useUrlFilters({
     filters: { ...filters, page: page > 1 ? page : '' },
     multiSort: sortItems,
+  })
+
+  // Bulk selection (react-admin: bulk selection + SelectAllButton)
+  // Виділення рядків: явний список id або selectAllMatching ("всі за фільтром").
+  // Скидається автоматично при зміні фільтрів/сортування/per_page.
+  const {
+    selectedIds,
+    selectAllMatching,
+    selectedCount,
+    allOnPageSelected,
+    canSelectAllMatching,
+    clear: clearRowSelection,
+    toggleSelectAll,
+    toggleSelectRow,
+    selectAllMatchingOn,
+  } = useRowSelection({
+    items,
+    total,
+    resetOn: [filters, sortItems, perPage],
   })
 
   // Примусове перезавантаження списку (аналог listRef.reload() у Vue):
@@ -158,29 +177,6 @@ export function useTableState({
   const handleSetPerPage = useCallback((newPerPage: number) => {
     setPerPage(newPerPage)
     setPage(1)
-  }, [])
-
-  // Toggle selection
-  const toggleSelect = useCallback((id: string | number) => {
-    setSelected(prev =>
-      prev.includes(id)
-        ? prev.filter(x => x !== id)
-        : [...prev, id]
-    )
-  }, [])
-
-  // Toggle select all
-  const toggleSelectAll = useCallback(() => {
-    setSelected(prev => {
-      const allIds = items.map(item => item[rowKey])
-      const allSelected = allIds.every(id => prev.includes(id))
-      return allSelected ? [] : allIds
-    })
-  }, [items, rowKey])
-
-  // Clear selection
-  const clearSelection = useCallback(() => {
-    setSelected([])
   }, [])
 
   // Inline cell edit: оптимістично оновлюємо рядок, PATCH на сервер,
@@ -331,55 +327,87 @@ export function useTableState({
     })
   }, [apiDelete, rowKey, items])
 
+  // Збирає фільтри для bulk all: true — ті самі, що і для list()
+  const buildBulkFilters = useCallback(() => {
+    const result: Record<string, any> = {}
+    for (const f of filterConfig) {
+      const v = filters[f.key]
+      if (v !== '' && v !== null && v !== undefined && v !== false) {
+        result[f.key] = v
+      }
+    }
+    return result
+  }, [filters, filterConfig])
+
   // Використовує bulk-ендпоінт для одночасного оновлення обраного поля у всіх
-  // вибраних записах, замість N окремих PATCH запитів.
+  // вибраних записах. Режим selectAllMatching надсилає фільтри замість ids.
   const applyBulkUpdate = useCallback(async (field: string, value: any) => {
-    if (!apiBulk || selected.length === 0) return
+    if (!apiBulk) return
+    if (!selectAllMatching && selectedIds.size === 0) return
+
     setBulkApplying(true)
     try {
-      await apiPost(apiBulk, {
+      const body: any = {
         action: 'update',
         field,
         value,
-        ids: selected,
-      })
-      setSelected([])
+      }
+
+      if (selectAllMatching) {
+        body.all = true
+        body.filters = buildBulkFilters()
+      } else {
+        body.ids = Array.from(selectedIds)
+      }
+
+      const res = await apiPost<{ affected?: number }>(apiBulk, body)
+      notify(`Оновлено: ${res.affected ?? 0} запис(ів)`, { type: 'success' })
+      clearRowSelection()
       reload()
     } catch (err) {
       notify(err instanceof Error ? err.message : 'Помилка масового оновлення', { type: 'error' })
     } finally {
       setBulkApplying(false)
     }
-  }, [apiBulk, selected, reload])
+  }, [apiBulk, selectAllMatching, selectedIds, buildBulkFilters, clearRowSelection, reload])
 
   // Іменована масова дія (activate/deactivate/archive тощо). Undo тут немає навмисно:
   // activate/deactivate не деструктивні й скасовуються зворотною дією.
   const applyBulkAction = useCallback(async (action: string, label: string) => {
-    if (!apiBulk || selected.length === 0) return
+    if (!apiBulk) return
+    if (!selectAllMatching && selectedIds.size === 0) return
 
-    const ids = [...selected]
     setBulkApplying(true)
     try {
-      const res = await apiPost<{ affected?: number }>(apiBulk, { ids, action })
-      notify(`${label}: ${res.affected ?? ids.length} запис(ів)`, { type: 'success' })
-      setSelected([])
+      const body: any = { action }
+
+      if (selectAllMatching) {
+        body.all = true
+        body.filters = buildBulkFilters()
+      } else {
+        body.ids = Array.from(selectedIds)
+      }
+
+      const res = await apiPost<{ affected?: number }>(apiBulk, body)
+      notify(`${label}: ${res.affected ?? 0} запис(ів)`, { type: 'success' })
+      clearRowSelection()
       reload()
     } catch (err) {
       notify(err instanceof Error ? err.message : 'Помилка виконання дії', { type: 'error' })
     } finally {
       setBulkApplying(false)
     }
-  }, [apiBulk, selected, reload])
+  }, [apiBulk, selectAllMatching, selectedIds, buildBulkFilters, clearRowSelection, reload])
 
   const applyBulkDelete = useCallback(() => {
-    if (!apiDelete || selected.length === 0) return
+    if (!apiDelete || selectedIds.size === 0) return
 
-    const removed = selected
+    const removed = Array.from(selectedIds)
       .map(id => ({ id, index: items.findIndex(r => r[rowKey] === id) }))
       .filter(({ index }) => index !== -1)
       .map(({ index }) => ({ row: items[index], index }))
 
-    setSelected([])
+    clearRowSelection()
 
     deleteManyWithUndo({
       items: removed,
@@ -409,7 +437,7 @@ export function useTableState({
       },
       onAnyCommitError: () => reload(),
     })
-  }, [apiDelete, selected, items, rowKey, reload])
+  }, [apiDelete, selectedIds, items, rowKey, clearRowSelection, reload])
 
   // Експорт у CSV: тягне всі сторінки під поточним фільтром, не лише видиму.
   const exportCsv = useCallback(async (columnsConfig: ColumnConfig[]) => {
@@ -502,7 +530,15 @@ export function useTableState({
     totalPages,
     sortItems,
     filters,
-    selected,
+    // Bulk selection (useRowSelection)
+    selectedIds,
+    selectAllMatching,
+    selectedCount,
+    allOnPageSelected,
+    canSelectAllMatching,
+    selectAllMatchingOn,
+    clearSelection: clearRowSelection,
+    toggleSelectRow,
     reload,
     toggleSort,
     setFilter,
@@ -510,9 +546,7 @@ export function useTableState({
     setPerPage: handleSetPerPage,
     setFilters,
     setSortItems,
-    toggleSelect,
     toggleSelectAll,
-    clearSelection,
     updateCell,
     deleteRow,
   }

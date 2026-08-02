@@ -58,7 +58,15 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
     totalPages,
     sortItems,
     filters,
-    selected,
+    // Bulk selection (useRowSelection)
+    selectedIds,
+    selectAllMatching,
+    selectedCount,
+    allOnPageSelected,
+    canSelectAllMatching,
+    selectAllMatchingOn,
+    clearSelection,
+    toggleSelectRow,
     reload,
     toggleSort,
     setFilter,
@@ -66,9 +74,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
     setPerPage,
     setFilters,
     setSortItems,
-    toggleSelect,
     toggleSelectAll,
-    clearSelection,
     updateCell,
     deleteRow,
   } = useTableState({
@@ -281,11 +287,11 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
   // при наступному виділенні відкривалась би з попереднім полем — і два
   // рендерери поводились би по-різному.
   useEffect(() => {
-    if (selected.length === 0) {
+    if (selectedCount === 0) {
       setBulkField('')
       setBulkValue(null)
     }
-  }, [selected.length])
+  }, [selectedCount])
   const BulkCell = bulkFieldConfig ? resolveCellType(bulkFieldConfig.type) : null
   // Видимість дії рядка: право (з JSON) плюс необовʼязковий предикат `visible(row)`,
   // який сторінка додає до конфіга в коді — так само, як додає `handler`. Потрібен
@@ -393,7 +399,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
     return null
   }
 
-  const isAllSelected = items.length > 0 && items.every(item => selected.includes(item[rowKey]))
+  // isAllSelected тепер з useRowSelection як allOnPageSelected
 
   return (
     <div>
@@ -564,77 +570,106 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
       {!error && (
         <>
           {/* Масові операції — з'являються, коли вибрано хоч один рядок */}
-          {selected.length > 0 && (
-            <div className="alert alert-info d-flex align-items-center gap-2 flex-wrap mb-3">
-              <span><strong>{selected.length}</strong> обрано</span>
+          {selectedCount > 0 && (
+            <div className="alert alert-info d-flex flex-column gap-2 mb-3">
+              <div className="d-flex align-items-center gap-2 flex-wrap">
+                <span className="fw-semibold small">
+                  {selectAllMatching
+                    ? `Обрано всі ${selectedCount} за фільтром`
+                    : `Обрано: ${selectedCount}`
+                  }
+                </span>
+                {canSelectAllMatching && (
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-link p-0 small text-decoration-none"
+                    onClick={selectAllMatchingOn}
+                  >
+                    Виділити всі {total}
+                  </button>
+                )}
+                {selectAllMatching && (
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-link p-0 small text-decoration-none"
+                    onClick={clearSelection}
+                  >
+                    Зняти виділення
+                  </button>
+                )}
+              </div>
 
-              {/* Без жодної редагованої колонки (напр. сторінка лише з іменованими
-                  діями) селект був би порожнім рядком «Змінити поле...» ні про що */}
-              {editableColumns.length > 0 && (
-                <select
-                  value={bulkField}
-                  onChange={(e) => { setBulkField(e.target.value); setBulkValue(null) }}
-                  className="form-select form-select-sm"
-                  style={{ width: 'auto' }}
-                >
-                  <option value="">Змінити поле...</option>
-                  {editableColumns.map(col => (
-                    <option key={col.key} value={col.key}>{col.label}</option>
-                  ))}
-                </select>
-              )}
+              <div className="d-flex align-items-center gap-2 flex-wrap">
 
-              {bulkFieldConfig && BulkCell && (
-                <BulkCell
-                  field={bulkFieldConfig}
-                  value={bulkValue}
-                  readonly={false}
-                  row={{}}
-                  onChange={setBulkValue}
-                />
-              )}
+                {/* Без жодної редагованої колонки (напр. сторінка лише з іменованими
+                    діями) селект був би порожнім рядком «Змінити поле...» ні про що */}
+                {editableColumns.length > 0 && (
+                  <select
+                    value={bulkField}
+                    onChange={(e) => { setBulkField(e.target.value); setBulkValue(null) }}
+                    className="form-select form-select-sm"
+                    style={{ width: 'auto' }}
+                  >
+                    <option value="">Змінити поле...</option>
+                    {editableColumns.map(col => (
+                      <option key={col.key} value={col.key}>{col.label}</option>
+                    ))}
+                  </select>
+                )}
 
-              {bulkFieldConfig && (
+                {bulkFieldConfig && BulkCell && (
+                  <BulkCell
+                    field={bulkFieldConfig}
+                    value={bulkValue}
+                    readonly={false}
+                    row={{}}
+                    onChange={setBulkValue}
+                  />
+                )}
+
+                {bulkFieldConfig && (
+                  <button
+                    className="btn btn-sm btn-primary"
+                    disabled={bulkApplying}
+                    onClick={() => applyBulkUpdate(bulkField, bulkValue)}
+                  >
+                    {bulkApplying && <span className="spinner-border spinner-border-sm me-1" />}
+                    Застосувати
+                  </button>
+                )}
+
+                {/* Іменовані дії: одна кнопка = одна операція з фіксованим значенням
+                    (список — у конфізі сторінки, виконує bulk-роут одним запитом) */}
+                {visibleBulkActions.map(a => (
+                  <button
+                    key={a.action}
+                    className={`btn btn-sm btn-${a.variant ?? 'outline-primary'}`}
+                    disabled={bulkApplying}
+                    onClick={() => applyBulkAction(a.action, a.label)}
+                  >
+                    {a.icon && <i className={`bi me-1 ${a.icon}`} />}
+                    {a.label}
+                  </button>
+                ))}
+
+                {canBulkDelete && (
+                  <button
+                    className="btn btn-sm btn-outline-danger"
+                    disabled={bulkApplying || selectAllMatching}
+                    title={selectAllMatching ? 'Масове видалення за фільтром недоступне — виділіть записи вручну' : ''}
+                    onClick={applyBulkDelete}
+                  >
+                    <i className="bi bi-trash" /> Видалити
+                  </button>
+                )}
+
                 <button
-                  className="btn btn-sm btn-primary"
-                  disabled={bulkApplying}
-                  onClick={() => applyBulkUpdate(bulkField, bulkValue)}
+                  className="btn btn-sm btn-outline-secondary ms-auto"
+                  onClick={() => { clearSelection(); setBulkField(''); setBulkValue(null) }}
                 >
-                  {bulkApplying && <span className="spinner-border spinner-border-sm me-1" />}
-                  Застосувати
+                  Скасувати
                 </button>
-              )}
-
-              {/* Іменовані дії: одна кнопка = одна операція з фіксованим значенням
-                  (список — у конфізі сторінки, виконує bulk-роут одним запитом) */}
-              {visibleBulkActions.map(a => (
-                <button
-                  key={a.action}
-                  className={`btn btn-sm btn-${a.variant ?? 'outline-primary'}`}
-                  disabled={bulkApplying}
-                  onClick={() => applyBulkAction(a.action, a.label)}
-                >
-                  {a.icon && <i className={`bi me-1 ${a.icon}`} />}
-                  {a.label}
-                </button>
-              ))}
-
-              {canBulkDelete && (
-                <button
-                  className="btn btn-sm btn-outline-danger"
-                  disabled={bulkApplying}
-                  onClick={applyBulkDelete}
-                >
-                  <i className="bi bi-trash" /> Видалити
-                </button>
-              )}
-
-              <button
-                className="btn btn-sm btn-outline-secondary ms-auto"
-                onClick={() => { clearSelection(); setBulkField(''); setBulkValue(null) }}
-              >
-                Скасувати
-              </button>
+              </div>
             </div>
           )}
 
@@ -647,7 +682,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                       <input
                         type="checkbox"
                         className="form-check-input"
-                        checked={isAllSelected}
+                        checked={allOnPageSelected}
                         onChange={toggleSelectAll}
                         title="Вибрати всі на сторінці"
                       />
@@ -682,8 +717,8 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                         <input
                           type="checkbox"
                           className="form-check-input"
-                          checked={selected.includes(row[rowKey])}
-                          onChange={() => toggleSelect(row[rowKey])}
+                          checked={selectedIds.has(row[rowKey])}
+                          onChange={() => toggleSelectRow(row[rowKey])}
                         />
                       </td>
                       {visibleColumns.map(col => (
