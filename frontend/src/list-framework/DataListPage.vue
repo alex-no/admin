@@ -420,30 +420,6 @@ const totalPages = ref(1)
 const bulkField = ref('')
 const bulkValue = ref(null)
 const bulkApplying = ref(false)
-
-// ── Bulk selection (react-admin: bulk selection + SelectAllButton) ──
-// Виділення рядків: явний список id або selectAllMatching ("всі за фільтром").
-// Скидається автоматично при зміні фільтрів/сортування/per_page.
-// Ініціалізується після filters/sortItems/perPage, щоб вони були доступні.
-const {
-  selectedIds,
-  selectAllMatching,
-  selectedCount,
-  allOnPageSelected,
-  canSelectAllMatching,
-  clear: clearRowSelection,
-  toggleSelectAll,
-  toggleSelectRow,
-  selectAllMatchingOn,
-} = useRowSelection({
-  items,
-  total,
-  resetOn: [
-    ...Object.values(filters), // кожен фільтр окремо
-    sortItems,                 // сортування
-    perPage,                   // per_page
-  ],
-})
 // Колонка редагована, якщо так сказано в конфізі І користувач має право хоч на
 // один із перелічених editPermissions. Прапорця немає — достатньо editable.
 // Порожній масив = редагувати не може ніхто.
@@ -476,6 +452,29 @@ const visibleBulkActions = computed(
 )
 
 watch(bulkField, () => { bulkValue.value = null })
+
+// ── Bulk selection (react-admin: bulk selection + SelectAllButton) ──
+// Виділення рядків: явний список id або selectAllMatching ("всі за фільтром").
+// Скидається автоматично при зміні фільтрів/сортування/per_page.
+const {
+  selectedIds,
+  selectAllMatching,
+  selectedCount,
+  allOnPageSelected,
+  canSelectAllMatching,
+  clear: clearRowSelection,
+  toggleSelectAll,
+  toggleSelectRow,
+  selectAllMatchingOn,
+} = useRowSelection({
+  items,
+  total,
+  resetOn: [
+    ...Object.values(filters), // кожен фільтр окремо
+    sortItems,                 // сортування
+    perPage,                   // per_page
+  ],
+})
 
 // ── Вибір колонок (react-admin: SelectColumnsButton) ──────────────────────
 // Колонка з прапорцем hideable: false ховатись не може. Експорт у CSV навмисно
