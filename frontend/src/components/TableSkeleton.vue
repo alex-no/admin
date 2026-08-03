@@ -34,7 +34,7 @@ defineProps({
   display: inline-block;
   height: 0.85rem;
   border-radius: 0.2rem;
-  background: #e9ecef;
+  background: var(--bs-tertiary-bg);
   animation: sk-pulse 1.2s ease-in-out infinite;
 }
 @keyframes sk-pulse {

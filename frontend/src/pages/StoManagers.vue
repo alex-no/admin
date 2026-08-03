@@ -27,7 +27,7 @@
       <div class="card shadow-sm">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0 small">
-            <thead class="table-light">
+            <thead>
               <tr>
                 <th style="width:60px">STO ID</th>
                 <th>Назва СТО</th>

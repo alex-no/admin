@@ -33,7 +33,7 @@ defineEmits(['update:modelValue'])
   left: 0;
   right: 0;
   z-index: 100;
-  background: #ffffff;
+  background: var(--bs-body-bg);
   margin: -0.75rem -1rem 0.5rem -1rem;
   padding: 0.25rem 1rem 0.5rem;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);

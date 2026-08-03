@@ -27,7 +27,7 @@ export default function Breadcrumbs() {
   const recordId = searchParams.get('id')
 
   return (
-    <nav aria-label="breadcrumb" className="px-4 py-2 border-bottom bg-body-tertiary flex-shrink-0">
+    <nav aria-label="breadcrumb" className="px-4 py-2 border-bottom flex-shrink-0" style={{ backgroundColor: 'var(--bs-secondary-bg)' }}>
       <ol className="breadcrumb mb-0 small">
         <li className="breadcrumb-item">
           <Link to="/">Головна</Link>

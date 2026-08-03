@@ -42,7 +42,7 @@
       <div class="card shadow-sm">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0 small">
-            <thead class="table-light">
+            <thead>
               <tr>
                 <th v-if="bulkActionsAvailable.length" style="width:36px">
                   <input
@@ -226,7 +226,7 @@
       <template #title>
         <h5 class="mb-0">
           Редагування СТО <span class="text-muted fw-normal fs-6">#{{ modalData.id }}</span>
-          <span v-if="modalData.name_uk || modalData.name" class="text-primary fw-normal fs-6 ms-2" style="color: #1e40af !important">
+          <span v-if="modalData.name_uk || modalData.name" class="text-primary fw-normal fs-6 ms-2">
             {{ modalData.name_uk || modalData.name }}
           </span>
         </h5>
@@ -826,7 +826,7 @@
                   Співробітників не додано
                 </div>
                 <table v-else class="table table-sm table-hover align-middle small mb-4">
-                  <thead class="table-light">
+                  <thead>
                     <tr>
                       <th class="text-muted" style="width:45px">ID</th>
                       <th style="width:200px">Ім'я / email</th>
@@ -889,7 +889,7 @@
                 </p>
                 <div v-if="!managersList.length" class="text-muted small ps-1">Менеджерів не призначено</div>
                 <table v-else class="table table-sm align-middle small mb-0">
-                  <thead class="table-light">
+                  <thead>
                     <tr>
                       <th>Ім'я / username</th>
                       <th>Email</th>
@@ -927,7 +927,7 @@
               <template v-else>
                 <div v-if="!bookingsList.length" class="text-muted text-center py-4">Записи не знайдено</div>
                 <table v-else class="table table-sm table-hover align-middle small mb-0">
-                  <thead class="table-light">
+                  <thead>
                     <tr>
                       <th class="text-muted" style="width:45px">ID</th>
                       <th>Дата / Час</th>
@@ -1125,7 +1125,7 @@
                           v-for="media in rv.media"
                           :key="media.id"
                           class="position-relative"
-                          style="border: 1px solid #dee2e6; border-radius: 4px; overflow: hidden;"
+                          style="border: 1px solid var(--bs-border-color); border-radius: 4px; overflow: hidden;"
                         >
                           <a
                             :href="media.url"
@@ -1477,7 +1477,7 @@
             <button class="btn btn-sm btn-outline-secondary" @click="closeCityPicker">✕</button>
           </div>
 
-          <div class="px-3 py-2" style="flex-shrink:0; border-bottom:1px solid #dee2e6">
+          <div class="px-3 py-2" style="flex-shrink:0; border-bottom:1px solid var(--bs-border-color)">
             <input
               ref="citySearchInputRef"
               v-model="cityPickerSearch"
@@ -3459,11 +3459,11 @@ function getStorageUrl(key) {
 .svc-chip--amenity { display: inline-flex; align-items: center; }
 
 .th-sortable { cursor: pointer; user-select: none; white-space: nowrap; }
-.th-sortable:hover { background: #e9ecef; }
+.th-sortable:hover { background: var(--bs-tertiary-bg); }
 
 /* Active tab highlight */
 .nav-tabs .nav-link.active {
-  background-color: #f8f9fa !important;
+  background-color: var(--bs-secondary-bg) !important;
 }
 
 .inline-editable {
@@ -3476,16 +3476,16 @@ function getStorageUrl(key) {
   transition: border-color .15s;
 }
 .inline-editable:hover {
-  border-color: #86b7fe;
-  background: #f8f9fa;
+  border-color: var(--admin-inline-hover-border);
+  background: var(--bs-secondary-bg);
 }
 
 .name-input { min-width: 160px; }
 
 .readonly-field {
   padding: 4px 8px;
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
+  background: var(--bs-secondary-bg);
+  border: 1px solid var(--bs-border-color);
   border-radius: 4px;
   min-height: 31px;
   line-height: 1.4;
@@ -3498,7 +3498,7 @@ function getStorageUrl(key) {
   left: 0;
   right: 0;
   z-index: 100;
-  background: #ffffff;
+  background: var(--bs-body-bg);
   margin: -0.75rem -1rem 0.5rem -1rem; /* Выходим за padding card-body */
   padding: 0.25rem 1rem 0.5rem;  /* Добавил padding-bottom для зазора */
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
@@ -3530,19 +3530,19 @@ function getStorageUrl(key) {
   align-items: center;
   padding: 2px 8px;
   border-radius: 4px;
-  border: 1px solid #dee2e6;
+  border: 1px solid var(--bs-border-color);
   font-size: 0.8rem;
   cursor: pointer;
   user-select: none;
   transition: background .12s, border-color .12s;
-  background: #f8f9fa;
-  color: #495057;
+  background: var(--bs-secondary-bg);
+  color: var(--bs-secondary-color);
 }
-.svc-chip:hover { border-color: #adb5bd; background: #e9ecef; }
+.svc-chip:hover { border-color: var(--bs-border-color-translucent); background: var(--bs-tertiary-bg); }
 .svc-chip--on {
-  background: #e8f0fe;
-  border-color: #86b7fe;
-  color: #0d47a1;
+  background: var(--admin-selected-row-bg);
+  border-color: var(--admin-inline-hover-border);
+  color: var(--bs-primary-text-emphasis);
 }
-.svc-chip--on:hover { background: #d6e4fd; border-color: #6ea8fe; }
+.svc-chip--on:hover { background: var(--admin-selected-row-bg); border-color: var(--bs-primary-border-subtle); }
 </style>

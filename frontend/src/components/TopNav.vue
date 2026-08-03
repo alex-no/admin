@@ -45,6 +45,16 @@
 
       <!-- User block -->
       <div class="d-flex align-items-center gap-3">
+        <!-- Theme toggle -->
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary"
+          :title="themeTitle"
+          @click="theme.cycle"
+        >
+          <i class="bi" :class="themeIcon"></i>
+        </button>
+
         <div class="dropdown">
           <button
             class="btn btn-sm btn-outline-secondary dropdown-toggle"
@@ -77,10 +87,12 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import { useTheme } from '@/composables/useTheme'
 import menu from '@/config/menu.json'
 import { findMenuLocation } from '@/utils/menuLocation'
 
 const auth   = useAuth()
+const theme  = useTheme()
 const route  = useRoute()
 const router = useRouter()
 
@@ -94,6 +106,18 @@ const visibleMenu = computed(() =>
 // Через findMenuLocation, а не голий startsWith: `/sto-managers` збігався б із
 // `/sto` і підсвічував чужий розділ (див. utils/menuLocation.js).
 const activeSection = computed(() => findMenuLocation(route.path)?.section.id ?? null)
+
+const themeIcon = computed(() => {
+  if (theme.mode.value === 'light') return 'bi-sun-fill'
+  if (theme.mode.value === 'dark') return 'bi-moon-stars-fill'
+  return 'bi-circle-half'
+})
+
+const themeTitle = computed(() => {
+  if (theme.mode.value === 'light') return 'Світла тема'
+  if (theme.mode.value === 'dark') return 'Темна тема'
+  return 'Авто (за системою)'
+})
 
 async function doLogout() {
   auth.logout()

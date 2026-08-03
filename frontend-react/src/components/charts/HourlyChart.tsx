@@ -1,3 +1,7 @@
+function getCSSColor(varName: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(varName).trim() || '#000'
+}
+
 interface HourlyChartProps {
   data?: Array<{ hour: number | string; count: number }>
   width?: number
@@ -45,7 +49,7 @@ export default function HourlyChart({ data = [], width = 600, height = 200 }: Ho
             y={PADDING + (chartHeight / 4) * (i - 1) + 5}
             textAnchor="end"
             fontSize="11"
-            fill="#666"
+            fill={getCSSColor("--bs-secondary-color")}
           >
             {Math.round(maxValue - (maxValue / 4) * (i - 1))}
           </text>
@@ -53,13 +57,13 @@ export default function HourlyChart({ data = [], width = 600, height = 200 }: Ho
 
         {bars.map((bar, idx) => (
           <g key={idx}>
-            <rect x={bar.x} y={bar.y} width={barWidth} height={bar.height} fill="#0d6efd" />
+            <rect x={bar.x} y={bar.y} width={barWidth} height={bar.height} fill={getCSSColor("--bs-primary")} />
             <text
               x={bar.x + barWidth / 2}
               y={height - PADDING + 15}
               textAnchor="middle"
               fontSize="10"
-              fill="#666"
+              fill={getCSSColor("--bs-secondary-color")}
             >
               {bar.hour}
             </text>

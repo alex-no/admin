@@ -160,11 +160,11 @@ async function submitPassword() {
 .card-header,
 .card-footer {
   background: white;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid var(--bs-border-color);
 }
 
 .card-footer {
-  border-top: 1px solid #dee2e6;
+  border-top: 1px solid var(--bs-border-color);
   border-bottom: none;
 }
 </style>

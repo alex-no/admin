@@ -14,7 +14,7 @@
       <div v-else class="card">
         <div class="card-body p-0">
           <table class="table table-hover mb-0">
-            <thead class="table-light">
+            <thead>
               <tr>
                 <th style="width: 60px">ID</th>
                 <th style="width: 200px">Slug</th>

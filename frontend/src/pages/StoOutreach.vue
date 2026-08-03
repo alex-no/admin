@@ -25,7 +25,7 @@
       <div class="card shadow-sm mb-3">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0 small">
-            <thead class="table-light">
+            <thead>
               <tr>
                 <th style="width:36px">
                   <input type="checkbox" class="form-check-input" :checked="allChecked" :indeterminate.prop="someChecked" @change="toggleAll" />
@@ -91,7 +91,7 @@
                       </div>
                       <div v-else-if="!historyItems.length" class="text-muted small">Розсилок не було</div>
                       <table v-else class="table table-sm mb-0 small">
-                        <thead class="table-light">
+                        <thead>
                           <tr>
                             <th style="width:110px">Дата</th>
                             <th style="width:90px">Канал</th>

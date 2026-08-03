@@ -43,7 +43,7 @@
         <div class="card shadow-sm">
           <div class="table-responsive">
             <table class="table table-hover align-middle mb-0 small">
-              <thead class="table-light">
+              <thead>
                 <tr>
                   <th class="text-end th-sortable" style="width:55px" @click="toggleSort('id')">
                     ID <SortIcon col="id" :sortKey :sortDir />
@@ -348,7 +348,7 @@ onMounted(() => {
 
 <style scoped>
 .th-sortable { cursor: pointer; user-select: none; white-space: nowrap; }
-.th-sortable:hover { background: #e9ecef; }
+.th-sortable:hover { background: var(--bs-tertiary-bg); }
 
 .inline-editable {
   display: inline-block;
@@ -359,7 +359,7 @@ onMounted(() => {
   transition: border-color .15s;
 }
 .inline-editable:hover {
-  border-color: #86b7fe;
-  background: #f8f9fa;
+  border-color: var(--admin-inline-hover-border);
+  background: var(--bs-secondary-bg);
 }
 </style>

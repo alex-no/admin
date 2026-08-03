@@ -1,4 +1,17 @@
-const COLORS = ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6c757d', '#0dcaf0', '#6f42c1', '#fd7e14']
+function getCSSColor(varName: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(varName).trim() || '#000'
+}
+
+const getColors = () => [
+  getCSSColor('--bs-primary'),
+  getCSSColor('--bs-success'),
+  getCSSColor('--bs-warning'),
+  getCSSColor('--bs-danger'),
+  getCSSColor('--bs-secondary'),
+  getCSSColor('--bs-info'),
+  getCSSColor('--bs-purple'),
+  getCSSColor('--bs-orange'),
+]
 
 interface PieChartProps {
   data?: any[]
@@ -9,6 +22,8 @@ interface PieChartProps {
 
 export default function PieChart({ data = [], labelKey, valueKey, size = 250 }: PieChartProps) {
   const total = data.reduce((sum, item) => sum + (item[valueKey] || 0), 0)
+  const COLORS = getColors()
+  const strokeColor = getCSSColor('--bs-body-bg')
 
   let currentAngle = -Math.PI / 2
   const radius = size / 2 - 10
@@ -45,7 +60,7 @@ export default function PieChart({ data = [], labelKey, valueKey, size = 250 }: 
         <svg width={size} height={size}>
           <g transform={`translate(${size / 2}, ${size / 2})`}>
             {slices.map((slice, idx) => (
-              <path key={idx} d={slice.path} fill={slice.color} stroke="#fff" strokeWidth={2} />
+              <path key={idx} d={slice.path} fill={slice.color} stroke={strokeColor} strokeWidth={2} />
             ))}
           </g>
         </svg>

@@ -301,7 +301,7 @@ defineExpose({ open, close })
 
 <style scoped>
 .nav-tabs .nav-link.active {
-  background-color: #f8f9fa !important;
+  background-color: var(--bs-secondary-bg) !important;
 }
 </style>
 

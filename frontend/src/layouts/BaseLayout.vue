@@ -3,7 +3,7 @@
     <TopNav />
     <!-- Поза <main>: <main> прокручується, а крихти мусять лишатись на місці -->
     <Breadcrumbs />
-    <main class="flex-grow-1 p-4 bg-light" style="overflow-y: auto; display: flex; flex-direction: column;">
+    <main class="flex-grow-1 p-4" style="overflow-y: auto; display: flex; flex-direction: column; background-color: var(--bs-body-bg);">
       <slot />
     </main>
   </div>

@@ -30,7 +30,7 @@
       <div class="card shadow-sm">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0 small">
-            <thead class="table-light">
+            <thead>
               <tr>
                 <th style="width:50px" class="text-end">ID</th>
                 <th class="th-sortable" @click="toggleSort('username')">
@@ -98,7 +98,7 @@
       </template>
 
       <!-- Tab nav -->
-      <div class="border-bottom px-3 pt-1 mx-n4 mt-n3" style="flex-shrink:0; background:#fff">
+      <div class="border-bottom px-3 pt-1 mx-n4 mt-n3" style="flex-shrink:0; background:var(--bs-body-bg)">
             <ul class="nav nav-tabs border-0">
               <li class="nav-item">
                 <button class="nav-link py-2 small text-nowrap"
@@ -261,7 +261,7 @@
               <template v-else>
                 <div v-if="!carsList.length" class="text-muted text-center py-4">Авто не знайдено</div>
                 <table v-else class="table table-sm align-middle small mb-0">
-                  <thead class="table-light">
+                  <thead>
                     <tr>
                       <th style="width:30px"></th>
                       <th>Авто</th>
@@ -303,7 +303,7 @@
                 </p>
 
                 <table v-if="msList.length" class="table table-sm align-middle small mb-3">
-                  <thead class="table-light">
+                  <thead>
                     <tr>
                       <th>СТО</th>
                       <th style="width:110px">Тип</th>
@@ -381,7 +381,7 @@
                 <p class="text-muted small mb-2">СТО, в яких зареєстрований користувач як співробітник.</p>
 
                 <table v-if="empList.length" class="table table-sm align-middle small mb-3">
-                  <thead class="table-light">
+                  <thead>
                     <tr>
                       <th>СТО</th>
                       <th style="width:200px">Посада</th>
@@ -1242,12 +1242,12 @@ onMounted(() => {
 <style scoped>
 /* Page content wrapper with scroll */
 .th-sortable { cursor: pointer; user-select: none; white-space: nowrap; }
-.th-sortable:hover { background: #e9ecef; }
+.th-sortable:hover { background: var(--bs-tertiary-bg); }
 
 .readonly-field {
   padding: 4px 8px;
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
+  background: var(--bs-secondary-bg);
+  border: 1px solid var(--bs-border-color);
   border-radius: 4px;
   min-height: 31px;
   line-height: 1.4;

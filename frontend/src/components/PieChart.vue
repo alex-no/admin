@@ -7,7 +7,7 @@
           :key="idx"
           :d="slice.path"
           :fill="slice.color"
-          :stroke="'#fff'"
+          :stroke="'var(--bs-body-bg)'"
           :stroke-width="2"
         />
       </g>
@@ -32,7 +32,7 @@ const props = defineProps({
   size: { type: Number, default: 250 },
 })
 
-const colors = ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6c757d', '#0dcaf0', '#6f42c1', '#fd7e14']
+const colors = ['var(--bs-primary)', 'var(--bs-success)', 'var(--bs-warning)', 'var(--bs-danger)', 'var(--bs-secondary)', 'var(--bs-info)', 'var(--bs-purple)', 'var(--bs-orange)']
 
 const slices = computed(() => {
   if (!props.data || !props.data.length) return []

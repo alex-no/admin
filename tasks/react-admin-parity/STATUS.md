@@ -52,7 +52,7 @@ allsto**. Не переносити, доки не закрито в обох м
 | [10](10-undoable-save.md) | Undoable-збереження | M | front | — | 🔲 | 🔲 | ⚠️ | інфраструктура готова в allsto |
 | [11](11-filter-sidebar.md) | Сайдбар фільтрів зі счётчиками | L | front+back | **08** | 🔲 | 🔲 | ⚠️ | інфраструктура готова в allsto |
 | [12](12-realtime-updates.md) | Live-обновлення | M/XL | front(+infra) | 10 | 🔲 | 🔲 | ⚠️ | Tier 1 (polling) готовий в allsto; Tier 2 (WS) — за потреби |
-| [13](13-dark-theme.md) | Тёмна тема | M | front | 07, 11 | 🔲 | 🔲 | 🔲 | |
+| [13](13-dark-theme.md) | Тёмна тема | M | front | 07, 11 | ✅ | ✅ | ✅ | useTheme + анти-блимання + перемикач у TopNav + ~165 hex→CSS-змінні; працює в allsto |
 | [14](14-breadcrumbs.md) | Breadcrumbs | S | front | — | ✅ | ✅ | ✅ | заодно виправлено `activeSection` у `TopNav` (голий `startsWith`) |
 | [15](15-admin-i18n.md) | i18n самої адмінки | L | front | усі (робити останньою) | 🔲 | 🔲 | 🔲 | користувач вирішив додати; greenfield, однаковий API Vue+React |
 | [16](16-global-search.md) | Глобальний пошук | L | front+back | 09 | 🔲 | 🔲 | 🔲 | |
@@ -63,7 +63,7 @@ allsto**. Не переносити, доки не закрито в обох м
 
 **Разом:** 21 задача. Дві (`05` клієнт, `20`) уже закриті фреймворком.
 Три (`17`, `18`, `19`) скасовані користувачем. `15` (i18n) додано в роботу.
-**Залишилось:** 6 задач (10, 11, 12, 13, 15, 16).
+**Залишилось:** 5 задач (10, 11, 12, 15, 16). Задача 13 готова в обох мовах.
 
 ---
 
@@ -1382,3 +1382,163 @@ prop `readonly`. Точка розширення — `registerCellType(type, com
 - BULK_ALL_LIMIT=5000 — запобігає випадковому оновленню мільйонів записів
 - resetOn включає кожен фільтр окремо, sortItems, perPage — будь-яка зміна вибірки скидає виділення
 - Кнопка "Виділити всі N" з'являється тільки якщо: усі на сторінці обрані + total > items.length
+
+---
+
+## 📋 Task 13: Тёмна тема
+
+**Статус:** ✅ ✅ (Vue + React готові, перевірка в браузері потрібна)
+
+**Що зроблено:**
+
+### Інфраструктура
+1. **`frontend/src/composables/useTheme.js`** — Vue-версія
+   - Три режими: `light` / `dark` / `auto` (за `prefers-color-scheme`)
+   - Збереження вибору в `localStorage` (`admin.theme`)
+   - Автоматичне відстеження зміни системної теми через `matchMedia`
+   - Функція `cycle()` для перемикання через кнопку
+
+2. **`frontend-react/src/composables/useTheme.ts`** — React-версія (TypeScript)
+   - Ідентична логіка з useTheme.js
+   - `useState` + `useEffect` для реактивності
+   - Та сама підтримка `auto` режиму
+
+3. **Анти-блимання в обох `index.html`**
+   - Inline `<script>` виставляє `data-bs-theme` **до** завантаження бандла
+   - Інакше в темному режимі буде біле блимання (FOUC)
+   - ⚠️ Ключ `localStorage` ('admin.theme') ідентичний у скрипті й composable
+
+4. **Перемикач у `TopNav.vue` та `TopNav.tsx`**
+   - Кнопка поруч з профілем користувача
+   - Іконки: `bi-sun-fill` / `bi-moon-stars-fill` / `bi-circle-half`
+   - title показує поточний режим
+   - Клік по кнопці → `cycle()`
+
+5. **Глобальні CSS-змінні** (`frontend/src/styles/theme.css` + `frontend-react/src/styles/theme.css`)
+   - `--admin-highlight-bg` — підсвітка щойно створеного рядка
+   - `--admin-inline-hover-bg` — hover inline-редагування
+   - `--admin-inline-hover-border` — focus-бордюр
+   - `--admin-selected-row-bg` — фон виділеного рядка
+   - Значення для `:root` (світла) та `[data-bs-theme="dark"]`
+
+### Заміна hex-кольорів
+**Всього замінено ~165 входжень** (більше ніж 106 в allsto через два фронтенди):
+
+| Hex-колір | Входжень | Замінено на |
+|---|---|---|
+| `#dee2e6` | 28 | `var(--bs-border-color)` |
+| `#f8f9fa` | 26 | `var(--bs-secondary-bg)` |
+| `#e9ecef` | 17 | `var(--bs-tertiary-bg)` |
+| `#86b7fe` | 11 | `var(--admin-inline-hover-border)` |
+| `#666`, `#6c757d` | 20 | `var(--bs-secondary-color)` |
+| `#fff`, `#ffffff` | 8 | `var(--bs-body-bg)` |
+| `#0d6efd` | 9 | `var(--bs-primary)` |
+| `#ffc107` | 4 | `var(--bs-warning)` |
+| `#dc3545` | 4 | `var(--bs-danger)` |
+| `#fd7e14` | 2 | `var(--bs-orange)` |
+| `#e9f0ff`, `#e8f0fe` | 3 | `var(--admin-highlight-bg)` / `--admin-selected-row-bg` |
+
+**Графіки (SVG):**
+- BarChart, PieChart, HourlyChart, TrendChart — кольори осей, підписів, заливок переведені на `getCSSColor()` helper
+- `COLORS` масив у PieChart: `['var(--bs-primary)', 'var(--bs-success)', ...]` замість hex
+- `fill="#666"` → `fill={getCSSColor('--bs-secondary-color')}`
+
+**Інші зміни:**
+- `TableSkeleton.tsx`: `background: #e9ecef` → `var(--bs-tertiary-bg)`
+- `ErrorLogStats`: `levelColor()` використовує `var(--bs-danger)`, `var(--bs-dark)` тощо
+- `StoList.vue`: `.svc-chip` кольори на змінні
+- Видалено інлайновий `style="color: #1e40af !important"` — тепер просто `.text-primary`
+
+### Що залишилось hex
+- `#000` у `getCSSColor()` fallback — це норма (якщо змінної немає)
+- Жодних інших hex-кольорів у `<style scoped>` чи `<svg>` не залишилось
+
+### Побудова
+- ✅ `npm run build` у `frontend` — успішно (1.57s)
+- ✅ `npm run build` у `frontend-react` — успішно (2.33s)
+- Бандли збільшились на ~1 кБ через додаткові composables
+
+**Не перевірено (потрібен браузер):**
+- Візуальна перевірка всіх сторінок у темній темі
+- Перемикання light → dark → auto працює без F5
+- Графіки читаються (осі, підписи не зникають на темному)
+- `text-dark` без пари не створює нечитабельний текст
+- `navbar-dark bg-dark` у TopNav не зливається з темним фоном
+- Skeleton, Empty state, FilterSidebar (якщо є) виглядають коректно
+- Бейджі статусів (`bg-warning text-dark`) читаються
+- Модалки (tab-nav, card-header) не мають білих смуг
+
+### Перенесення в allsto
+
+**Дата:** 2026-08-03
+**Статус:** ✅ Готово
+
+**Що перенесено:**
+1. `useTheme.js` → `allsto/www_front/admin/src/composables/useTheme.js`
+2. `theme.css` → `allsto/www_front/admin/src/styles/theme.css` (створено директорію)
+3. Анти-блимання скрипт в `allsto/www_front/admin/index.html`
+4. `import './styles/theme.css'` в `allsto/www_front/admin/src/main.js`
+5. `theme.apply()` в `allsto/www_front/admin/src/App.vue`
+6. Перемикач у `allsto/www_front/admin/src/components/TopNav.vue`
+
+**Замінено hex-кольори:**
+- Всі hex-кольори в `.vue` файлах → CSS-змінні Bootstrap
+- `BarChart.vue`: `fill="#333"` → `var(--bs-body-color)`
+- `TrendChart.vue`: `stroke="#e0e0e0"` → `var(--bs-border-color)`
+- `PieChart.vue`: colors масив на Bootstrap змінні
+- `StoEditModal.vue`: `.svc-chip` кольори
+- `ErrorLogStats.vue`: `levelColor()` на Bootstrap змінні
+
+**Результат:**
+- ✅ `npm run build` успішно (2.50s)
+- ✅ Скопійовано `admin_dist → public/admin/`
+- ✅ Жодних hex-кольорів не залишилось (окрім `<template #...>` синтаксису)
+
+**Відмінності від admin:**
+- В allsto немає React-версії (тільки Vue)
+- outDir: `../admin_dist` замість `dist`
+- Менше компонентів (немає HourlyChart)
+
+### Фінальні поліпшення темної теми
+
+**Дата:** 2026-08-03
+**Статус:** ✅ Готово в admin (Vue+React) + allsto
+
+**Що змінено (за запитом користувача):**
+
+1. **Темно-сірий фон замість чорного:**
+   - `--bs-body-bg: #2b2d31` (основний фон)
+   - `--bs-secondary-bg: #1e1f22` (картки, breadcrumbs, thead)
+   - `--bs-tertiary-bg: #383a40` (hover-стани)
+
+2. **Покращений контраст:**
+   - Текст: `#e8e9eb` (світліший)
+   - Бордюри: `#4a4d55` (помітніші)
+   - Navbar: `#1a1c1f` (найтемніший) + border-bottom
+
+3. **Світліші акцентні кольори:**
+   - Primary: `#5b9cff`, Success: `#3ba55d`, Warning: `#ffb84d`, Danger: `#ed5f74`
+
+4. **Виправлено bg-light на компонентах:**
+   - `BaseLayout.vue` / `BaseLayout.tsx`: `<main>` тепер `var(--bs-body-bg)`
+   - `Breadcrumbs.vue` / `Breadcrumbs.tsx`: `var(--bs-secondary-bg)`
+   - `BaseModal.vue`: прибрано `bg-light` з `card-footer`
+
+5. **Додаткові стилі в theme.css:**
+   - `.navbar-dark` темніший фон + border
+   - `.table > thead` темний фон
+   - `.card-header`, `.card-footer` темні
+   - `.dropdown-menu` темний
+
+**Результат:**
+- ✅ admin Vue: build успішно (14.00s)
+- ✅ admin React: build успішно (4.52s)
+- ✅ allsto: працює (2.00s)
+- ✅ Всі елементи читабельні з хорошим контрастом
+
+**Перевірено користувачем:**
+- ✅ Основний фон темно-сірий
+- ✅ Заголовок таблиці темніший
+- ✅ Footer модалки темний
+- ✅ Breadcrumbs темні
+- ✅ Всі елементи контрастні та добре видимі

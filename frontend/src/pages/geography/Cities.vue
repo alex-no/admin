@@ -55,7 +55,7 @@
         <div class="card shadow-sm">
           <div class="table-responsive">
             <table class="table table-hover align-middle mb-0 small">
-              <thead class="table-light">
+              <thead>
                 <tr>
                   <th
                     v-for="col in cfg.table" :key="col.key"
@@ -371,12 +371,12 @@ onMounted(async () => {
 
 <style scoped>
 .th-sortable { cursor: pointer; user-select: none; white-space: nowrap; }
-.th-sortable:hover { background: #e9ecef; }
+.th-sortable:hover { background: var(--bs-tertiary-bg); }
 
 .inline-editable {
   display: block; cursor: text; min-width: 80px;
   padding: 2px 4px; border-radius: 4px;
   border: 1px solid transparent; transition: border-color .15s;
 }
-.inline-editable:hover { border-color: #86b7fe; background: #f8f9fa; }
+.inline-editable:hover { border-color: var(--admin-inline-hover-border); background: var(--bs-secondary-bg); }
 </style>

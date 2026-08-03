@@ -13,12 +13,13 @@ export default function BaseLayout() {
       {/* Поза <main>: <main> прокручується, а крихти мусять лишатись на місці */}
       <Breadcrumbs />
       <main
-        className="flex-grow-1 p-4 bg-light"
+        className="flex-grow-1 p-4"
         style={{
           overflowY: 'auto',
           display: 'flex',
           flexDirection: 'column',
           transition: 'margin 0.2s',
+          backgroundColor: 'var(--bs-body-bg)',
           ...contentMargin,
         }}
       >

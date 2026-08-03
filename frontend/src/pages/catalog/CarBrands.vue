@@ -34,7 +34,7 @@
         <div class="card shadow-sm">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0 small">
-            <thead class="table-light">
+            <thead>
               <tr>
                 <th style="width:50px" class="text-end">ID</th>
                 <th class="th-sortable" @click="toggleSort('name')">
@@ -239,5 +239,5 @@ onMounted(async () => {
 }
 
 .th-sortable { cursor: pointer; user-select: none; white-space: nowrap; }
-.th-sortable:hover { background: #e9ecef; }
+.th-sortable:hover { background: var(--bs-tertiary-bg); }
 </style>

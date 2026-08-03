@@ -14,7 +14,7 @@
           :y="padding + idx * barHeight + barHeight / 2 + 4"
           text-anchor="end"
           font-size="12"
-          fill="#666"
+          fill="var(--bs-secondary-color)"
         >
           {{ item.label }}
         </text>
@@ -22,7 +22,7 @@
           :x="padding + item.barWidth + 5"
           :y="padding + idx * barHeight + barHeight / 2 + 4"
           font-size="12"
-          fill="#333"
+          fill="var(--bs-body-color)"
           font-weight="bold"
         >
           {{ item.value }}
@@ -41,7 +41,7 @@ const props = defineProps({
   labelKey: { type: String, required: true },
   valueKey: { type: String, required: true },
   title: { type: String, default: '' },
-  color: { type: String, default: '#0d6efd' },
+  color: { type: String, default: 'var(--bs-primary)' },
   width: { type: Number, default: 400 },
 })
 

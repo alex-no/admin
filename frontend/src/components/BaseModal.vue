@@ -71,7 +71,7 @@
 
         <!-- Опціональний блок між заголовком і тілом (напр. панель вкладок) —
              рендериться лише якщо сторінка передала контент у цей слот. -->
-        <div v-if="$slots.subheader" class="border-bottom px-3 pt-1" style="flex-shrink:0; background:#fff">
+        <div v-if="$slots.subheader" class="border-bottom px-3 pt-1" style="flex-shrink:0; background:var(--bs-body-bg)">
           <slot name="subheader"></slot>
         </div>
 
@@ -79,7 +79,7 @@
           <slot></slot>
         </div>
 
-        <div v-if="$slots.footer" class="card-footer px-4 py-2 bg-light d-flex justify-content-between align-items-center">
+        <div v-if="$slots.footer" class="card-footer px-4 py-2 d-flex justify-content-between align-items-center">
           <slot name="footer"></slot>
         </div>
       </div>
@@ -271,7 +271,7 @@ function getModeSwitchTitle() {
   top: 0;
   right: 0;
   bottom: 0;
-  border-left: 1px solid #dee2e6;
+  border-left: 1px solid var(--bs-border-color);
   box-shadow: -2px 0 8px rgba(0, 0, 0, 0.08);
 }
 

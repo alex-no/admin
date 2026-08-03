@@ -27,7 +27,7 @@
     <template v-else>
       <div v-if="!asgnList.length" class="text-muted small mb-3">Прив'язок немає</div>
       <table v-else class="table table-sm align-middle small mb-3">
-        <thead class="table-light">
+        <thead>
           <tr>
             <th style="width:110px">Тип</th>
             <th>Назва</th>

@@ -1,6 +1,6 @@
 <!-- Copyright (c) 2026 Oleksandr Nosov. MIT License. -->
 <template>
-  <nav aria-label="breadcrumb" class="px-4 py-2 border-bottom bg-body-tertiary flex-shrink-0">
+  <nav aria-label="breadcrumb" class="px-4 py-2 border-bottom flex-shrink-0" style="background-color: var(--bs-secondary-bg);">
     <ol class="breadcrumb mb-0 small">
       <li class="breadcrumb-item">
         <router-link to="/">Головна</router-link>

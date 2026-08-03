@@ -16,7 +16,7 @@
       <div class="card shadow-sm mb-3">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0 small">
-            <thead class="table-light">
+            <thead>
               <tr>
                 <th style="width:50px" class="text-end">ID</th>
                 <th>Регіон</th>
@@ -237,7 +237,7 @@
               </summary>
             <div class="table-responsive mt-2">
               <table class="table table-bordered table-sm small align-middle">
-                <thead class="table-light">
+                <thead>
                   <tr>
                     <th style="width:110px">Поле</th>
                     <th v-if="modalData?.google_data">
@@ -457,7 +457,7 @@
                     <img
                       :src="url"
                       :alt="'Фото ' + (i+1)"
-                      style="width:120px; height:90px; object-fit:cover; border-radius:4px; border:1px solid #dee2e6"
+                      style="width:120px; height:90px; object-fit:cover; border-radius:4px; border:1px solid var(--bs-border-color)"
                     />
                   </a>
                 </div>
@@ -526,7 +526,7 @@
             <button class="btn btn-sm btn-outline-secondary" @click="closeImportCityPicker">✕</button>
           </div>
 
-          <div class="px-3 py-2" style="flex-shrink:0; border-bottom:1px solid #dee2e6">
+          <div class="px-3 py-2" style="flex-shrink:0; border-bottom:1px solid var(--bs-border-color)">
             <input
               ref="importCitySearchInputRef"
               v-model="importCityPickerSearch"
@@ -1109,8 +1109,8 @@ function selectImportCity(city) {
 
 .readonly-field {
   padding: 4px 8px;
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
+  background: var(--bs-secondary-bg);
+  border: 1px solid var(--bs-border-color);
   border-radius: 4px;
   min-height: 31px;
   line-height: 1.4;

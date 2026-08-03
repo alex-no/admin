@@ -29,7 +29,8 @@ function buildTrend(stats: Stats | null): { labels: string[]; datasets: TrendDat
   for (const level of ['error', 'critical', 'warning', 'alert', 'emergency']) {
     const data = labels.map(date => dateMap[date][level] || 0)
     if (data.reduce((s, v) => s + v, 0) > 0) {
-      datasets.push({ label: level, data, color: LEVEL_COLOR[level] ?? '#6c757d' })
+      const fallbackColor = getComputedStyle(document.documentElement).getPropertyValue('--bs-secondary').trim() || '#6c757d'
+      datasets.push({ label: level, data, color: LEVEL_COLOR[level] ?? fallbackColor })
     }
   }
 

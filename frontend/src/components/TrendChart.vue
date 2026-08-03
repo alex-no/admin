@@ -10,7 +10,7 @@
           :y1="padding + (chartHeight / 4) * (i - 1)"
           :x2="width - padding"
           :y2="padding + (chartHeight / 4) * (i - 1)"
-          stroke="#e0e0e0"
+          stroke="var(--bs-border-color)"
           stroke-width="1"
         />
       </g>
@@ -24,7 +24,7 @@
           :y="padding + (chartHeight / 4) * (i - 1) + 5"
           text-anchor="end"
           font-size="12"
-          fill="#666"
+          fill="var(--bs-secondary-color)"
         >
           {{ Math.round(maxValue - (maxValue / 4) * (i - 1)) }}
         </text>
@@ -57,7 +57,7 @@
           :y="height - padding + 20"
           text-anchor="middle"
           font-size="11"
-          fill="#666"
+          fill="var(--bs-secondary-color)"
         >
           {{ formatDate(label) }}
         </text>

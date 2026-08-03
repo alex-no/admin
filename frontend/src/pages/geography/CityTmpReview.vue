@@ -17,7 +17,7 @@
       <div class="card shadow-sm">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0 small">
-            <thead class="table-light">
+            <thead>
               <tr>
                 <th style="width:50px" class="text-end">ID</th>
                 <th>Назва (чернетка)</th>
@@ -488,8 +488,8 @@ onMounted(async () => {
 
 <style scoped>
 .readonly-field {
-  padding: 4px 8px; background: #f8f9fa;
-  border: 1px solid #dee2e6; border-radius: 4px;
+  padding: 4px 8px; background: var(--bs-secondary-bg);
+  border: 1px solid var(--bs-border-color); border-radius: 4px;
   min-height: 31px; line-height: 1.4;
 }
 </style>

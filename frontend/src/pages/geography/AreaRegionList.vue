@@ -40,7 +40,7 @@
       <div class="card shadow-sm">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0 small">
-            <thead class="table-light">
+            <thead>
               <tr>
                 <th
                   v-for="col in cfg.table"
@@ -616,7 +616,7 @@ onMounted(async () => {
   user-select: none;
   white-space: nowrap;
 }
-.th-sortable:hover { background: #e9ecef; }
+.th-sortable:hover { background: var(--bs-tertiary-bg); }
 
 .inline-editable {
   display: block;
@@ -628,14 +628,14 @@ onMounted(async () => {
   transition: border-color .15s;
 }
 .inline-editable:hover {
-  border-color: #86b7fe;
-  background: #f8f9fa;
+  border-color: var(--admin-inline-hover-border);
+  background: var(--bs-secondary-bg);
 }
 
 .readonly-field {
   padding: 4px 8px;
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
+  background: var(--bs-secondary-bg);
+  border: 1px solid var(--bs-border-color);
   border-radius: 4px;
   min-height: 31px;
   line-height: 1.4;
@@ -644,16 +644,16 @@ onMounted(async () => {
 .city-autocomplete-wrap { position: relative; }
 .city-dropdown {
   position: absolute; z-index: 1060; left: 0; right: 0;
-  background: #fff; border: 1px solid #dee2e6; border-radius: 4px;
+  background: var(--bs-body-bg); border: 1px solid var(--bs-border-color); border-radius: 4px;
   box-shadow: 0 4px 12px rgba(0,0,0,.12);
   max-height: 220px; overflow-y: auto; margin-top: 2px;
 }
 .city-option {
   padding: 6px 10px; cursor: pointer; font-size: .85rem;
 }
-.city-option:hover { background: #e9f0ff; }
+.city-option:hover { background: var(--admin-highlight-bg); }
 .city-dropdown-info {
-  border: 1px solid #dee2e6; border-radius: 4px;
-  margin-top: 2px; background: #fff;
+  border: 1px solid var(--bs-border-color); border-radius: 4px;
+  margin-top: 2px; background: var(--bs-body-bg);
 }
 </style>

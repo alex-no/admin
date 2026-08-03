@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTheme } from '@/composables/useTheme'
 import menuConfig from '@/config/menu.json'
 import { findMenuLocation } from '@/utils/menuLocation'
 
@@ -23,6 +24,7 @@ interface MenuSection {
 
 export default function TopNav() {
   const { user, logout, can } = useAuth()
+  const { mode, cycle } = useTheme()
   const location = useLocation()
   const navigate = useNavigate()
   const [openMenu, setOpenMenu] = useState<string | null>(null)
@@ -39,6 +41,9 @@ export default function TopNav() {
   // Через findMenuLocation, а не голий startsWith: `/sto-managers` збігався б із
   // `/sto` і підсвічував чужий розділ (див. utils/menuLocation.ts).
   const activeSection = findMenuLocation(location.pathname)?.section.id ?? null
+
+  const themeIcon = mode === 'light' ? 'bi-sun-fill' : mode === 'dark' ? 'bi-moon-stars-fill' : 'bi-circle-half'
+  const themeTitle = mode === 'light' ? 'Світла тема' : mode === 'dark' ? 'Темна тема' : 'Авто (за системою)'
 
   const handleLogout = async () => {
     logout()
@@ -96,6 +101,16 @@ export default function TopNav() {
 
         {/* User block */}
         <div className="d-flex align-items-center gap-3">
+          {/* Theme toggle */}
+          <button
+            type="button"
+            className="btn btn-sm btn-outline-secondary"
+            title={themeTitle}
+            onClick={cycle}
+          >
+            <i className={`bi ${themeIcon}`}></i>
+          </button>
+
           <div className="dropdown">
             <button
               className="btn btn-sm btn-outline-secondary dropdown-toggle"

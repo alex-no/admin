@@ -1,3 +1,7 @@
+function getCSSColor(varName: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(varName).trim() || '#000'
+}
+
 export interface TrendDataset {
   label: string
   data: number[]
@@ -45,7 +49,7 @@ export default function TrendChart({ labels, datasets }: TrendChartProps) {
             y1={PADDING + (chartHeight / 4) * (i - 1)}
             x2={WIDTH - PADDING}
             y2={PADDING + (chartHeight / 4) * (i - 1)}
-            stroke="#e0e0e0"
+            stroke={getCSSColor('--bs-border-color')}
             strokeWidth={1}
           />
         ))}
@@ -58,7 +62,7 @@ export default function TrendChart({ labels, datasets }: TrendChartProps) {
             y={PADDING + (chartHeight / 4) * (i - 1) + 5}
             textAnchor="end"
             fontSize="12"
-            fill="#666"
+            fill={getCSSColor("--bs-secondary-color")}
           >
             {Math.round(maxValue - (maxValue / 4) * (i - 1))}
           </text>
@@ -87,7 +91,7 @@ export default function TrendChart({ labels, datasets }: TrendChartProps) {
             y={HEIGHT - PADDING + 20}
             textAnchor="middle"
             fontSize="11"
-            fill="#666"
+            fill={getCSSColor("--bs-secondary-color")}
           >
             {formatDate(label)}
           </text>

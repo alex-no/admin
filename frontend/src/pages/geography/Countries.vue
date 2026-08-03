@@ -26,7 +26,7 @@
       <div class="card shadow-sm">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0 small">
-            <thead class="table-light">
+            <thead>
               <tr>
                 <th
                   v-for="col in cfg.table"
@@ -357,7 +357,7 @@ onMounted(() => {
 }
 
 .th-sortable:hover {
-  background: #e9ecef;
+  background: var(--bs-tertiary-bg);
 }
 
 .inline-editable {
@@ -370,7 +370,7 @@ onMounted(() => {
 }
 
 .inline-editable:hover {
-  border-color: #86b7fe;
-  background: #f8f9fa;
+  border-color: var(--admin-inline-hover-border);
+  background: var(--bs-secondary-bg);
 }
 </style>

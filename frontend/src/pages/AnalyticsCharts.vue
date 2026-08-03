@@ -153,12 +153,12 @@ const trendData = computed(() => {
     {
       label: 'Користувачі',
       data: labels.map(date => dateMap[date].real),
-      color: '#0d6efd',
+      color: 'var(--bs-primary)',
     },
     {
       label: 'Боти',
       data: labels.map(date => dateMap[date].bots),
-      color: '#6c757d',
+      color: 'var(--bs-secondary-color)',
     },
   ]
 

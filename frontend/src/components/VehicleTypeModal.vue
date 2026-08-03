@@ -178,8 +178,8 @@ defineExpose({ openCreate, openEdit, close })
 <style scoped>
 .readonly-field {
   padding: 4px 8px;
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
+  background: var(--bs-secondary-bg);
+  border: 1px solid var(--bs-border-color);
   border-radius: 4px;
   min-height: 31px;
   line-height: 1.4;

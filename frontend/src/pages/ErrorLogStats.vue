@@ -211,13 +211,13 @@ function levelBadge(level) {
 
 function levelColor(level) {
   const map = {
-    error: '#dc3545',
-    critical: '#721c24',
-    alert: '#ffc107',
-    emergency: '#212529',
-    warning: '#ff9800',
+    error: 'var(--bs-danger)',
+    critical: 'var(--bs-danger-dark)',
+    alert: 'var(--bs-warning)',
+    emergency: 'var(--bs-dark)',
+    warning: 'var(--bs-orange)',
   }
-  return map[level] || '#6c757d'
+  return map[level] || 'var(--bs-secondary-color)'
 }
 
 function shortException(str) {

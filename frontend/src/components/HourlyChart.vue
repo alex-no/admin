@@ -8,7 +8,7 @@
           :y="padding + (chartHeight / 4) * (i - 1) + 5"
           text-anchor="end"
           font-size="11"
-          fill="#666"
+          fill="var(--bs-secondary-color)"
         >
           {{ Math.round(maxValue - (maxValue / 4) * (i - 1)) }}
         </text>
@@ -21,14 +21,14 @@
           :y="bar.y"
           :width="barWidth"
           :height="bar.height"
-          fill="#0d6efd"
+          fill="var(--bs-primary)"
         />
         <text
           :x="bar.x + barWidth / 2"
           :y="height - padding + 15"
           text-anchor="middle"
           font-size="10"
-          fill="#666"
+          fill="var(--bs-secondary-color)"
         >
           {{ bar.hour }}
         </text>

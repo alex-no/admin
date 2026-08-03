@@ -9,16 +9,24 @@ interface BarChartProps {
 const PADDING = 100
 const BAR_HEIGHT = 30
 
+function getCSSColor(varName: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(varName).trim() || '#000'
+}
+
 export default function BarChart({
   data = [],
   labelKey,
   valueKey,
-  color = '#0d6efd',
+  color,
   width = 400,
 }: BarChartProps) {
   if (!data.length) {
     return <div className="text-center text-muted py-3">Немає даних</div>
   }
+
+  const barColor = color || getCSSColor('--bs-primary')
+  const textColor = getCSSColor('--bs-secondary-color')
+  const valueColor = getCSSColor('--bs-body-color')
 
   const height = data.length * BAR_HEIGHT + PADDING
   const maxValue = Math.max(...data.map(item => item[valueKey] || 0), 1)
@@ -40,14 +48,14 @@ export default function BarChart({
               y={PADDING + idx * BAR_HEIGHT}
               width={item.barWidth}
               height={BAR_HEIGHT - 5}
-              fill={color}
+              fill={barColor}
             />
             <text
               x={PADDING - 5}
               y={PADDING + idx * BAR_HEIGHT + BAR_HEIGHT / 2 + 4}
               textAnchor="end"
               fontSize="12"
-              fill="#666"
+              fill={textColor}
             >
               {item.label}
             </text>
@@ -55,7 +63,7 @@ export default function BarChart({
               x={PADDING + item.barWidth + 5}
               y={PADDING + idx * BAR_HEIGHT + BAR_HEIGHT / 2 + 4}
               fontSize="12"
-              fill="#333"
+              fill={valueColor}
               fontWeight="bold"
             >
               {item.value}
