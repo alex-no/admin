@@ -49,9 +49,9 @@ allsto**. Не переносити, доки не закрито в обох м
 | [07](07-loading-skeletons.md) | Skeleton замість спінера | S | front | 01 (колонки) | ✅ | ✅ | ✅ | `TableSkeleton` — skeleton-рядки замість повноекранного спінера; layout shift зникає |
 | [08](08-select-all-across-pages.md) | Виділення всіх за фільтром | M | front+back | 05 (bulk-ендпоінт) | ✅ | ✅ | ✅ | |
 | [09](09-async-reference-autocomplete.md) | Async-автокомпліт довідника | M | front+back | — | ✅ | ✅ | ✅ | мінімальний фікс: `per_page=500`, попередження про обрізання; повний автокомпліт — окрема задача |
-| [10](10-undoable-save.md) | Undoable-збереження | M | front | — | 🔲 | 🔲 | 🔲 | у `admin` inline-PATCH уже оптимістичний з відкатом |
-| [11](11-filter-sidebar.md) | Сайдбар фільтрів зі счётчиками | L | front+back | **08** | 🔲 | 🔲 | 🔲 | |
-| [12](12-realtime-updates.md) | Live-обновлення | M/XL | front(+infra) | 10 | 🔲 | 🔲 | 🔲 | Tier 1 polling; Tier 2 WS — за потреби |
+| [10](10-undoable-save.md) | Undoable-збереження | M | front | — | 🔲 | 🔲 | ⚠️ | інфраструктура готова в allsto |
+| [11](11-filter-sidebar.md) | Сайдбар фільтрів зі счётчиками | L | front+back | **08** | 🔲 | 🔲 | ⚠️ | інфраструктура готова в allsto |
+| [12](12-realtime-updates.md) | Live-обновлення | M/XL | front(+infra) | 10 | 🔲 | 🔲 | ⚠️ | Tier 1 (polling) готовий в allsto; Tier 2 (WS) — за потреби |
 | [13](13-dark-theme.md) | Тёмна тема | M | front | 07, 11 | 🔲 | 🔲 | 🔲 | |
 | [14](14-breadcrumbs.md) | Breadcrumbs | S | front | — | ✅ | ✅ | ✅ | заодно виправлено `activeSection` у `TopNav` (голий `startsWith`) |
 | [15](15-admin-i18n.md) | i18n самої адмінки | L | front | усі (робити останньою) | 🔲 | 🔲 | 🔲 | користувач вирішив додати; greenfield, однаковий API Vue+React |
@@ -1133,9 +1133,36 @@ VehicleTypes, ServiceGroups. Перевірено складанням і 19 п�
 
 ### 12 — Live-обновлення
 
-**Vue:** 🔲 · **React:** 🔲 · **→ allsto:** 🔲
-**Дата:**   **Хто:**
+**Vue:** 🔲 · **React:** 🔲 · **→ allsto:** ⚠️ інфраструктура готова (Tier 1)
+**Дата:** 2026-08-03   **Хто:** Claude
 **Примітки / причина:**
+
+**→ allsto:** ✅ Tier 1 (polling) повністю готовий:
+
+**Інфраструктура:**
+- ✅ `useListPolling.js` створений — тихе автооновлення через fetch кожні 60 секунд
+- ✅ Пауза при неактивній вкладці (`document.visibilityState`) — 8 вкладок не довбають бекенд
+- ✅ Пауза при pending мутаціях (`hasPending()` з Task 10) — polling не перезаписує оптимістичні значення
+- ✅ `revalidate()` обходить `useListCache` — завжди свіжий запит
+
+**Плашка "нові записи":**
+- ✅ `knownTotal` — що адмін бачив; `newCount = total - knownTotal`
+- ✅ На нейтральному вигляді (перша сторінка без фільтрів) — оновлення тихе, без плашки
+- ✅ Не нейтральний вигляд — плашка "↑ N нових записів [Показати]", клік → `load(1)`
+- ✅ `load()` (викликаний адміном) оновлює `knownTotal`, polling — НЕ оновлює
+
+**UI:**
+- ✅ Перемикач "Автооновлення" у toolbar (іконка ⟳/⏸)
+- ✅ Стан зберігається в `localStorage` окремо для кожної сторінки (`admin.polling:{apiList}`)
+- ✅ За замовчуванням увімкнено
+
+**Інтеграція:**
+- ✅ Підключено в `DataListPage.vue` — працює автоматично на всіх config-driven сторінках
+- ✅ Інтервал 60 секунд (1 хвилина)
+
+⏸️ **Tier 2 (WebSocket)** — робити тільки якщо Tier 1 виявиться недостатнім (затримка або відсутність push реально шкодить). Вимагає нового node-сервісу в docker-compose, Apache proxy з Upgrade, аутентифікації каналу, публікації подій з PHP-бекенду — це XL-задача, а не M.
+
+⏸️ **Розкатка на конкретні сторінки** — коли з'являться config-driven черги модерації (зараз тільки legacy `StoList.vue`). Специфіка (30с для ErrorLogs, 60с для черг) — окремо для кожної сторінки.
 
 ---
 
