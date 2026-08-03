@@ -81,6 +81,8 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
     toggleSelectAll,
     updateCell,
     deleteRow,
+    enablePolling,
+    setEnablePolling,
   } = useTableState({
     apiList,
     apiUpdate,
@@ -479,6 +481,15 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
               ? <span className="spinner-border spinner-border-sm me-1" />
               : <i className="bi bi-download me-1" />}
             CSV
+          </button>
+
+          <button
+            type="button"
+            className={`btn btn-sm ${enablePolling ? 'btn-outline-success' : 'btn-outline-secondary'}`}
+            title={enablePolling ? 'Автооновлення увімкнено' : 'Автооновлення вимкнено'}
+            onClick={() => setEnablePolling(!enablePolling)}
+          >
+            <i className={`bi ${enablePolling ? 'bi-arrow-repeat' : 'bi-pause-circle'}`} />
           </button>
 
           <ColumnSelector

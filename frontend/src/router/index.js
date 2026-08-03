@@ -48,6 +48,9 @@ const routes = [
   // Feedback
   { path: '/feedback', name: 'Feedback', component: () => import('../pages/Feedback.vue') },
   { path: '/feedback/stats', name: 'FeedbackStats', component: () => import('../pages/FeedbackStats.vue') },
+
+  // Test pages
+  { path: '/test-facets', name: 'TestFacets', component: () => import('../pages/TestFacets.vue') },
   { path: '/news', name: 'News', component: () => import('../pages/News.vue') },
 
   // Reviews

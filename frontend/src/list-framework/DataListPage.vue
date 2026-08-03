@@ -53,6 +53,16 @@
           <i v-else class="bi bi-download me-1"></i>CSV
         </button>
 
+        <button
+          type="button"
+          class="btn btn-sm"
+          :class="enablePolling ? 'btn-outline-success' : 'btn-outline-secondary'"
+          :title="enablePolling ? 'Автооновлення увімкнено' : 'Автооновлення вимкнено'"
+          @click="enablePolling = !enablePolling"
+        >
+          <i class="bi" :class="enablePolling ? 'bi-arrow-repeat' : 'bi-pause-circle'"></i>
+        </button>
+
         <ColumnSelector
           :columns="columnsConfig"
           :is-visible="isColumnVisible"
@@ -363,6 +373,7 @@ import { useColumnPrefs } from '@/composables/useColumnPrefs'
 import { useRowSelection } from '@/composables/useRowSelection'
 import { useRowExpand } from '@/composables/useRowExpand'
 import { useListCache } from '@/composables/useListCache'
+import { useListPolling } from '@/composables/useListPolling'
 import { formatPhoneUA, normalizePhoneE164 } from '@/utils/phone'
 import { rowsToCsv, downloadCsv } from '@/utils/csv'
 import Pagination from '@/components/Pagination.vue'
@@ -507,6 +518,31 @@ const {
 
 // ── Розкривні рядки (react-admin: Datagrid expand) ────────────────────────
 const { isExpanded, toggle: toggleExpand, collapseAll: collapseAllExpanded } = useRowExpand()
+
+// ── Live updates (Task 12: автооновлення списку через polling) ────────────
+const enablePolling = ref(true)
+const POLLING_STORAGE_KEY = computed(() => `admin.polling:${props.apiList}`)
+onMounted(() => {
+  try {
+    const stored = localStorage.getItem(POLLING_STORAGE_KEY.value)
+    if (stored !== null) enablePolling.value = JSON.parse(stored)
+  } catch {
+    // Битий JSON — ігноруємо
+  }
+})
+watch(enablePolling, (v) => {
+  localStorage.setItem(POLLING_STORAGE_KEY.value, JSON.stringify(v))
+})
+
+// Пауза polling коли є відкриті мутації або модалка
+const pausePolling = computed(() => hasPending() || createOpen.value)
+
+useListPolling({
+  revalidate,
+  intervalMs: 60000, // 1 хвилина
+  paused: pausePolling,
+  enabled: enablePolling,
+})
 
 // ── Вибір колонок (react-admin: SelectColumnsButton) ──────────────────────
 // Колонка з прапорцем hideable: false ховатись не може. Експорт у CSV навмисно
@@ -952,6 +988,39 @@ function toggleSort(key, event) {
     sortItems.value = sortItems.value.map((s, i) => (i === idx ? { ...s, dir: 'DESC' } : s))
   } else {
     sortItems.value = sortItems.value.filter((_, i) => i !== idx)
+  }
+}
+
+// ── Revalidate (для polling, без спінера, обходить кеш) ───────────────────
+async function revalidate() {
+  const params = new URLSearchParams()
+  params.set('page', String(page.value))
+  params.set('per_page', String(perPage.value))
+  if (sortItems.value.length) {
+    params.set('sort_by', sortItems.value.map((s) => s.key).join(','))
+    params.set('sort_dir', sortItems.value.map((s) => s.dir).join(','))
+  }
+  for (const f of props.filterConfig) {
+    const v = filters[f.key].value
+    if (v !== '' && v !== null && v !== undefined && v !== false) {
+      params.set(f.param ?? f.key, v)
+    }
+  }
+
+  try {
+    const res = await fetch(`${props.apiList}?${params}`, { headers: auth.authHeaders() })
+    const json = await res.json().catch(() => ({}))
+    if (!res.ok) return // Тиха помилка: polling не мусить лякати адміна тостами
+    const newTotal = json.pagination?.total ?? (json.data?.length ?? 0)
+
+    // Завжди оновлюємо дані (в admin немає isNeutralView концепції)
+    items.value = json.data ?? []
+    total.value = newTotal
+    totalPages.value = json.pagination?.total_pages ?? 1
+    const cacheKey = `${props.apiList}?${params}`
+    cacheSet(cacheKey, { items: items.value, total: total.value, totalPages: totalPages.value })
+  } catch {
+    // Тиха помилка: polling не мусить лякати
   }
 }
 

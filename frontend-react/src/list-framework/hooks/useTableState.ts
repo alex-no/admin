@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { apiGet, apiPatch, apiPost, apiDelete as apiDeleteRequest } from '@/utils/api'
 import { notify } from '@/hooks/useNotify'
 import { useUndoableMutation } from '@/hooks/useUndoableMutation'
+import { useListPolling } from '@/hooks/useListPolling'
 import { getCached, setCached } from './useListCache'
 import { fetchOptions } from './useRemoteOptions'
 import { useRowSelection } from './useRowSelection'
@@ -91,6 +92,19 @@ export function useTableState({
   const firstOptionApplied = useRef<Set<string>>(new Set())
   const [bulkApplying, setBulkApplying] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [enablePolling, setEnablePolling] = useState(() => {
+    try {
+      const stored = localStorage.getItem(`admin.polling:${apiList}`)
+      return stored !== null ? JSON.parse(stored) : true
+    } catch {
+      return true
+    }
+  })
+
+  // Persist polling preference
+  useEffect(() => {
+    localStorage.setItem(`admin.polling:${apiList}`, JSON.stringify(enablePolling))
+  }, [enablePolling, apiList])
 
   // Initialize filters from config (only once), overriding with values from URL
   useEffect(() => {
@@ -129,6 +143,55 @@ export function useTableState({
   // просто інкрементимо токен, який входить у deps ефекту завантаження нижче,
   // щоб не дублювати логіку запиту другою копією.
   const reload = useCallback(() => setReloadToken(t => t + 1), [])
+
+  // Revalidate (для polling, без спінера, обходить кеш)
+  const revalidate = useCallback(async () => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      per_page: perPage.toString(),
+    })
+
+    for (const f of filterConfig) {
+      const value = filters[f.key]
+      if (value !== '' && value !== null && value !== undefined && value !== false) {
+        params.set(f.param ?? f.key, String(value))
+      }
+    }
+    for (const [key, value] of Object.entries(filters)) {
+      if (filterConfig.some(f => f.key === key)) continue
+      if (value !== '' && value !== null && value !== undefined) {
+        params.set(key, String(value))
+      }
+    }
+
+    if (sortItems.length > 0) {
+      params.append('sort_by', sortItems.map(s => s.key).join(','))
+      params.append('sort_dir', sortItems.map(s => s.dir).join(','))
+    }
+
+    const url = `${apiList}?${params.toString()}`
+
+    try {
+      const response = await apiGet<PaginatedResponse<any>>(url)
+      setCached(url, response)
+      setItems(response.data)
+      setTotal(response.pagination.total)
+      setTotalPages(response.pagination.total_pages)
+    } catch {
+      // Тиха помилка: polling не мусить лякати адміна тостами
+    }
+  }, [filters, sortItems, perPage, page, apiList, filterConfig])
+
+  // Live updates (Task 12: автооновлення списку через polling)
+  const { hasPending } = useUndoableMutation()
+  const pausePolling = hasPending()
+
+  useListPolling({
+    revalidate,
+    intervalMs: 60000, // 1 хвилина
+    paused: pausePolling,
+    enabled: enablePolling,
+  })
 
   // Toggle sort
   const toggleSort = useCallback((key: string, ctrlKey = false) => {
@@ -578,5 +641,8 @@ export function useTableState({
     toggleSelectAll,
     updateCell,
     deleteRow,
+    // Live updates (Task 12)
+    enablePolling,
+    setEnablePolling,
   }
 }

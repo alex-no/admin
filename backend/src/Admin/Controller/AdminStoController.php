@@ -137,7 +137,7 @@ final readonly class AdminStoController
         $stmt   = $this->pdo->prepare("SELECT * FROM sto $where ORDER BY $order LIMIT $perPage OFFSET $offset");
         $stmt->execute($binds);
 
-        return $this->json([
+        $response = [
             'status' => 'success',
             'data'   => array_map($this->format(...), $stmt->fetchAll()),
             'pagination' => [
@@ -146,7 +146,15 @@ final readonly class AdminStoController
                 'total'       => $total,
                 'total_pages' => (int) ceil($total / max(1, $perPage)),
             ],
-        ]);
+        ];
+
+        // Facets (Task 11: FilterSidebar counts)
+        $facetsParam = trim((string) ($params['facets'] ?? ''));
+        if ($facetsParam !== '') {
+            $response['facets'] = $this->buildFacets($facetsParam, $where, $binds);
+        }
+
+        return $this->json($response);
     }
 
     #[OA\Get(
@@ -634,6 +642,63 @@ final readonly class AdminStoController
         }
 
         return $parts !== [] ? implode(', ', $parts) : 'id ASC';
+    }
+
+    /**
+     * Build facets (counts per value for filterable fields).
+     * @param string $facetsParam comma-separated field names
+     * @param string $where WHERE clause
+     * @param array $binds query bindings
+     * @return array<string, array<int, array{value: string, count: int, label?: string}>>
+     */
+    private function buildFacets(string $facetsParam, string $where, array $binds): array
+    {
+        $requestedFields = array_filter(
+            array_map('trim', explode(',', $facetsParam)),
+            static fn (string $f) => $f !== ''
+        );
+
+        $facetableFields = ['is_active', 'sto_type'];
+        $result = [];
+
+        foreach ($requestedFields as $field) {
+            if (!in_array($field, $facetableFields, true)) {
+                continue; // Whitelist: only allowed fields
+            }
+            $result[$field] = $this->buildFacet($field, $where, $binds);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Build single facet (count per distinct value).
+     */
+    private function buildFacet(string $field, string $where, array $binds): array
+    {
+        $sql = "SELECT $field AS value, COUNT(*) AS count FROM sto $where GROUP BY $field ORDER BY count DESC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($binds);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $result = [];
+        foreach ($rows as $row) {
+            $item = [
+                'value' => $row['value'],
+                'count' => (int) $row['count'],
+            ];
+
+            // Add label for known enums
+            if ($field === 'sto_type' && isset(self::TYPE_LABELS[$row['value']])) {
+                $item['label'] = self::TYPE_LABELS[$row['value']];
+            } elseif ($field === 'is_active') {
+                $item['label'] = $row['value'] ? 'Активні' : 'Неактивні';
+            }
+
+            $result[] = $item;
+        }
+
+        return $result;
     }
 
     /**
