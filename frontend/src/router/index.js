@@ -51,6 +51,7 @@ const routes = [
 
   // Test pages
   { path: '/test-facets', name: 'TestFacets', component: () => import('../pages/TestFacets.vue') },
+  { path: '/test-i18n', name: 'TestI18n', component: () => import('../pages/TestI18n.vue') },
   { path: '/news', name: 'News', component: () => import('../pages/News.vue') },
 
   // Reviews

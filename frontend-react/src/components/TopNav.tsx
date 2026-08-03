@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTheme } from '@/composables/useTheme'
+import LanguageSwitcher from './LanguageSwitcher'
 import menuConfig from '@/config/menu.json'
 import { findMenuLocation } from '@/utils/menuLocation'
 
@@ -110,6 +111,9 @@ export default function TopNav() {
           >
             <i className={`bi ${themeIcon}`}></i>
           </button>
+
+          {/* Language switcher */}
+          <LanguageSwitcher />
 
           <div className="dropdown">
             <button

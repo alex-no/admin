@@ -1,0 +1,117 @@
+{
+  "common": {
+    "save": "Сохранить",
+    "cancel": "Отменить",
+    "delete": "Удалить",
+    "edit": "Редактировать",
+    "create": "Создать",
+    "add": "Добавить",
+    "close": "Закрыть",
+    "reset": "Сбросить",
+    "search": "Поиск",
+    "filter": "Фильтр",
+    "export": "Экспорт",
+    "import": "Импорт",
+    "refresh": "Обновить",
+    "loading": "Загрузка...",
+    "noData": "Нет данных",
+    "error": "Ошибка",
+    "success": "Успешно",
+    "active": "Активный",
+    "inactive": "Неактивный",
+    "yes": "Да",
+    "no": "Нет",
+    "all": "Все",
+    "actions": "Действия",
+    "total": "Всего",
+    "selected": "Выбрано",
+    "page": "Страница",
+    "of": "из",
+    "perPage": "На странице"
+  },
+  "nav": {
+    "dashboard": "Главная",
+    "sto": "СТО",
+    "dataRegistry": "Реестр данных",
+    "users": "Пользователи",
+    "bookings": "Записи",
+    "geography": "География",
+    "catalog": "Каталог",
+    "analytics": "Аналитика",
+    "errorLogs": "Журнал ошибок",
+    "roles": "Роли",
+    "permissions": "Разрешения",
+    "system": "Система",
+    "settings": "Настройки"
+  },
+  "auth": {
+    "login": "Вход",
+    "logout": "Выход",
+    "email": "Email",
+    "password": "Пароль",
+    "signIn": "Войти",
+    "welcome": "Добро пожаловать"
+  },
+  "table": {
+    "id": "ID",
+    "name": "Название",
+    "status": "Статус",
+    "createdAt": "Создано",
+    "updatedAt": "Обновлено",
+    "noRecords": "Записи не найдены",
+    "selectColumns": "Выбрать колонки",
+    "resetColumns": "Сбросить",
+    "hideColumn": "Скрыть",
+    "showColumn": "Показать"
+  },
+  "filters": {
+    "resetFilters": "Сбросить фильтры",
+    "saveFilter": "Сохранить фильтр",
+    "savedFilters": "Сохраненные фильтры...",
+    "filterName": "Название фильтра",
+    "deleteFilter": "Удалить фильтр"
+  },
+  "bulk": {
+    "selectAll": "Выделить все {count}",
+    "selected": "Выбрано {count}",
+    "selectedAll": "Выбрано все {count} по фильтру",
+    "updateField": "Изменить поле...",
+    "selectField": "Выберите поле",
+    "activate": "Активировать",
+    "deactivate": "Деактивировать"
+  },
+  "empty": {
+    "noRecords": "Нет ни одной записи",
+    "noMatchingRecords": "Не найдено ни одной записи по указанным фильтрам",
+    "createFirst": "Создайте первую запись",
+    "clearFilters": "Очистить фильтры"
+  },
+  "modal": {
+    "create": "Создание записи",
+    "edit": "Редактирование записи",
+    "detail": "Детали записи",
+    "confirm": "Подтверждение",
+    "confirmDelete": "Вы уверены, что хотите удалить эту запись?"
+  },
+  "validation": {
+    "required": "Это поле обязательно",
+    "email": "Неверный формат email",
+    "minLength": "Минимальная длина {min} символов",
+    "maxLength": "Максимальная длина {max} символов"
+  },
+  "messages": {
+    "saved": "Сохранено",
+    "deleted": "Удалено",
+    "created": "Создано",
+    "updated": "Обновлено",
+    "error": "Произошла ошибка",
+    "confirmAction": "Подтвердите действие",
+    "unsavedChanges": "У вас есть несохраненные изменения"
+  },
+  "language": {
+    "uk": "Українська",
+    "en": "English",
+    "ru": "Русский",
+    "selectLanguage": "Выберите язык"
+  }
+}

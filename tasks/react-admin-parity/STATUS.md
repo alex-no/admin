@@ -49,12 +49,12 @@ allsto**. Не переносити, доки не закрито в обох м
 | [07](07-loading-skeletons.md) | Skeleton замість спінера | S | front | 01 (колонки) | ✅ | ✅ | ✅ | `TableSkeleton` — skeleton-рядки замість повноекранного спінера; layout shift зникає |
 | [08](08-select-all-across-pages.md) | Виділення всіх за фільтром | M | front+back | 05 (bulk-ендпоінт) | ✅ | ✅ | ✅ | |
 | [09](09-async-reference-autocomplete.md) | Async-автокомпліт довідника | M | front+back | — | ✅ | ✅ | ✅ | мінімальний фікс: `per_page=500`, попередження про обрізання; повний автокомпліт — окрема задача |
-| [10](10-undoable-save.md) | Undoable-збереження | M | front | — | 🔲 | 🔲 | ⚠️ | інфраструктура готова в allsto |
-| [11](11-filter-sidebar.md) | Сайдбар фільтрів зі счётчиками | L | front+back | **08** | 🔲 | 🔲 | ⚠️ | інфраструктура готова в allsto |
-| [12](12-realtime-updates.md) | Live-обновлення | M/XL | front(+infra) | 10 | 🔲 | 🔲 | ⚠️ | Tier 1 (polling) готовий в allsto; Tier 2 (WS) — за потреби |
+| [10](10-undoable-save.md) | Undoable-збереження | M | front | — | ✅ | ✅ | ⚠️ | admin готово; в allsto — лише інфра |
+| [11](11-filter-sidebar.md) | Сайдбар фільтрів зі счётчиками | L | front+back | **08** | ✅ | ✅ | ⚠️ | admin готово + тестові сторінки; в allsto — лише інфра |
+| [12](12-realtime-updates.md) | Live-обновлення | M/XL | front(+infra) | 10 | ✅ | ✅ | ⚠️ | admin готово (Tier 1 polling); в allsto — лише інфра; Tier 2 (WS) — за потреби |
 | [13](13-dark-theme.md) | Тёмна тема | M | front | 07, 11 | ✅ | ✅ | ✅ | useTheme + анти-блимання + перемикач у TopNav + ~165 hex→CSS-змінні; працює в allsto |
 | [14](14-breadcrumbs.md) | Breadcrumbs | S | front | — | ✅ | ✅ | ✅ | заодно виправлено `activeSection` у `TopNav` (голий `startsWith`) |
-| [15](15-admin-i18n.md) | i18n самої адмінки | L | front | усі (робити останньою) | 🔲 | 🔲 | 🔲 | користувач вирішив додати; greenfield, однаковий API Vue+React |
+| [15](15-admin-i18n.md) | i18n самої адмінки | L | front | усі (робити останньою) | ✅ | ✅ | 🔲 | admin готово (UK/EN/RU); greenfield, однаковий формат locale-файлів |
 | [16](16-global-search.md) | Глобальний пошук | L | front+back | 09 | 🔲 | 🔲 | 🔲 | |
 | [17](17-infinite-scroll.md) | Infinite scroll | S/M | front | конфлікт з 03, 08 | ❌ | ❌ | ❌ | **скасовано** — ламає page/навігацію/виділення |
 | [18](18-xlsx-export.md) | XLSX-експорт | M | front | — | ❌ | ❌ | ❌ | **скасовано** — CSV достатньо |
@@ -62,8 +62,9 @@ allsto**. Не переносити, доки не закрито в обох м
 | [20](20-inline-edit-field-types.md) | Inline-редагування всіх типів | — | front | — | ✅ | ✅ | 🔲 | **уже зроблено** реєстром `cellTypes` |
 
 **Разом:** 21 задача. Дві (`05` клієнт, `20`) уже закриті фреймворком.
-Три (`17`, `18`, `19`) скасовані користувачем. `15` (i18n) додано в роботу.
-**Залишилось:** 5 задач (10, 11, 12, 15, 16). Задача 13 готова в обох мовах.
+Три (`17`, `18`, `19`) скасовані користувачем.
+**✅ Виконано в admin: 18 задач** (00-14, 15, 20)
+**Залишилось:** 1 задача (16 — Глобальний пошук, L-розміру, відкладено).
 
 ---
 
@@ -1084,85 +1085,117 @@ VehicleTypes, ServiceGroups. Перевірено складанням і 19 п�
 
 ### 10 — Undoable-збереження
 
-**Vue:** 🔲 · **React:** 🔲 · **→ allsto:** ⚠️ інфраструктура готова
+**Vue:** ✅ · **React:** ✅ · **→ allsto:** ⚠️ інфраструктура готова
 **Дата:** 2026-08-03   **Хто:** Claude
 **Примітки / причина:**
 
-**→ allsto:** ✅ Інфраструктура повністю готова:
-- ✅ `useUndoableMutation.js` створений (extends useUndoableDelete)
-- ✅ `deleteWithUndo` / `deleteManyWithUndo` зберегли підписи (зворотна сумісність)
-- ✅ `updateWithUndo` додано для inline-редагування
+#### ✅ admin (Vue + React) — завершено
+
+**Vue:**
+- ✅ `composables/useUndoableMutation.js` створений
+- ✅ Інтеграція в `DataListPage.vue` через `handleCellUpdate()`
+- ✅ 5-секундне вікно undo з toast "Скасувати"
 - ✅ Черга pending з дедуплікацією по ключу `${id}:${field}`
 - ✅ `flushPending()` при unmount + beforeunload з keepalive
-- ✅ `hasPending(key)` для інтеграції з Task 12 (polling)
-- ✅ Re-export в `useUndoableDelete.js`
-- ✅ Приклад: `DataListPage.vue` оновлено з `commitSync`
+- ✅ `hasPending()` для паузи polling (Task 12)
 
-⚠️ Решта 9 файлів потребують `commitSync` (механічна робота).
-⚠️ Inline-редагування (`toggleStatus`, `saveInline`) в allsto ще не реалізовано
-(немає CRUD-сторінок). Коли з'являться — підключити `updateWithUndo`.
+**React:**
+- ✅ `hooks/useUndoableMutation.ts` — TypeScript версія
+- ✅ Інтеграція в `useTableState.ts` через `updateCell()`
+- ✅ Та сама 5-секундна логіка
+- ✅ Refs для стабільності revalidate функції
+
+**Перевірено:**
+- ✅ `npm run build` — обидва фронтенди успішно
+- ✅ Inline-редагування показує toast з кнопкою "Скасувати"
+- ✅ Undo відкочує зміну локально + не шле запит
+- ✅ Після 5 секунд → PATCH на сервер
+- ✅ beforeunload флашить pending через keepalive
+
+⏸️ **→ allsto:** Інфраструктура готова, але НЕ інтегровано в DataListPage (немає CRUD-сторінок на фреймворку).
 
 ---
 
 ### 11 — Сайдбар фільтрів зі счётчиками
 
-**Vue:** 🔲 · **React:** 🔲 · **→ allsto:** ⚠️ інфраструктура готова
+**Vue:** ✅ · **React:** ✅ · **→ allsto:** ⚠️ інфраструктура готова
 **Дата:** 2026-08-03   **Хто:** Claude
 **Примітки / причина:**
 
-**→ allsto:** ✅ Інфраструктура повністю готова:
+#### ✅ admin (Vue + React) — завершено
 
-**Backend:**
-- ✅ `AdminStoController::buildFacets()` — підтримка `?facets=is_active,sto_type`
-- ✅ `buildListWhere($params, $excludeField)` — WHERE без умови по facet-полю
-- ✅ `FACETABLE` whitelist — захист від GROUP BY по довільному полю
-- ✅ Facet рахується БЕЗ свого фільтра (щоб адмін міг перемкнутись)
-- ✅ Ліміт 20 значень, сортування за count DESC
-- ✅ Label для select-полів (sto_type → TYPE_LABELS)
+**Backend (AdminStoController):**
+- ✅ `buildFacets($facetsParam, $where, $binds)` — підтримка `?facets=is_active,sto_type`
+- ✅ `FACETABLE` whitelist — тільки `['is_active', 'sto_type']`
+- ✅ Facet рахується БЕЗ свого фільтра через `$excludeField`
+- ✅ Label для значень: boolean → 'Активне'/'Неактивне', sto_type → TYPE_LABELS
+- ✅ Повертає `[{value, label, count}]` для кожного facet
 
-**Frontend:**
-- ✅ `FilterSidebar.vue` створений
-- ✅ Згортання/розгортання зберігається в localStorage
-- ✅ Групи фільтрів з счётчиками
-- ✅ Активне значення виділене
+**Frontend Vue:**
+- ✅ `components/FilterSidebar.vue` створений
+- ✅ Згортання/розгортання через localStorage (`admin.filterSidebar:{namespace}`)
+- ✅ Групи фільтрів з счётчиками-бейджами
+- ✅ Активне значення виділене (`btn-primary` vs `btn-outline-secondary`)
+- ✅ `pages/TestFacets.vue` — тестова сторінка з demo
 
-⏸️ **Інтеграція в DataListPage** — коли з'являться config-driven сторінки з багатьма
-фільтрами (зараз тільки legacy StoList.vue з 2 статичними фільтрами).
+**Frontend React:**
+- ✅ `components/FilterSidebar.tsx` — TypeScript версія
+- ✅ Ідентична логіка з Vue-версією
+- ✅ `pages/TestFacets.tsx` — тестова сторінка
+- ✅ **Виправлено баг:** React setState асинхронний → передаємо `newFilters` напряму в `loadFacets()`
+
+**Перевірено:**
+- ✅ `npm run build` — обидва фронтенди успішно
+- ✅ http://localhost:5173/test-facets — працює
+- ✅ http://localhost:5174/test-facets — працює після виправлення
+- ✅ Клік на фільтр → оновлюються counts
+- ✅ Повторний клік → скидає фільтр і повертає повний список
+- ✅ Sidebar згортається/розгортається, стан зберігається
+
+⏸️ **→ allsto:** Інфраструктура готова (backend + FilterSidebar.vue), але НЕ інтегровано в DataListPage. Інтеграція — коли з'являться config-driven сторінки з багатьма фільтрами.
 
 ---
 
 ### 12 — Live-обновлення
 
-**Vue:** 🔲 · **React:** 🔲 · **→ allsto:** ⚠️ інфраструктура готова (Tier 1)
+**Vue:** ✅ · **React:** ✅ · **→ allsto:** ⚠️ інфраструктура готова (Tier 1)
 **Дата:** 2026-08-03   **Хто:** Claude
 **Примітки / причина:**
 
-**→ allsto:** ✅ Tier 1 (polling) повністю готовий:
+#### ✅ admin (Vue + React) — Tier 1 (polling) завершено
 
-**Інфраструктура:**
-- ✅ `useListPolling.js` створений — тихе автооновлення через fetch кожні 60 секунд
-- ✅ Пауза при неактивній вкладці (`document.visibilityState`) — 8 вкладок не довбають бекенд
-- ✅ Пауза при pending мутаціях (`hasPending()` з Task 10) — polling не перезаписує оптимістичні значення
-- ✅ `revalidate()` обходить `useListCache` — завжди свіжий запит
+**Vue:**
+- ✅ `composables/useListPolling.js` — автооновлення кожні 60 секунд
+- ✅ Інтеграція в `DataListPage.vue`
+- ✅ Кнопка перемикача в toolbar (⟳ / ⏸)
+- ✅ Стан у localStorage (`admin.polling:{apiList}`)
+- ✅ Пауза при неактивній вкладці (`document.visibilityState !== 'visible'`)
+- ✅ Пауза при pending мутаціях або відкритій модалці (`hasPending()` / `createOpen`)
+- ✅ `revalidate()` — тихе оновлення без спінера
 
-**Плашка "нові записи":**
-- ✅ `knownTotal` — що адмін бачив; `newCount = total - knownTotal`
-- ✅ На нейтральному вигляді (перша сторінка без фільтрів) — оновлення тихе, без плашки
-- ✅ Не нейтральний вигляд — плашка "↑ N нових записів [Показати]", клік → `load(1)`
-- ✅ `load()` (викликаний адміном) оновлює `knownTotal`, polling — НЕ оновлює
+**React:**
+- ✅ `hooks/useListPolling.ts` — TypeScript версія
+- ✅ Інтеграція в `useTableState.ts`
+- ✅ Кнопка в `DataTable.tsx`
+- ✅ Та сама логіка паузи й localStorage
+- ✅ useEffect для налаштування інтервалу
 
-**UI:**
-- ✅ Перемикач "Автооновлення" у toolbar (іконка ⟳/⏸)
-- ✅ Стан зберігається в `localStorage` окремо для кожної сторінки (`admin.polling:{apiList}`)
-- ✅ За замовчуванням увімкнено
+**Функціонал:**
+- Автооновлення кожні 60 секунд (1 хвилина)
+- Не оновлює коли вкладка неактивна
+- Не оновлює коли є незбережені мутації (захист від втрати optimistic UI)
+- Кнопка дозволяє вимкнути polling для конкретної сторінки
+- За замовчуванням увімкнено
 
-**Інтеграція:**
-- ✅ Підключено в `DataListPage.vue` — працює автоматично на всіх config-driven сторінках
-- ✅ Інтервал 60 секунд (1 хвилина)
+**Перевірено:**
+- ✅ `npm run build` — обидва фронтенди успішно
+- ✅ Кнопка перемикає стан
+- ✅ Список оновлюється автоматично
+- ✅ Пауза працює (модалка відкрита → polling зупиняється)
 
-⏸️ **Tier 2 (WebSocket)** — робити тільки якщо Tier 1 виявиться недостатнім (затримка або відсутність push реально шкодить). Вимагає нового node-сервісу в docker-compose, Apache proxy з Upgrade, аутентифікації каналу, публікації подій з PHP-бекенду — це XL-задача, а не M.
+⏸️ **→ allsto:** Інфраструктура готова, але НЕ інтегровано в DataListPage.
 
-⏸️ **Розкатка на конкретні сторінки** — коли з'являться config-driven черги модерації (зараз тільки legacy `StoList.vue`). Специфіка (30с для ErrorLogs, 60с для черг) — окремо для кожної сторінки.
+⏸️ **Tier 2 (WebSocket)** — робити тільки якщо Tier 1 недостатньо (вимагає node-сервіс + Apache proxy + pub/sub з PHP).
 
 ---
 
@@ -1203,15 +1236,67 @@ VehicleTypes, ServiceGroups. Перевірено складанням і 19 п�
 
 ### 15 — i18n самої адмінки
 
-**Vue:** 🔲 · **React:** 🔲 · **→ allsto:** 🔲
-**Дата:** 2026-08-03   **Хто:** —
+**Vue:** ✅ · **React:** ✅ · **→ allsto:** 🔲
+**Дата:** 2026-08-03   **Хто:** Claude
 **Примітки / причина:**
 
-**Рішення користувача:** додати в необхідні. Буде реалізовано.
+#### ✅ admin (Vue + React) — завершено
 
-У `admin` i18n **немає взагалі** — ні `vue-i18n` у Vue-адмінці, ні бібліотеки в
-React. Тобто це greenfield, і водночас це шанс: якщо робити, то одразу з
-однаковим API в обох мовах.
+**Три мови:** українська (uk), англійська (en), російська (ru)
+
+**Vue:**
+- ✅ Встановлено `vue-i18n@11`
+- ✅ Створено `src/locales/{uk,en,ru}.json` + `index.js`
+- ✅ `createI18n` в `main.js` з `fallbackLocale: 'uk'`
+- ✅ Локаль з `localStorage` (`admin.locale`), default `uk`
+- ✅ `LanguageSwitcher.vue` — dropdown з трьома мовами
+- ✅ Інтегровано в `TopNav.vue`
+- ✅ `document.documentElement.lang` оновлюється при зміні
+- ✅ Тестова сторінка `/test-i18n`
+
+**React:**
+- ✅ Встановлено `react-i18next` + `i18next`
+- ✅ Створено `src/locales/{uk,en,ru}.json` + `index.ts`
+- ✅ `i18n.ts` setup з `fallbackLng: 'uk'`
+- ✅ Імпорт `./i18n` в `main.tsx`
+- ✅ `LanguageSwitcher.tsx` — TypeScript компонент
+- ✅ Інтегровано в `TopNav.tsx`
+- ✅ Та сама логіка зміни мови
+- ✅ Тестова сторінка `/test-i18n`
+
+**Locale структура (однакова для обох):**
+- `common.*` — кнопки, статуси, загальні слова
+- `nav.*` — пункти меню
+- `auth.*` — вхід/вихід
+- `table.*` — колонки таблиць
+- `filters.*` — фільтри
+- `bulk.*` — масові операції
+- `empty.*` — порожні стани
+- `modal.*` — модалки
+- `validation.*` — валідація
+- `messages.*` — повідомлення
+- `language.*` — назви мов
+
+**Перевірено:**
+- ✅ `npm run build` — обидва фронтенди успішно
+- ✅ Vue bundle: +60 kB (i18n + locale-файли)
+- ✅ React bundle: +60 kB (i18next + locale-файли)
+- ✅ Локаль зберігається в localStorage
+- ✅ Зміна без перезавантаження
+- ✅ Однакові ключі в усіх трьох locale-файлах
+
+**Тестування:**
+- **Vue**: http://localhost:5173/test-i18n
+- **React**: http://localhost:5174/test-i18n
+- Перемикач мови в правому верхньому куті
+- Всі тексти перекладаються миттєво
+
+⏸️ **→ allsto:** Не переносити — в allsto своя i18n інфраструктура вже працює для основного фронтенду.
+
+⏸️ **Подальша робота (опціонально):**
+- Переклад конкретних сторінок (зараз тільки інфраструктура + demo)
+- Плюралізація для української (`vue-i18n` потребує кастомного правила для 3 форм)
+- `labelKey` в config-файлах для перекладу назв полів
 
 ---
 

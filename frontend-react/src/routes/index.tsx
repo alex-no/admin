@@ -13,6 +13,7 @@ import ErrorLogs from '@/pages/ErrorLogs'
 import ErrorLogStats from '@/pages/ErrorLogStats'
 import ApiDocsAdmin from '@/pages/ApiDocsAdmin'
 import TestFacets from '@/pages/TestFacets'
+import TestI18n from '@/pages/TestI18n'
 import NotImplemented from '@/pages/NotImplemented'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -76,6 +77,7 @@ function AppRoutes() {
         {/* Dev Tools */}
         <Route path="api-docs-admin" element={<ApiDocsAdmin />} />
         <Route path="test-facets" element={<TestFacets />} />
+        <Route path="test-i18n" element={<TestI18n />} />
 
         {/* 404 */}
         <Route path="*" element={<NotImplemented />} />

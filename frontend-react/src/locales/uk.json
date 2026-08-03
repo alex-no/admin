@@ -1,0 +1,117 @@
+{
+  "common": {
+    "save": "Зберегти",
+    "cancel": "Скасувати",
+    "delete": "Видалити",
+    "edit": "Редагувати",
+    "create": "Створити",
+    "add": "Додати",
+    "close": "Закрити",
+    "reset": "Скинути",
+    "search": "Пошук",
+    "filter": "Фільтр",
+    "export": "Експорт",
+    "import": "Імпорт",
+    "refresh": "Оновити",
+    "loading": "Завантаження...",
+    "noData": "Немає даних",
+    "error": "Помилка",
+    "success": "Успішно",
+    "active": "Активний",
+    "inactive": "Неактивний",
+    "yes": "Так",
+    "no": "Ні",
+    "all": "Всі",
+    "actions": "Дії",
+    "total": "Всього",
+    "selected": "Обрано",
+    "page": "Сторінка",
+    "of": "з",
+    "perPage": "На сторінці"
+  },
+  "nav": {
+    "dashboard": "Головна",
+    "sto": "СТО",
+    "dataRegistry": "Реєстр даних",
+    "users": "Користувачі",
+    "bookings": "Записи",
+    "geography": "Географія",
+    "catalog": "Каталог",
+    "analytics": "Аналітика",
+    "errorLogs": "Журнал помилок",
+    "roles": "Ролі",
+    "permissions": "Дозволи",
+    "system": "Система",
+    "settings": "Налаштування"
+  },
+  "auth": {
+    "login": "Вхід",
+    "logout": "Вихід",
+    "email": "Email",
+    "password": "Пароль",
+    "signIn": "Увійти",
+    "welcome": "Ласкаво просимо"
+  },
+  "table": {
+    "id": "ID",
+    "name": "Назва",
+    "status": "Статус",
+    "createdAt": "Створено",
+    "updatedAt": "Оновлено",
+    "noRecords": "Записів не знайдено",
+    "selectColumns": "Вибрати колонки",
+    "resetColumns": "Скинути",
+    "hideColumn": "Приховати",
+    "showColumn": "Показати"
+  },
+  "filters": {
+    "resetFilters": "Скинути фільтри",
+    "saveFilter": "Зберегти фільтр",
+    "savedFilters": "Збережені фільтри...",
+    "filterName": "Назва фільтра",
+    "deleteFilter": "Видалити фільтр"
+  },
+  "bulk": {
+    "selectAll": "Виділити всі {count}",
+    "selected": "Обрано {count}",
+    "selectedAll": "Обрано всі {count} за фільтром",
+    "updateField": "Змінити поле...",
+    "selectField": "Оберіть поле",
+    "activate": "Активувати",
+    "deactivate": "Деактивувати"
+  },
+  "empty": {
+    "noRecords": "Немає жодного запису",
+    "noMatchingRecords": "Не знайдено жодного запису за вказаними фільтрами",
+    "createFirst": "Створіть перший запис",
+    "clearFilters": "Очистити фільтри"
+  },
+  "modal": {
+    "create": "Створення запису",
+    "edit": "Редагування запису",
+    "detail": "Деталі запису",
+    "confirm": "Підтвердження",
+    "confirmDelete": "Ви впевнені, що хочете видалити цей запис?"
+  },
+  "validation": {
+    "required": "Це поле обов'язкове",
+    "email": "Невірний формат email",
+    "minLength": "Мінімальна довжина {min} символів",
+    "maxLength": "Максимальна довжина {max} символів"
+  },
+  "messages": {
+    "saved": "Збережено",
+    "deleted": "Видалено",
+    "created": "Створено",
+    "updated": "Оновлено",
+    "error": "Сталася помилка",
+    "confirmAction": "Підтвердіть дію",
+    "unsavedChanges": "У вас є незбережені зміни"
+  },
+  "language": {
+    "uk": "Українська",
+    "en": "English",
+    "ru": "Русский",
+    "selectLanguage": "Оберіть мову"
+  }
+}

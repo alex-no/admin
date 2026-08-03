@@ -55,6 +55,9 @@
           <i class="bi" :class="themeIcon"></i>
         </button>
 
+        <!-- Language switcher -->
+        <LanguageSwitcher />
+
         <div class="dropdown">
           <button
             class="btn btn-sm btn-outline-secondary dropdown-toggle"
@@ -88,6 +91,7 @@ import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { useTheme } from '@/composables/useTheme'
+import LanguageSwitcher from './LanguageSwitcher.vue'
 import menu from '@/config/menu.json'
 import { findMenuLocation } from '@/utils/menuLocation'
 
