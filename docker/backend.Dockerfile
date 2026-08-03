@@ -7,11 +7,16 @@ RUN apt-get update && apt-get install -y \
     sqlite3 \
     libsqlite3-dev \
     iputils-ping \
-    traceroute
+    traceroute \
+    libfreetype6-dev \
+    libjpeg62-turbo-dev \
+    libpng-dev \
+    libwebp-dev
 
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-install pdo_sqlite
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install pdo_sqlite gd
 
 RUN a2enmod rewrite headers
 

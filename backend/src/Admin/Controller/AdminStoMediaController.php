@@ -8,6 +8,7 @@ namespace App\Admin\Controller;
 
 use App\Admin\Service\AdminAuth;
 use App\Admin\Support\JsonResponseTrait;
+use App\Shared\Infrastructure\Storage\ImageProcessor;
 use OpenApi\Attributes as OA;
 use PDO;
 use Psr\Http\Message\ResponseFactoryInterface;
@@ -39,6 +40,7 @@ final readonly class AdminStoMediaController
         private AdminAuth $auth,
         private PDO $pdo,
         private ResponseFactoryInterface $responseFactory,
+        private ImageProcessor $imageProcessor,
     ) {
     }
 
@@ -134,23 +136,30 @@ final readonly class AdminStoMediaController
         // Тип визначаємо за вмістом, а не за getClientMediaType() — той приходить
         // від браузера і підробляється тривіально (curl -F 'photo=@script.txt;type=image/png').
         // Шлях "за URL" нижче робить так само, тож перевірка в обох однакова.
-        $bytes     = $file->getStream()->getContents();
-        $imageInfo = @getimagesizefromstring($bytes);
+        $rawBytes  = $file->getStream()->getContents();
+        $imageInfo = @getimagesizefromstring($rawBytes);
         $mime      = $imageInfo['mime'] ?? null;
         $ext       = self::ALLOWED_MIME_TO_EXT[$mime] ?? null;
         if ($ext === null) {
             return $this->json(['status' => 'error', 'message' => 'Підтримуються лише JPG, PNG, WebP'], 400);
         }
 
-        $fileName = bin2hex(random_bytes(8)) . '.' . $ext;
-        file_put_contents($this->mediaDir() . '/' . $fileName, $bytes);
+        // Convert to WebP
+        try {
+            $processed = $this->imageProcessor->processToWebp($rawBytes, maxSide: 1920, quality: 85);
+        } catch (\RuntimeException $e) {
+            return $this->json(['status' => 'error', 'message' => 'Помилка обробки зображення: ' . $e->getMessage()], 422);
+        }
+
+        $fileName = bin2hex(random_bytes(8)) . '.webp';
+        file_put_contents($this->mediaDir() . '/' . $fileName, $processed['content']);
 
         $id = $this->insertMedia(
             stoId: $stoId,
             fileName: $fileName,
             originalName: $file->getClientFilename(),
-            mimeType: $mime,
-            size: strlen($bytes),
+            mimeType: 'image/webp',
+            size: strlen($processed['content']),
             source: 'upload',
             sourceUrl: null,
         );
@@ -195,27 +204,34 @@ final readonly class AdminStoMediaController
             return $this->json(['status' => 'error', 'message' => $fetched['error']], 400);
         }
 
-        $bytes = $fetched['bytes'];
-        if (strlen($bytes) > self::MAX_URL_FETCH_BYTES) {
+        $rawBytes = $fetched['bytes'];
+        if (strlen($rawBytes) > self::MAX_URL_FETCH_BYTES) {
             return $this->json(['status' => 'error', 'message' => 'Файл завеликий (максимум 8 МБ)'], 400);
         }
 
-        $imageInfo = @getimagesizefromstring($bytes);
+        $imageInfo = @getimagesizefromstring($rawBytes);
         $mime      = $imageInfo['mime'] ?? null;
         $ext       = self::ALLOWED_MIME_TO_EXT[$mime] ?? null;
         if ($ext === null) {
             return $this->json(['status' => 'error', 'message' => 'Посилання не веде на зображення JPG/PNG/WebP'], 400);
         }
 
-        $fileName = bin2hex(random_bytes(8)) . '.' . $ext;
-        file_put_contents($this->mediaDir() . '/' . $fileName, $bytes);
+        // Convert to WebP
+        try {
+            $processed = $this->imageProcessor->processToWebp($rawBytes, maxSide: 1920, quality: 85);
+        } catch (\RuntimeException $e) {
+            return $this->json(['status' => 'error', 'message' => 'Помилка обробки зображення: ' . $e->getMessage()], 422);
+        }
+
+        $fileName = bin2hex(random_bytes(8)) . '.webp';
+        file_put_contents($this->mediaDir() . '/' . $fileName, $processed['content']);
 
         $id = $this->insertMedia(
             stoId: $stoId,
             fileName: $fileName,
             originalName: basename(parse_url($url, PHP_URL_PATH) ?? ''),
-            mimeType: $mime,
-            size: strlen($bytes),
+            mimeType: 'image/webp',
+            size: strlen($processed['content']),
             source: 'url',
             sourceUrl: $url,
         );

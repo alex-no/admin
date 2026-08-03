@@ -356,7 +356,7 @@ import { useAuth } from '@/composables/useAuth'
 import EmptyState from '@/components/EmptyState.vue'
 import TableSkeleton from '@/components/TableSkeleton.vue'
 import { useNotify } from '@/composables/useNotify'
-import { useUndoableDelete } from '@/composables/useUndoableDelete'
+import { useUndoableMutation } from '@/composables/useUndoableMutation'
 import { useUrlFilters } from '@/composables/useUrlFilters'
 import { useSavedFilters } from '@/composables/useSavedFilters'
 import { useColumnPrefs } from '@/composables/useColumnPrefs'
@@ -416,7 +416,7 @@ const emit = defineEmits(['row-action', 'list-update'])
 
 const auth = useAuth()
 const { notify } = useNotify()
-const { deleteWithUndo, deleteManyWithUndo } = useUndoableDelete()
+const { deleteWithUndo, deleteManyWithUndo, updateWithUndo } = useUndoableMutation()
 
 // ── Filters state (по одному ref на кожне поле з filterConfig) ─────────────
 const filters = {}
@@ -956,9 +956,7 @@ function toggleSort(key, event) {
 }
 
 // ── Inline cell edit ─────────────────────────────────────────────────────
-async function handleCellUpdate(row, field, value) {
-  const prev = row[field.key]
-
+function handleCellUpdate(row, field, value) {
   // Нормалізація phone-list перед збереженням: прибираємо форматування, залишаємо
   // тільки E.164 ("+380..."). Дзеркало StoRegistry.vue → saveTab.
   let normalized = value
@@ -966,20 +964,45 @@ async function handleCellUpdate(row, field, value) {
     normalized = (value ?? []).map(normalizePhoneE164).filter((p) => p)
   }
 
-  row[field.key] = normalized
-  if (!props.apiUpdate) return
-  try {
-    const res = await fetch(`${props.apiUpdate}/${row[props.rowKey]}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', ...auth.authHeaders() },
-      body: JSON.stringify({ [field.key]: normalized }),
-    })
-    const json = await res.json().catch(() => ({}))
-    if (!res.ok) throw new Error(json.message ?? 'Помилка збереження')
-  } catch (e) {
-    row[field.key] = prev
-    notify(e.message, { type: 'error' })
+  if (!props.apiUpdate) {
+    row[field.key] = normalized
+    return
   }
+
+  const id = row[props.rowKey]
+  const prev = row[field.key]
+  const label = field.label || field.key
+
+  updateWithUndo({
+    key: `${id}:${field.key}`,
+    message: `«${label}»: ${prev} → ${normalized}`,
+    apply: () => {
+      row[field.key] = normalized
+    },
+    revert: () => {
+      row[field.key] = prev
+    },
+    commit: async () => {
+      const res = await fetch(`${props.apiUpdate}/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...auth.authHeaders() },
+        body: JSON.stringify({ [field.key]: normalized }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.message ?? 'Помилка збереження')
+    },
+    commitSync: () => {
+      fetch(`${props.apiUpdate}/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...auth.authHeaders() },
+        body: JSON.stringify({ [field.key]: normalized }),
+        keepalive: true,
+      })
+    },
+    onCommitError: () => {
+      row[field.key] = prev
+    },
+  })
 }
 
 // ── Row actions (detail / delete / custom) ──────────────────────────────

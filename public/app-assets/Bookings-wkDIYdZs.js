@@ -1,0 +1,1 @@
+import{L as e,j as t,v as n,y as r}from"./index-87iksW0f.js";import{t as i}from"./BaseLayout-BIeGqEND.js";var a={__name:`Bookings`,setup(a){return(a,o)=>(t(),r(i,null,{default:e(()=>[...o[0]||=[n(`h5`,{class:`mb-3`},`Записи`,-1),n(`p`,{class:`text-muted`},`В розробці…`,-1)]]),_:1}))}};export{a as default};

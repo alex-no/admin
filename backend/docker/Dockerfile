@@ -17,7 +17,8 @@ RUN install-php-extensions \
     xml \
     xmlwriter \
     simplexml \
-    pdo
+    pdo \
+    gd
 
 ENV LC_ALL=C.UTF-8
 

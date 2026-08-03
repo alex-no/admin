@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { apiGet, apiPatch, apiPost, apiDelete as apiDeleteRequest } from '@/utils/api'
 import { notify } from '@/hooks/useNotify'
-import { deleteWithUndo, deleteManyWithUndo } from '@/hooks/useUndoableDelete'
+import { useUndoableMutation } from '@/hooks/useUndoableMutation'
 import { getCached, setCached } from './useListCache'
 import { fetchOptions } from './useRemoteOptions'
 import { useRowSelection } from './useRowSelection'
@@ -67,6 +67,8 @@ export function useTableState({
   rowKey = 'id',
   onRowUpdated,
 }: UseTableStateOptions) {
+  const { deleteWithUndo, deleteManyWithUndo, updateWithUndo } = useUndoableMutation()
+
   // Separate state for each concern
   const [items, setItems] = useState<any[]>([])
   const [total, setTotal] = useState(0)
@@ -179,12 +181,9 @@ export function useTableState({
     setPage(1)
   }, [])
 
-  // Inline cell edit: оптимістично оновлюємо рядок, PATCH на сервер,
-  // при помилці — відкат до попереднього значення (як у Vue-версії).
-  const updateCell = useCallback(async (row: any, field: ColumnConfig, value: any) => {
-    const id = row[rowKey]
-    const prev = row[field.key]
-
+  // Inline cell edit: undoable mutation — зміна з'являється одразу,
+  // реальний PATCH — через UNDO_DELETE_DELAY, весь цей час доступне "Скасувати".
+  const updateCell = useCallback((row: any, field: ColumnConfig, value: any) => {
     // Нормалізація phone-list перед збереженням: прибираємо форматування, залишаємо
     // тільки E.164 ("+380..."). Дзеркало Vue: DataListPage.vue → handleCellUpdate.
     let normalized = value
@@ -192,22 +191,45 @@ export function useTableState({
       normalized = (value ?? []).map(normalizePhoneE164).filter((p: string) => p)
     }
 
-    setItems(items => items.map(r => (r[rowKey] === id ? { ...r, [field.key]: normalized } : r)))
+    if (!apiUpdate) {
+      setItems(items => items.map(r => (r[rowKey] === row[rowKey] ? { ...r, [field.key]: normalized } : r)))
+      return
+    }
 
-    if (!apiUpdate) return
+    const id = row[rowKey]
+    const prev = row[field.key]
+    const label = field.label || field.key
 
     const url = apiUpdate.includes('{id}')
       ? apiUpdate.replace('{id}', String(id))
       : `${apiUpdate}/${id}`
 
-    try {
-      await apiPatch(url, { [field.key]: normalized })
-      onRowUpdated?.({ ...row, [field.key]: normalized })
-    } catch (err) {
-      setItems(items => items.map(r => (r[rowKey] === id ? { ...r, [field.key]: prev } : r)))
-      notify(err instanceof Error ? err.message : 'Помилка збереження', { type: 'error' })
-    }
-  }, [apiUpdate, rowKey, onRowUpdated])
+    updateWithUndo({
+      key: `${id}:${field.key}`,
+      message: `«${label}»: ${prev} → ${normalized}`,
+      apply: () => {
+        setItems(items => items.map(r => (r[rowKey] === id ? { ...r, [field.key]: normalized } : r)))
+      },
+      revert: () => {
+        setItems(items => items.map(r => (r[rowKey] === id ? { ...r, [field.key]: prev } : r)))
+      },
+      commit: async () => {
+        await apiPatch(url, { [field.key]: normalized })
+        onRowUpdated?.({ ...row, [field.key]: normalized })
+      },
+      commitSync: () => {
+        fetch(url, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [field.key]: normalized }),
+          keepalive: true,
+        })
+      },
+      onCommitError: () => {
+        setItems(items => items.map(r => (r[rowKey] === id ? { ...r, [field.key]: prev } : r)))
+      },
+    })
+  }, [apiUpdate, rowKey, onRowUpdated, updateWithUndo])
 
   // Load on filters/sort/perPage/page change
   useEffect(() => {
