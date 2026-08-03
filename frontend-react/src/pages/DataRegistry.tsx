@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { DataTable } from '@/list-framework'
+import { DataTable, useRecordNav } from '@/list-framework'
 import DataRegistryDetail from './DataRegistryDetail'
 import { authHeaders } from '@/utils/api'
 import type {
@@ -23,6 +23,12 @@ export default function DataRegistry() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [detailRow, setDetailRow] = useState<any>(null)
   const [detailTab, setDetailTab] = useState('general')
+  const [listState, setListState] = useState<{
+    items: any[]
+    page: number
+    perPage: number
+    total: number
+  }>({ items: [], page: 1, perPage: 50, total: 0 })
 
   const openDetail = (row: any, tab: string) => {
     setDetailRow(row)
@@ -104,6 +110,27 @@ export default function DataRegistry() {
   const syncDetailRow = useCallback((row: any) => {
     setDetailRow((cur: any) => (cur && cur.id === row.id ? row : cur))
   }, [])
+
+  // Запам'ятовуємо стан списку для навігації
+  const handleListUpdate = useCallback((items: any[], page: number, perPage: number, total: number) => {
+    setListState({ items, page, perPage, total })
+  }, [])
+
+  // Навігація по записах
+  const recordNav = useRecordNav({
+    items: listState.items,
+    page: listState.page,
+    perPage: listState.perPage,
+    total: listState.total,
+    currentId: detailRow?.id ?? null,
+    load: async (page: number) => {
+      if (listRef.current) {
+        await listRef.current.setFilter('page', page)
+      }
+    },
+    openRecord: (row: any) => openDetail(row, 'general'),
+  })
+
   // actions[] у конфізі — без обробників: JSON описує type/label/icon/permission/tab,
   // а що робить дія, вирішує сторінка. 'delete' таблиця обробляє сама через apiDelete.
   const actions: ActionConfig[] = (cfg.actions as ActionConfig[]).map((a) =>
@@ -132,6 +159,20 @@ export default function DataRegistry() {
         rowKey="id"
         defaultPerPage={50}
         onRowUpdated={syncDetailRow}
+        onListUpdate={handleListUpdate}
+        expandable={true}
+        renderExpanded={(row) => (
+          <div className="card">
+            <div className="card-header bg-white py-2">
+              <strong className="small">Деталі запису #{row.id}</strong>
+            </div>
+            <div className="card-body p-2">
+              <pre className="mb-0 small" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                {JSON.stringify(row, null, 2)}
+              </pre>
+            </div>
+          </div>
+        )}
       />
 
       {detailRow && (
@@ -141,6 +182,7 @@ export default function DataRegistry() {
           onClose={closeDetail}
           onSaved={() => listRef.current?.reload()}
           onTabChange={handleTabChange}
+          recordNav={recordNav}
         />
       )}
     </div>

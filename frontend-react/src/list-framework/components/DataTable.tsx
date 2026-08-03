@@ -1,6 +1,7 @@
-import { forwardRef, useEffect, useImperativeHandle, useState, useMemo } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useState, useMemo, Fragment } from 'react'
 import { useTableState } from '../hooks/useTableState'
 import { useColumnPrefs } from '../hooks/useColumnPrefs'
+import { useRowExpand } from '../hooks/useRowExpand'
 import { useSavedFilters } from '@/hooks/useSavedFilters'
 import { useAuth } from '@/contexts/AuthContext'
 import { notify } from '@/hooks/useNotify'
@@ -40,6 +41,9 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
   defaultSort,
   rowClassName,
   onRowUpdated,
+  onListUpdate,
+  expandable = false,
+  renderExpanded,
 }: DataTableProps, ref) {
   const {
     items,
@@ -89,8 +93,23 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
     onRowUpdated,
   })
 
+  // ── Розкривні рядки (react-admin: Datagrid expand) ───────────────────────
+  const { isExpanded, toggle: toggleExpand, collapseAll: collapseAllExpanded } = useRowExpand()
+
+  // Скидаємо розкриті рядки при load (зміна сторінки/фільтрів)
+  useEffect(() => {
+    collapseAllExpanded()
+  }, [items, collapseAllExpanded])
+
   // Сторінка може перезавантажити список після збереження в картці (як listRef.reload() у Vue)
   useImperativeHandle(ref, () => ({ reload, setFilter }), [reload, setFilter])
+
+  // Повідомляємо сторінку про зміни стану списку для навігації
+  useEffect(() => {
+    if (onListUpdate) {
+      onListUpdate(items, page, perPage, total)
+    }
+  }, [items, page, perPage, total, onListUpdate])
 
   // ── Збережені фільтри ────────────────────────────────────────────────────
   const { presets, save: savePreset, remove: removePreset } = useSavedFilters(apiList)
@@ -306,6 +325,14 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
     action.visible ? Boolean(action.visible(row)) : true
   const deleteAction = visibleActions.find(a => a.type === 'delete')
   const canBulkDelete = Boolean(apiDelete && deleteAction)
+
+  const visibleColspan = useMemo(() => {
+    let count = visibleColumns.length
+    count += 1 // чекбокс bulk-виділення
+    if (expandable) count += 1 // колонка стрілки expand
+    if (visibleActions.length) count += 1 // колонка дій рядка
+    return count
+  }, [visibleColumns.length, expandable, visibleActions.length])
   // Дзеркало Vue: DataListPage.vue → visibleBulkActions. Сервер перевіряє те саме
   // право повторно (AdminStoController::BULK_ACTIONS) — тут лише UI.
   const visibleBulkActions = apiBulk
@@ -687,6 +714,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                         title="Вибрати всі на сторінці"
                       />
                     </th>
+                    {expandable && <th style={{ width: '32px' }}></th>}
                     {visibleColumns.map(col => (
                       <th
                         key={col.key}
@@ -699,7 +727,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                         {col.sortable && <SortIcon column={col.key} sortItems={sortItems} />}
                       </th>
                     ))}
-                    {visibleActions.length > 0 && <th style={{ width: '100px' }}></th>}
+                    {(visibleActions.length > 0 || canCreate) && <th style={{ width: '100px' }}></th>}
                   </tr>
                 </thead>
 
@@ -708,47 +736,77 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                     rows={skeletonRows}
                     columns={skeletonColumns}
                     hasCheckbox={true}
+                    hasExpand={expandable}
                   />
                 ) : (
                   <tbody>
                   {items.map(row => (
-                    <tr key={row[rowKey]} className={rowClassName ? rowClassName(row) : undefined}>
-                      <td>
-                        <input
-                          type="checkbox"
-                          className="form-check-input"
-                          checked={selectedIds.has(row[rowKey])}
-                          onChange={() => toggleSelectRow(row[rowKey])}
-                        />
-                      </td>
-                      {visibleColumns.map(col => (
-                        <td key={col.key} className={col.align ? `text-${col.align}` : ''}>
-                          {renderCell(col, row)}
+                    <Fragment key={row[rowKey]}>
+                      <tr className={rowClassName ? rowClassName(row) : undefined}>
+                        <td>
+                          <input
+                            type="checkbox"
+                            className="form-check-input"
+                            checked={selectedIds.has(row[rowKey])}
+                            onChange={() => toggleSelectRow(row[rowKey])}
+                          />
                         </td>
-                      ))}
-                      {visibleActions.length > 0 && (
-                        <td className="text-nowrap">
-                          {visibleActions.filter(a => isActionVisible(a, row)).map(action => (
+                        {expandable && (
+                          <td style={{ width: '32px' }}>
                             <button
-                              // type сам по собі не унікальний: 'detail' може бути
-                              // кілька разів, по одному на вкладку картки
-                              key={`${action.type}:${action.tab ?? ''}`}
-                              className={`btn btn-sm me-1 ${action.type === 'delete' ? 'btn-outline-danger' : 'btn-outline-secondary'}`}
-                              title={action.label}
-                              onClick={() => handleAction(action, row)}
+                              className="btn btn-sm btn-link p-0 text-secondary"
+                              title={isExpanded(row[rowKey]) ? 'Згорнути' : 'Деталі'}
+                              onClick={(e) => { e.stopPropagation(); toggleExpand(row[rowKey]) }}
                             >
-                              <i className={`bi ${action.icon}`}></i>
+                              <i className={`bi ${isExpanded(row[rowKey]) ? 'bi-chevron-down' : 'bi-chevron-right'}`}></i>
                             </button>
-                          ))}
-                        </td>
+                          </td>
+                        )}
+                        {visibleColumns.map(col => (
+                          <td key={col.key} className={col.align ? `text-${col.align}` : ''}>
+                            {renderCell(col, row)}
+                          </td>
+                        ))}
+                        {(visibleActions.length > 0 || canCreate) && (
+                          <td className="text-nowrap">
+                            {visibleActions.filter(a => isActionVisible(a, row)).map(action => (
+                              <button
+                                // type сам по собі не унікальний: 'detail' може бути
+                                // кілька разів, по одному на вкладку картки
+                                key={`${action.type}:${action.tab ?? ''}`}
+                                className={`btn btn-sm me-1 ${action.type === 'delete' ? 'btn-outline-danger' : 'btn-outline-secondary'}`}
+                                title={action.label}
+                                onClick={() => handleAction(action, row)}
+                              >
+                                <i className={`bi ${action.icon}`}></i>
+                              </button>
+                            ))}
+                            {canCreate && (
+                              <button
+                                className="btn btn-sm btn-outline-secondary"
+                                title="Створити копію"
+                                onClick={() => openClone(row)}
+                              >
+                                <i className="bi bi-copy"></i>
+                              </button>
+                            )}
+                          </td>
+                        )}
+                      </tr>
+                      {expandable && isExpanded(row[rowKey]) && (
+                        <tr>
+                          <td colSpan={visibleColspan} className="bg-light p-3">
+                            {renderExpanded?.(row)}
+                          </td>
+                        </tr>
                       )}
-                    </tr>
+                    </Fragment>
                   ))}
                   {items.length === 0 && (
                     <tr>
                       {/* p-0: власний padding у EmptyState, інакше подвійний */}
                       <td
-                        colSpan={visibleColumns.length + 1 + (visibleActions.length ? 1 : 0)}
+                        colSpan={visibleColspan}
                         className="p-0"
                       >
                         <EmptyState

@@ -16,8 +16,21 @@
       :filter-config="filterConfig"
       :columns-config="columnsConfig"
       :actions="cfg.actions"
+      :expandable="true"
       @row-action="onRowAction"
-    />
+      @list-update="(items, pg, pp, tot) => { listItems = items; listPage = pg; listPerPage = pp; listTotal = tot }"
+    >
+      <template #expand="{ row }">
+        <div class="card">
+          <div class="card-header bg-white py-2">
+            <strong class="small">Деталі запису #{{ row.id }}</strong>
+          </div>
+          <div class="card-body p-2">
+            <pre class="mb-0 small" style="max-height: 300px; overflow-y: auto;">{{ JSON.stringify(row, null, 2) }}</pre>
+          </div>
+        </div>
+      </template>
+    </DataListPage>
   </ListPageWrapper>
 
   <BaseModal
@@ -32,10 +45,21 @@
     :close-on-backdrop="false"
   >
     <template #title>
-      <h5 class="mb-0">
-        СТО <span class="text-muted fw-normal fs-6">#{{ detailRow?.id }}</span>
-        <span v-if="detailRow?.name_uk" class="text-primary fw-normal fs-6 ms-2">{{ detailRow.name_uk }}</span>
-      </h5>
+      <div class="d-flex align-items-center w-100">
+        <h5 class="mb-0 flex-grow-1">
+          СТО <span class="text-muted fw-normal fs-6">#{{ detailRow?.id }}</span>
+          <span v-if="detailRow?.name_uk" class="text-primary fw-normal fs-6 ms-2">{{ detailRow.name_uk }}</span>
+        </h5>
+        <RecordNavigator
+          :position="recordNav.position.value"
+          :total-count="recordNav.totalCount.value"
+          :has-prev="recordNav.hasPrev.value"
+          :has-next="recordNav.hasNext.value"
+          :busy="recordNav.busy.value"
+          @prev="recordNav.goPrev"
+          @next="recordNav.goNext"
+        />
+      </div>
     </template>
 
     <!-- П'ять вкладок навмисно (а не дві) — щоб на вузькому floating-вікні/докері
@@ -277,12 +301,14 @@ import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
 import ListPageWrapper from '@/components/ListPageWrapper.vue'
 import BaseModal from '@/components/BaseModal.vue'
 import ModalTabs from '@/components/ModalTabs.vue'
+import RecordNavigator from '@/components/RecordNavigator.vue'
 import DataListPage from '@/list-framework/DataListPage.vue'
 import PhoneListCell from '@/list-framework/cells/PhoneListCell.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import { useUrlFilters } from '@/composables/useUrlFilters'
 import { useRemoteOptions } from '@/list-framework/composables/useRemoteOptions'
+import { useRecordNav } from '@/composables/useRecordNav'
 import { normalizePhoneE164 } from '@/utils/phone'
 // Конфіг спільний із React-версією (frontend-react/src/pages/DataRegistry.tsx) —
 // один екран описується одним конфігом. Див. shared/page-configs/README.md.
@@ -293,6 +319,12 @@ import cfg from '@configs/sto-registry.config.json'
 const auth = useAuth()
 const { deleteWithUndo } = useUndoableDelete()
 const listRef = ref(null)
+
+// Стан списку для навігації
+const listItems = ref([])
+const listPage = ref(1)
+const listPerPage = ref(50)
+const listTotal = ref(0)
 
 // Субменю картки деталей — той самий підхід, що і в AllSTO (StoList.vue):
 // sticky-панель вкладок + кнопки "Зберегти"/"Зберегти та закрити" знизу
@@ -343,6 +375,32 @@ let suppressUnsavedCheck = false
 const hasUnsavedChanges = computed(
   () => JSON.stringify(form) !== JSON.stringify(originalForm)
 )
+
+const confirmLeave = () => {
+  if (!hasUnsavedChanges.value) return true
+  return confirm('Є незбережені зміни. Перейти на інший запис без збереження?')
+}
+
+// Навігація по записах
+const recordNav = useRecordNav({
+  items: listItems,
+  page: listPage,
+  perPage: listPerPage,
+  total: listTotal,
+  currentId: computed(() => detailRow.value?.id ?? null),
+  load: async (page) => {
+    if (listRef.value) {
+      await listRef.value.setPage(page)
+    }
+  },
+  openRecord: (row) => {
+    populateForm(row)
+    activeTab.value = 'general'
+    detailId.value = row.id
+    detailOpen.value = true
+  },
+  canLeave: confirmLeave,
+})
 
 // Той самий довідник, що й у фільтрі "Країна" (sto-registry.filter.json) —
 // useRemoteOptions кешує за URL, тому другого запиту до бекенду не буде.
@@ -569,6 +627,11 @@ async function saveTab(close) {
     })
     const json = await res.json().catch(() => ({}))
     if (!res.ok) throw new Error(json.message ?? 'Помилка збереження')
+
+    // Оновлюємо форму з нормалізованими даними (особливо phones в E.164)
+    if (payload.phones) {
+      form.phones = payload.phones
+    }
 
     originalForm = { ...form }
     listRef.value?.reload()

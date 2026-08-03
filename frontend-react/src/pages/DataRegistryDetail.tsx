@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import BaseModal from '@/components/BaseModal'
 import PhoneListInput from '@/components/PhoneListInput'
 import DataRegistryPhotos from './DataRegistryPhotos'
-import { useRemoteOptions } from '@/list-framework'
+import { useRemoteOptions, RecordNavigator } from '@/list-framework'
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
 import { apiPatch } from '@/utils/api'
 import { normalizePhoneE164 } from '@/utils/phone'
@@ -16,6 +16,16 @@ interface DataRegistryDetailProps {
   onSaved?: () => void
   /** Викликається при зміні вкладки, щоб синхронізувати з URL */
   onTabChange?: (tab: string) => void
+  /** Навігація по записах */
+  recordNav?: {
+    position: number | null
+    totalCount: number
+    hasPrev: boolean
+    hasNext: boolean
+    busy: boolean
+    goPrev: () => void
+    goNext: () => void
+  }
 }
 
 const STO_TYPES = [
@@ -64,6 +74,7 @@ export default function DataRegistryDetail({
   onClose,
   onSaved,
   onTabChange,
+  recordNav,
 }: DataRegistryDetailProps) {
   const [activeTab, setActiveTab] = useState(initialTab)
 
@@ -117,7 +128,11 @@ export default function DataRegistryDetail({
 
     try {
       await apiPatch(`/admin/sto/${row.id}`, payload)
-      setSavedForm(form) // збережене стало новою точкою відліку для "змінено"
+
+      // Оновлюємо форму з нормалізованими даними (особливо phones в E.164)
+      const updatedForm = payload.phones ? { ...form, phones: payload.phones } : form
+      setForm(updatedForm)
+      setSavedForm(updatedForm) // збережене стало новою точкою відліку для "змінено"
       onSaved?.()
       if (close) onClose()
     } catch (err) {
@@ -128,12 +143,25 @@ export default function DataRegistryDetail({
   }
 
   const title = (
-    <h5 className="mb-0">
-      СТО <span className="text-muted fw-normal fs-6">#{row.id}</span>
-      {form.name_uk && (
-        <span className="text-primary fw-normal fs-6 ms-2">{form.name_uk}</span>
+    <div className="d-flex align-items-center w-100">
+      <h5 className="mb-0 flex-grow-1">
+        СТО <span className="text-muted fw-normal fs-6">#{row.id}</span>
+        {form.name_uk && (
+          <span className="text-primary fw-normal fs-6 ms-2">{form.name_uk}</span>
+        )}
+      </h5>
+      {recordNav && (
+        <RecordNavigator
+          position={recordNav.position}
+          totalCount={recordNav.totalCount}
+          hasPrev={recordNav.hasPrev}
+          hasNext={recordNav.hasNext}
+          busy={recordNav.busy}
+          onPrev={recordNav.goPrev}
+          onNext={recordNav.goNext}
+        />
       )}
-    </h5>
+    </div>
   )
 
   const subheader = (

@@ -183,6 +183,7 @@
                     @change="toggleSelectAll"
                   />
                 </th>
+                <th v-if="expandable" style="width:32px"></th>
                 <th
                   v-for="col in visibleColumns"
                   :key="col.key"
@@ -194,7 +195,7 @@
                   {{ col.label }}
                   <SortIcon v-if="col.sortable" :col="col.key" :sort-items="sortItems" />
                 </th>
-                <th v-if="actions.length" style="width:100px"></th>
+                <th v-if="actions.length || canCreate" style="width:100px"></th>
               </tr>
             </thead>
 
@@ -203,44 +204,69 @@
               :rows="skeletonRows"
               :columns="skeletonColumns"
               :has-checkbox="true"
+              :has-expand="expandable"
             />
 
             <tbody v-else>
-              <tr v-for="row in items" :key="row[rowKey]" :class="rowClass ? rowClass(row) : ''">
-                <td>
-                  <input
-                    type="checkbox"
-                    class="form-check-input"
-                    :checked="selectedIds.has(row[rowKey])"
-                    @change="toggleSelect(row[rowKey])"
-                  />
-                </td>
-                <td v-for="col in visibleColumns" :key="col.key" :class="col.align ? `text-${col.align}` : ''">
-                  <!-- displayKey: у рядку вже лежить приєднана назва (country_id → country_name),
-                       тому показуємо її замість голого FK, а сортування лишається по col.key -->
-                  <component
-                    :is="resolveCellComponent(col)"
-                    :field="col"
-                    :model-value="row[col.displayKey ?? col.key]"
-                    :readonly="!isColumnEditable(col)"
-                    :row="row"
-                    @update:model-value="(v) => handleCellUpdate(row, col, v)"
-                  />
-                </td>
-                <td v-if="actions.length" class="text-nowrap">
-                  <button
-                    v-for="a in actions"
-                    v-show="isActionVisible(a, row)"
-                    :key="`${a.type}:${a.tab ?? ''}`"
-                    class="btn btn-sm btn-outline-secondary me-1"
-                    :class="a.type === 'delete' ? 'btn-outline-danger' : ''"
-                    :title="a.label"
-                    @click="handleAction(a, row)"
-                  >
-                    <i class="bi" :class="a.icon"></i>
-                  </button>
-                </td>
-              </tr>
+              <template v-for="row in items" :key="row[rowKey]">
+                <tr :class="rowClass ? rowClass(row) : ''">
+                  <td>
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      :checked="selectedIds.has(row[rowKey])"
+                      @change="toggleSelect(row[rowKey])"
+                    />
+                  </td>
+                  <td v-if="expandable" style="width:32px">
+                    <button
+                      class="btn btn-sm btn-link p-0 text-secondary"
+                      :title="isExpanded(row[rowKey]) ? 'Згорнути' : 'Деталі'"
+                      @click.stop="toggleExpand(row[rowKey])"
+                    >
+                      <i :class="['bi', isExpanded(row[rowKey]) ? 'bi-chevron-down' : 'bi-chevron-right']"></i>
+                    </button>
+                  </td>
+                  <td v-for="col in visibleColumns" :key="col.key" :class="col.align ? `text-${col.align}` : ''">
+                    <!-- displayKey: у рядку вже лежить приєднана назва (country_id → country_name),
+                         тому показуємо її замість голого FK, а сортування лишається по col.key -->
+                    <component
+                      :is="resolveCellComponent(col)"
+                      :field="col"
+                      :model-value="row[col.displayKey ?? col.key]"
+                      :readonly="!isColumnEditable(col)"
+                      :row="row"
+                      @update:model-value="(v) => handleCellUpdate(row, col, v)"
+                    />
+                  </td>
+                  <td v-if="actions.length || canCreate" class="text-nowrap">
+                    <button
+                      v-for="a in actions"
+                      v-show="isActionVisible(a, row)"
+                      :key="`${a.type}:${a.tab ?? ''}`"
+                      class="btn btn-sm btn-outline-secondary me-1"
+                      :class="a.type === 'delete' ? 'btn-outline-danger' : ''"
+                      :title="a.label"
+                      @click="handleAction(a, row)"
+                    >
+                      <i class="bi" :class="a.icon"></i>
+                    </button>
+                    <button
+                      v-if="canCreate"
+                      class="btn btn-sm btn-outline-secondary"
+                      title="Створити копію"
+                      @click="openClone(row)"
+                    >
+                      <i class="bi bi-copy"></i>
+                    </button>
+                  </td>
+                </tr>
+                <tr v-if="expandable && isExpanded(row[rowKey])">
+                  <td :colspan="visibleColspan" class="bg-light p-3">
+                    <slot name="expand" :row="row" />
+                  </td>
+                </tr>
+              </template>
               <tr v-if="!items.length">
                 <!-- p-0: власний padding у EmptyState, інакше подвійний -->
                 <td :colspan="visibleColspan" class="p-0">
@@ -335,8 +361,9 @@ import { useUrlFilters } from '@/composables/useUrlFilters'
 import { useSavedFilters } from '@/composables/useSavedFilters'
 import { useColumnPrefs } from '@/composables/useColumnPrefs'
 import { useRowSelection } from '@/composables/useRowSelection'
+import { useRowExpand } from '@/composables/useRowExpand'
 import { useListCache } from '@/composables/useListCache'
-import { formatPhoneUA } from '@/utils/phone'
+import { formatPhoneUA, normalizePhoneE164 } from '@/utils/phone'
 import { rowsToCsv, downloadCsv } from '@/utils/csv'
 import Pagination from '@/components/Pagination.vue'
 import ColumnSelector from '@/components/ColumnSelector.vue'
@@ -381,9 +408,11 @@ const props = defineProps({
   // Порожній список: «Ще немає {entityLabel}» — родовий відмінок множини
   entityLabel: { type: String, default: 'записів' },
   emptyIcon: { type: String, default: 'bi-inbox' },
+  // Розкривні рядки: чи показувати колонку зі стрілкою + expand slot
+  expandable: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['row-action'])
+const emit = defineEmits(['row-action', 'list-update'])
 
 const auth = useAuth()
 const { notify } = useNotify()
@@ -476,6 +505,9 @@ const {
   ],
 })
 
+// ── Розкривні рядки (react-admin: Datagrid expand) ────────────────────────
+const { isExpanded, toggle: toggleExpand, collapseAll: collapseAllExpanded } = useRowExpand()
+
 // ── Вибір колонок (react-admin: SelectColumnsButton) ──────────────────────
 // Колонка з прапорцем hideable: false ховатись не може. Експорт у CSV навмисно
 // працює з повним columnsConfig — приховане в UI все одно попадає у вигрузку.
@@ -523,9 +555,13 @@ function resetFilters() {
   }
 }
 
-const visibleColspan = computed(
-  () => visibleColumns.value.length + 1 + (props.actions.length ? 1 : 0)
-)
+const visibleColspan = computed(() => {
+  let count = visibleColumns.value.length
+  count += 1 // чекбокс bulk-виділення
+  if (props.expandable) count += 1 // колонка стрілки expand
+  if (props.actions.length) count += 1 // колонка дій рядка
+  return count
+})
 
 // Під час applyPreset() кілька refs (фільтри + сортування + perPage) міняються
 // одним синхронним блоком — без цього прапорця кожен watch нижче викликав би
@@ -842,6 +878,8 @@ async function load(p = 1) {
   error.value = null
   // Скид виділення тепер відбувається автоматично через useRowSelection resetOn
   // clearRowSelection() — викликати не треба, бо зміна page → зміна URL → watch у useUrlFilters
+  // Скид розкритих рядків: id з іншої вибірки (інша сторінка/фільтр) нам не потрібні
+  collapseAllExpanded()
 
   const params = new URLSearchParams()
   params.set('page', String(p))
@@ -920,13 +958,21 @@ function toggleSort(key, event) {
 // ── Inline cell edit ─────────────────────────────────────────────────────
 async function handleCellUpdate(row, field, value) {
   const prev = row[field.key]
-  row[field.key] = value
+
+  // Нормалізація phone-list перед збереженням: прибираємо форматування, залишаємо
+  // тільки E.164 ("+380..."). Дзеркало StoRegistry.vue → saveTab.
+  let normalized = value
+  if (field.type === 'phone-list') {
+    normalized = (value ?? []).map(normalizePhoneE164).filter((p) => p)
+  }
+
+  row[field.key] = normalized
   if (!props.apiUpdate) return
   try {
     const res = await fetch(`${props.apiUpdate}/${row[props.rowKey]}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...auth.authHeaders() },
-      body: JSON.stringify({ [field.key]: value }),
+      body: JSON.stringify({ [field.key]: normalized }),
     })
     const json = await res.json().catch(() => ({}))
     if (!res.ok) throw new Error(json.message ?? 'Помилка збереження')
@@ -1137,7 +1183,7 @@ function resolveCellComponent(field) {
 
 /**
  * Змінити значення фільтра ззовні — напр. клік по IP в комірці ставить цей IP
- * у фільтр. Перезавантаження запускає той самий watch, що й ручна зміна поля.
+ * у фільтр. Перезавантаження запускає той samий watch, що й ручна зміна поля.
  */
 function setFilter(key, value) {
   if (!(key in filters)) {
@@ -1147,7 +1193,19 @@ function setFilter(key, value) {
   filters[key].value = value
 }
 
-defineExpose({ reload: () => load(page.value), setFilter })
+/**
+ * Перейти на сторінку ззовні (для навігації по записах через межу сторінки).
+ */
+async function setPage(p) {
+  await load(p)
+}
+
+defineExpose({ reload: () => load(page.value), setFilter, setPage })
+
+// Емітуємо оновлення стану списку для навігації
+watch([items, page, perPage, total], () => {
+  emit('list-update', items.value, page.value, perPage.value, total.value)
+})
 
 onMounted(() => {
   urlFilters.initFromUrl()

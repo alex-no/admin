@@ -6,7 +6,7 @@ import { getCached, setCached } from './useListCache'
 import { fetchOptions } from './useRemoteOptions'
 import { useRowSelection } from './useRowSelection'
 import { rowsToCsv, downloadCsv } from '@/utils/csv'
-import { formatPhoneUA } from '@/utils/phone'
+import { formatPhoneUA, normalizePhoneE164 } from '@/utils/phone'
 import {
   useUrlFilters,
   readFiltersFromUrl,
@@ -185,7 +185,14 @@ export function useTableState({
     const id = row[rowKey]
     const prev = row[field.key]
 
-    setItems(items => items.map(r => (r[rowKey] === id ? { ...r, [field.key]: value } : r)))
+    // Нормалізація phone-list перед збереженням: прибираємо форматування, залишаємо
+    // тільки E.164 ("+380..."). Дзеркало Vue: DataListPage.vue → handleCellUpdate.
+    let normalized = value
+    if (field.type === 'phone-list') {
+      normalized = (value ?? []).map(normalizePhoneE164).filter((p: string) => p)
+    }
+
+    setItems(items => items.map(r => (r[rowKey] === id ? { ...r, [field.key]: normalized } : r)))
 
     if (!apiUpdate) return
 
@@ -194,8 +201,8 @@ export function useTableState({
       : `${apiUpdate}/${id}`
 
     try {
-      await apiPatch(url, { [field.key]: value })
-      onRowUpdated?.({ ...row, [field.key]: value })
+      await apiPatch(url, { [field.key]: normalized })
+      onRowUpdated?.({ ...row, [field.key]: normalized })
     } catch (err) {
       setItems(items => items.map(r => (r[rowKey] === id ? { ...r, [field.key]: prev } : r)))
       notify(err instanceof Error ? err.message : 'Помилка збереження', { type: 'error' })

@@ -238,6 +238,10 @@ export interface DataTableProps {
   /** Порожній список: «Ще немає {entityLabel}» — родовий відмінок множини */
   entityLabel?: string
   emptyIcon?: string
+  /** Розкривні рядки: чи показувати колонку зі стрілкою + рендерити expanded вміст */
+  expandable?: boolean
+  /** Рендер вмісту розкритого рядка (дзеркало Vue: `<slot name="expand">`) */
+  renderExpanded?: (row: any) => React.ReactNode
   /**
    * Сортування при першому відкритті, напр. [{ key: 'created_at', dir: 'desc' }].
    * Значення з URL має пріоритет — посилання відтворює саме те, що бачив автор.
@@ -251,4 +255,6 @@ export interface DataTableProps {
   rowClassName?: (row: any) => string
   /** Рядок успішно змінено інлайн — щоб сторінка могла оновити відкриту картку */
   onRowUpdated?: (row: any) => void
+  /** Список оновився — щоб сторінка могла оновити стан навігації */
+  onListUpdate?: (items: any[], page: number, perPage: number, total: number) => void
 }

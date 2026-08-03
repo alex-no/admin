@@ -8,12 +8,14 @@ interface TableSkeletonProps {
   rows?: number
   columns: Column[]
   hasCheckbox?: boolean
+  hasExpand?: boolean
 }
 
 export default function TableSkeleton({
   rows = 10,
   columns,
   hasCheckbox = false,
+  hasExpand = false,
 }: TableSkeletonProps) {
   return (
     <tbody>
@@ -21,6 +23,11 @@ export default function TableSkeleton({
         <tr key={r}>
           {hasCheckbox && (
             <td style={{ width: '36px' }}>
+              <span className="sk" style={{ width: '1rem' }} />
+            </td>
+          )}
+          {hasExpand && (
+            <td style={{ width: '32px' }}>
               <span className="sk" style={{ width: '1rem' }} />
             </td>
           )}

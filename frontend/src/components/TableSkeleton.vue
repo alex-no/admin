@@ -5,6 +5,9 @@
       <td v-if="hasCheckbox" style="width:36px">
         <span class="sk" style="width:1rem"></span>
       </td>
+      <td v-if="hasExpand" style="width:32px">
+        <span class="sk" style="width:1rem"></span>
+      </td>
       <td
         v-for="(col, i) in columns"
         :key="i"
@@ -22,6 +25,7 @@ defineProps({
   rows: { type: Number, default: 10 },
   columns: { type: Array, required: true },
   hasCheckbox: { type: Boolean, default: false },
+  hasExpand: { type: Boolean, default: false },
 })
 </script>
 
