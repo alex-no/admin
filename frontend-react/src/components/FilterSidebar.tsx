@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface FilterValue {
   value: string
@@ -20,6 +21,7 @@ interface FilterSidebarProps {
 }
 
 export default function FilterSidebar({ namespace, groups, activeFilters, onToggle }: FilterSidebarProps) {
+  const { t } = useTranslation()
   const [collapsed, setCollapsed] = useState(false)
   const storageKey = `admin.filterSidebar:${namespace}`
 
@@ -47,11 +49,11 @@ export default function FilterSidebar({ namespace, groups, activeFilters, onTogg
   return (
     <aside className={`filter-sidebar ${collapsed ? 'collapsed' : ''}`}>
       <div className="d-flex justify-content-between align-items-center mb-3">
-        {!collapsed && <h6 className="mb-0">Фільтри</h6>}
+        {!collapsed && <h6 className="mb-0">{t('common.filter')}</h6>}
         <button
           className="btn btn-sm btn-link p-0"
           onClick={toggleCollapsed}
-          title={collapsed ? 'Розгорнути' : 'Згорнути'}
+          title={collapsed ? t('filters.expand') : t('filters.collapse')}
         >
           <i className={`bi ${collapsed ? 'bi-chevron-double-right' : 'bi-chevron-double-left'}`} />
         </button>

@@ -3,7 +3,7 @@
     <button
       class="btn btn-sm btn-outline-secondary py-0 px-2"
       :disabled="!hasPrev || busy"
-      title="Попередній запис"
+      :title="t('common.prevRecord')"
       @click="$emit('prev')"
     >
       ‹
@@ -22,7 +22,7 @@
     <button
       class="btn btn-sm btn-outline-secondary py-0 px-2"
       :disabled="!hasNext || busy"
-      title="Наступний запис"
+      :title="t('common.nextRecord')"
       @click="$emit('next')"
     >
       ›
@@ -31,6 +31,10 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n({ useScope: 'global' })
+
 defineProps({
   position: Number,
   totalCount: Number,

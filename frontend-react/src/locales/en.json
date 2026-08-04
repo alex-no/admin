@@ -50,7 +50,8 @@
     "email": "Email",
     "password": "Password",
     "signIn": "Sign In",
-    "welcome": "Welcome"
+    "welcome": "Welcome",
+    "changePassword": "Change Password"
   },
   "table": {
     "id": "ID",
@@ -69,7 +70,9 @@
     "saveFilter": "Save filter",
     "savedFilters": "Saved filters...",
     "filterName": "Filter name",
-    "deleteFilter": "Delete filter"
+    "deleteFilter": "Delete filter",
+    "expand": "Expand",
+    "collapse": "Collapse"
   },
   "bulk": {
     "selectAll": "Select all {count}",

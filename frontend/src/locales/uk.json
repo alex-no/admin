@@ -27,9 +27,21 @@
     "selected": "Обрано",
     "page": "Сторінка",
     "of": "з",
-    "perPage": "На сторінці"
+    "perPage": "На сторінці",
+    "prevRecord": "Попередній запис",
+    "nextRecord": "Наступний запис",
+    "resize": "Змінити розмір",
+    "addPhone": "Додати номер",
+    "removePhone": "Видалити номер",
+    "details": "Деталі",
+    "contacts": "Контактні дані",
+    "description": "Опис",
+    "ratingReviews": "Рейтинг та відгуки",
+    "activate": "Активувати",
+    "deactivate": "Деактивувати"
   },
   "nav": {
+    "home": "Головна",
     "dashboard": "Головна",
     "sto": "СТО",
     "dataRegistry": "Реєстр даних",
@@ -50,11 +62,16 @@
     "email": "Email",
     "password": "Пароль",
     "signIn": "Увійти",
-    "welcome": "Ласкаво просимо"
+    "welcome": "Ласкаво просимо",
+    "changePassword": "Змінити пароль"
   },
   "table": {
     "id": "ID",
     "name": "Назва",
+    "type": "Тип",
+    "address": "Адреса",
+    "phones": "Телефони",
+    "rating": "Рейтинг",
     "status": "Статус",
     "createdAt": "Створено",
     "updatedAt": "Оновлено",
@@ -62,14 +79,28 @@
     "selectColumns": "Вибрати колонки",
     "resetColumns": "Скинути",
     "hideColumn": "Приховати",
-    "showColumn": "Показати"
+    "showColumn": "Показати",
+    "activeStatus": "Активне",
+    "inactiveStatus": "Неактивне",
+    "selectAllOnPage": "Вибрати всі на сторінці",
+    "sort": "Сортувати",
+    "sortMulti": "Клік — сортувати. Ctrl+клік — додати до сортування",
+    "clone": "Створити копію"
+  },
+  "pagination": {
+    "first": "Перша сторінка",
+    "previous": "Попередня",
+    "next": "Наступна",
+    "last": "Остання сторінка"
   },
   "filters": {
     "resetFilters": "Скинути фільтри",
     "saveFilter": "Зберегти фільтр",
     "savedFilters": "Збережені фільтри...",
     "filterName": "Назва фільтра",
-    "deleteFilter": "Видалити фільтр"
+    "deleteFilter": "Видалити фільтр",
+    "expand": "Розгорнути",
+    "collapse": "Згорнути"
   },
   "bulk": {
     "selectAll": "Виділити всі {count}",
@@ -91,7 +122,12 @@
     "edit": "Редагування запису",
     "detail": "Деталі запису",
     "confirm": "Підтвердження",
-    "confirmDelete": "Ви впевнені, що хочете видалити цей запис?"
+    "confirmDelete": "Ви впевнені, що хочете видалити цей запис?",
+    "copy": "копія",
+    "dockRight": "Закріпити справа",
+    "dockBottom": "Закріпити знизу",
+    "undock": "Відкріпити (плаваюче вікно)",
+    "changeMode": "Змінити режим"
   },
   "validation": {
     "required": "Це поле обов'язкове",
@@ -111,7 +147,100 @@
   "language": {
     "uk": "Українська",
     "en": "English",
-    "ru": "Русский",
+    "ru": "Русський",
     "selectLanguage": "Оберіть мову"
+  },
+  "menu": {
+    "data": "Дані",
+    "dataRegistry": "Реєстр даних",
+    "analytics": "Аналітика",
+    "visits": "Відвідування",
+    "stats": "Статистика",
+    "charts": "Графіки",
+    "rbac": "Ролі та права",
+    "roles": "Ролі",
+    "permissions": "Права доступу",
+    "system": "Система",
+    "errorLogs": "Логи помилок",
+    "errorStats": "Статистика помилок",
+    "devTools": "Інструменти розробника",
+    "apiDocs": "API Docs (Admin)"
+  },
+  "dataList": {
+    "searchPlaceholder": "Пошук за назвою...",
+    "savedFilters": "Збережені фільтри...",
+    "saveCurrentFilter": "Зберегти поточний фільтр",
+    "deleteFilter": "Видалити збережений фільтр",
+    "exportCsv": "Експорт у CSV",
+    "autoRefreshOn": "Автооновлення увімкнено",
+    "autoRefreshOff": "Автооновлення вимкнено",
+    "add": "Додати",
+    "filterName": "Назва фільтру...",
+    "total": "Всього",
+    "perPage": "на сторінці",
+    "selected": "Обрано",
+    "clearSelection": "Очистити виділення"
+  },
+  "filter": {
+    "search": "Пошук",
+    "searchPlaceholder": "Пошук за назвою...",
+    "type": "Тип",
+    "allTypes": "Всі типи",
+    "status": "Статус",
+    "allStatuses": "Всі статуси",
+    "active": "Активні",
+    "inactive": "Неактивні",
+    "country": "Країна",
+    "allCountries": "Всі країни",
+    "typeService": "СТО",
+    "typeTire": "Шиномонтаж",
+    "typeWash": "Автомийка"
+  },
+  "stoRegistry": {
+    "title": "Реєстр даних",
+    "recordDetails": "Деталі запису",
+    "tabs": {
+      "general": "Основна інформація",
+      "contacts": "Контактні дані",
+      "description": "Опис та деталі",
+      "rating": "Рейтинг та відгуки",
+      "country": "Країна реєстрації",
+      "photos": "Фото"
+    },
+    "fields": {
+      "name": "Назва",
+      "type": "Тип",
+      "address": "Адреса",
+      "phones": "Телефони",
+      "description": "Опис",
+      "rating": "Рейтинг",
+      "country": "Країна реєстрації",
+      "active": "Активне",
+      "inactive": "Неактивне"
+    },
+    "types": {
+      "service": "СТО",
+      "tire": "Шиномонтаж",
+      "wash": "Автомийка"
+    },
+    "photos": {
+      "upload": "Завантажити фото",
+      "uploadFromUrl": "Завантажити з URL",
+      "uploading": "Завантаження...",
+      "urlLabel": "URL зображення",
+      "urlPlaceholder": "https://example.com/image.jpg",
+      "urlHint": "Підтримуються формати: JPG, PNG, WebP.",
+      "noPhotos": "Фото відсутні",
+      "cover": "Обкладинка",
+      "setCover": "Зробити обкладинкою",
+      "caption": "Підпис...",
+      "ratingHint": "Від 0 до 5",
+      "ratingDescription": "Зазвичай рейтинг розраховується з відгуків користувачів — тут його можна задати вручну.",
+      "selectCountry": "— Оберіть країну —"
+    },
+    "unsavedChanges": "Є незбережені зміни. Закрити без збереження?",
+    "unsavedNavigation": "Є незбережені зміни. Перейти на інший запис без збереження?",
+    "saveAndClose": "Зберегти та закрити",
+    "photoDeleted": "Фото видалено"
   }
 }

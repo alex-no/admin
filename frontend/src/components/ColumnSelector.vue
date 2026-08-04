@@ -44,7 +44,7 @@
           :disabled="!hasHidden"
           @click="emit('reset')"
         >
-          Скинути
+          {{ labels.reset }}
         </button>
       </template>
     </div>
@@ -53,6 +53,12 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n({ useScope: 'global' })
+const labels = computed(() => ({
+  reset: t('table.resetColumns'),
+}))
 
 const props = defineProps({
   // Повний конфіг колонок таблиці; показуємо лише hideable !== false

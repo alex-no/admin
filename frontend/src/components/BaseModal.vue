@@ -33,7 +33,7 @@
       <div
         v-if="mode === 'floating'"
         class="resize-handle resize-handle--corner"
-        title="Змінити розмір"
+        :title="t('common.resize')"
         @mousedown="startResize($event, modalRef)"
       ></div>
 
@@ -89,7 +89,10 @@
 
 <script setup>
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useModalWindow } from '../composables/useModalWindow'
+
+const { t } = useI18n({ useScope: 'global' })
 
 const props = defineProps({
   visible: {
@@ -233,10 +236,10 @@ function getModeIcon() {
 }
 
 function getModeSwitchTitle() {
-  if (mode.value === 'floating') return 'Закріпити справа'
-  if (mode.value === 'docked-right') return 'Закріпити знизу'
-  if (mode.value === 'docked-bottom') return 'Відкріпити (плаваюче вікно)'
-  return 'Змінити режим'
+  if (mode.value === 'floating') return t('modal.dockRight')
+  if (mode.value === 'docked-right') return t('modal.dockBottom')
+  if (mode.value === 'docked-bottom') return t('modal.undock')
+  return t('modal.changeMode')
 }
 </script>
 

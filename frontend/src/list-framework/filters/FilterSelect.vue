@@ -7,17 +7,20 @@
     :disabled="disabled"
     @change="$emit('update:modelValue', $event.target.value)"
   >
-    <option v-for="opt in ungroupedOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+    <option v-for="opt in ungroupedOptions" :key="opt.value" :value="opt.value">{{ translateLabel(opt.label) }}</option>
     <!-- Варіанти з `group` збираються в <optgroup> у порядку першої появи -->
-    <optgroup v-for="g in groupedOptions" :key="g.label" :label="g.label">
-      <option v-for="opt in g.options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+    <optgroup v-for="g in groupedOptions" :key="g.label" :label="translateLabel(g.label)">
+      <option v-for="opt in g.options" :key="opt.value" :value="opt.value">{{ translateLabel(opt.label) }}</option>
     </optgroup>
   </select>
 </template>
 
 <script setup>
 import { computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRemoteOptions } from '../composables/useRemoteOptions'
+
+const { t } = useI18n({ useScope: 'global' })
 
 const props = defineProps({
   field: { type: Object, required: true },
@@ -57,12 +60,23 @@ const isRequired = computed(() => props.field.required === true)
 // країни немає сенсу, але повернутись до «Всі країни» користувач може).
 const autoFirst = computed(() => isRequired.value || props.field.defaultFirstOption === true)
 
+// Translate label if it looks like a translation key (contains a dot)
+function translateLabel(label) {
+  if (!label) return ''
+  if (label.includes('.')) {
+    const translated = t(label)
+    return translated !== label ? translated : label
+  }
+  return label
+}
+
 // Порожня опція ("Всі …") — завжди від рендерера, а не з конфіга: у самому
 // field.options її бути не має, інакше React-версія покаже її двічі
 // (див. shared/page-configs/README.md, контракт фільтрів).
-const placeholderOption = computed(
-  () => props.field.placeholderOption ?? { value: '', label: props.field.label ?? 'Всі' }
-)
+const placeholderOption = computed(() => {
+  const base = props.field.placeholderOption ?? { value: '', label: props.field.label ?? 'Всі' }
+  return { ...base, label: translateLabel(base.label) }
+})
 
 // Або статичний field.options, або довантаження за field.optionsUrl (з кешем по URL).
 // Порожню опцію тут навмисно **не** просимо: тримаємо справжні варіанти окремо,

@@ -4,20 +4,32 @@
     <i :class="['bi', filtered ? 'bi-funnel' : icon]" style="font-size:2.5rem; opacity:.35"></i>
 
     <p class="text-muted mt-3 mb-3">
-      <template v-if="filtered">За вибраними фільтрами нічого не знайдено</template>
-      <template v-else>Ще немає {{ entityLabel }}</template>
+      <template v-if="filtered">{{ emptyMessage.noMatching }}</template>
+      <template v-else>{{ emptyMessage.noRecords }}</template>
     </p>
 
     <button v-if="filtered" class="btn btn-sm btn-outline-secondary" @click="$emit('reset-filters')">
-      <i class="bi bi-x-circle me-1"></i>Скинути фільтри
+      <i class="bi bi-x-circle me-1"></i>{{ emptyMessage.clearFilters }}
     </button>
     <button v-else-if="canCreate" class="btn btn-sm btn-primary" @click="$emit('create')">
-      <i class="bi bi-plus-lg me-1"></i>Створити
+      <i class="bi bi-plus-lg me-1"></i>{{ emptyMessage.create }}
     </button>
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n({ useScope: 'global' })
+
+const emptyMessage = computed(() => ({
+  noMatching: t('empty.noMatchingRecords'),
+  noRecords: t('empty.noRecords'),
+  clearFilters: t('empty.clearFilters'),
+  create: t('common.create'),
+}))
+
 /**
  * Порожній список. Два стани, які раніше зливались в одне «Немає даних»:
  * записів справді немає (тоді пропонуємо створити) — і фільтр нічого не знайшов

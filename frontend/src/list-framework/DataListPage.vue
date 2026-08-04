@@ -20,13 +20,13 @@
             style="width:auto"
             @change="applyPreset"
           >
-            <option value="">Збережені фільтри...</option>
+            <option value="">{{ t('dataList.savedFilters') }}</option>
             <option v-for="p in savedPresets" :key="p.name" :value="p.name">{{ p.name }}</option>
           </select>
           <button
             type="button"
             class="btn btn-sm btn-outline-secondary"
-            title="Зберегти поточний фільтр"
+            :title="t('dataList.saveCurrentFilter')"
             @click="showSaveFilterInput = !showSaveFilterInput"
           >
             <i class="bi bi-bookmark-plus"></i>
@@ -35,7 +35,7 @@
             v-if="selectedPresetName"
             type="button"
             class="btn btn-sm btn-outline-danger"
-            title="Видалити збережений фільтр"
+            :title="t('dataList.deleteFilter')"
             @click="deleteSelectedPreset"
           >
             <i class="bi bi-trash"></i>
@@ -46,7 +46,7 @@
           type="button"
           class="btn btn-sm btn-outline-secondary"
           :disabled="exporting"
-          title="Експорт у CSV"
+          :title="t('dataList.exportCsv')"
           @click="exportCsv"
         >
           <span v-if="exporting" class="spinner-border spinner-border-sm me-1"></span>
@@ -57,7 +57,7 @@
           type="button"
           class="btn btn-sm"
           :class="enablePolling ? 'btn-outline-success' : 'btn-outline-secondary'"
-          :title="enablePolling ? 'Автооновлення увімкнено' : 'Автооновлення вимкнено'"
+          :title="enablePolling ? t('dataList.autoRefreshOn') : t('dataList.autoRefreshOff')"
           @click="enablePolling = !enablePolling"
         >
           <i class="bi" :class="enablePolling ? 'bi-arrow-repeat' : 'bi-pause-circle'"></i>
@@ -72,7 +72,7 @@
         />
 
         <button v-if="canCreate" type="button" class="btn btn-sm btn-success" @click="openCreate">
-          <i class="bi bi-plus-lg me-1"></i>Додати
+          <i class="bi bi-plus-lg me-1"></i>{{ t('dataList.add') }}
         </button>
 
         <!-- Власні кнопки сторінки (створення через свою модалку, імпорт тощо).
@@ -89,12 +89,12 @@
         type="text"
         class="form-control form-control-sm"
         style="width:220px"
-        placeholder="Назва фільтру..."
+        :placeholder="t('dataList.filterName')"
         @keydown.enter.prevent="confirmSavePreset"
         @keydown.esc.prevent="showSaveFilterInput = false"
       />
-      <button type="button" class="btn btn-sm btn-primary" @click="confirmSavePreset">Зберегти</button>
-      <button type="button" class="btn btn-sm btn-outline-secondary" @click="showSaveFilterInput = false">Скасувати</button>
+      <button type="button" class="btn btn-sm btn-primary" @click="confirmSavePreset">{{ t('common.save') }}</button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" @click="showSaveFilterInput = false">{{ t('common.cancel') }}</button>
     </div>
 
     <div v-if="error" class="alert alert-danger">{{ error }}</div>
@@ -104,8 +104,8 @@
       <div v-if="selectedCount > 0" class="alert alert-info d-flex flex-column gap-2 mb-3">
         <div class="d-flex align-items-center gap-2 flex-wrap">
           <span class="fw-semibold small">
-            <template v-if="selectAllMatching">Обрано всі {{ selectedCount }} за фільтром</template>
-            <template v-else>Обрано: {{ selectedCount }}</template>
+            <template v-if="selectAllMatching">{{ t('bulk.selectedAll', { count: selectedCount }) }}</template>
+            <template v-else>{{ t('bulk.selected', { count: selectedCount }) }}</template>
           </span>
           <button
             v-if="canSelectAllMatching"
@@ -113,7 +113,7 @@
             class="btn btn-sm btn-link p-0 small text-decoration-none"
             @click="selectAllMatchingOn"
           >
-            Виділити всі {{ total }}
+            {{ t('bulk.selectAll', { count: total }) }}
           </button>
           <button
             v-if="selectAllMatching"
@@ -121,7 +121,7 @@
             class="btn btn-sm btn-link p-0 small text-decoration-none"
             @click="clearSelection"
           >
-            Зняти виділення
+            {{ t('dataList.clearSelection') }}
           </button>
         </div>
 
@@ -130,7 +130,7 @@
           <!-- Без жодної редагованої колонки (напр. сторінка лише з іменованими
                діями) селект був би порожнім рядком «Змінити поле...» ні про що -->
           <select v-if="editableColumns.length" v-model="bulkField" class="form-select form-select-sm" style="width:auto">
-            <option value="">Змінити поле...</option>
+            <option value="">{{ t('bulk.updateField') }}</option>
             <option v-for="col in editableColumns" :key="col.key" :value="col.key">{{ col.label }}</option>
           </select>
 
@@ -149,7 +149,7 @@
             :disabled="bulkApplying"
             @click="applyBulkUpdate"
           >
-            <span v-if="bulkApplying" class="spinner-border spinner-border-sm me-1"></span>Застосувати
+            <span v-if="bulkApplying" class="spinner-border spinner-border-sm me-1"></span>{{ t('common.save') }}
           </button>
 
           <!-- Іменовані дії: одна кнопка = одна операція з фіксованим значенням
@@ -162,7 +162,7 @@
             :disabled="bulkApplying"
             @click="applyNamedBulk(a)"
           >
-            <i v-if="a.icon" class="bi me-1" :class="a.icon"></i>{{ a.label }}
+            <i v-if="a.icon" class="bi me-1" :class="a.icon"></i>{{ translateLabel(a.label) }}
           </button>
 
           <button
@@ -172,10 +172,10 @@
             :title="selectAllMatching ? 'Масове видалення за фільтром недоступне — виділіть записи вручну' : ''"
             @click="applyBulkDelete"
           >
-            <i class="bi bi-trash"></i> Видалити
+            <i class="bi bi-trash"></i> {{ t('common.delete') }}
           </button>
 
-          <button class="btn btn-sm btn-outline-secondary ms-auto" @click="clearSelection">Скасувати</button>
+          <button class="btn btn-sm btn-outline-secondary ms-auto" @click="clearSelection">{{ t('common.cancel') }}</button>
         </div>
       </div>
 
@@ -189,7 +189,7 @@
                     type="checkbox"
                     class="form-check-input"
                     :checked="allOnPageSelected"
-                    title="Вибрати всі на сторінці"
+                    :title="t('table.selectAllOnPage')"
                     @change="toggleSelectAll"
                   />
                 </th>
@@ -199,10 +199,10 @@
                   :key="col.key"
                   :style="col.width ? { width: col.width } : {}"
                   :class="[col.align ? `text-${col.align}` : '', col.sortable ? 'th-sortable' : '']"
-                  :title="col.sortable ? 'Клік — сортувати. Ctrl+клік — додати до сортування' : null"
+                  :title="col.sortable ? t('table.sortMulti') : null"
                   @click="col.sortable ? toggleSort(col.key, $event) : null"
                 >
-                  {{ col.label }}
+                  {{ translateLabel(col.label) }}
                   <SortIcon v-if="col.sortable" :col="col.key" :sort-items="sortItems" />
                 </th>
                 <th v-if="actions.length || canCreate" style="width:100px"></th>
@@ -231,7 +231,7 @@
                   <td v-if="expandable" style="width:32px">
                     <button
                       class="btn btn-sm btn-link p-0 text-secondary"
-                      :title="isExpanded(row[rowKey]) ? 'Згорнути' : 'Деталі'"
+                      :title="isExpanded(row[rowKey]) ? t('filters.collapse') : t('filters.expand')"
                       @click.stop="toggleExpand(row[rowKey])"
                     >
                       <i :class="['bi', isExpanded(row[rowKey]) ? 'bi-chevron-down' : 'bi-chevron-right']"></i>
@@ -256,7 +256,7 @@
                       :key="`${a.type}:${a.tab ?? ''}`"
                       class="btn btn-sm btn-outline-secondary me-1"
                       :class="a.type === 'delete' ? 'btn-outline-danger' : ''"
-                      :title="a.label"
+                      :title="translateLabel(a.label)"
                       @click="handleAction(a, row)"
                     >
                       <i class="bi" :class="a.icon"></i>
@@ -264,7 +264,7 @@
                     <button
                       v-if="canCreate"
                       class="btn btn-sm btn-outline-secondary"
-                      title="Створити копію"
+                      :title="t('table.clone')"
                       @click="openClone(row)"
                     >
                       <i class="bi bi-copy"></i>
@@ -297,18 +297,18 @@
 
       <div class="d-flex justify-content-between align-items-center mt-3">
         <span class="text-muted small">
-          Всього: {{ total }}
+          {{ t('dataList.total') }}: {{ total }}
           <span
             v-if="revalidating"
             class="spinner-border spinner-border-sm ms-1"
             style="width:.7rem;height:.7rem"
-            title="Оновлення..."
+            :title="t('common.loading')"
           ></span>
         </span>
         <div class="d-flex align-items-center gap-2">
           <Pagination :current-page="page" :total-pages="totalPages" @change="load" />
           <select v-model.number="perPage" class="form-select form-select-sm" style="width:auto">
-            <option v-for="n in PER_PAGE_OPTIONS" :key="n" :value="n">{{ n }} на сторінці</option>
+            <option v-for="n in PER_PAGE_OPTIONS" :key="n" :value="n">{{ n }} {{ t('dataList.perPage') }}</option>
           </select>
         </div>
       </div>
@@ -321,6 +321,7 @@
       v-if="canCreate"
       v-model:visible="createOpen"
       storage-key="list-framework-create"
+      :default-mode="'docked-right'"
       :default-width="520"
       :min-width="380"
       :max-width="760"
@@ -331,14 +332,14 @@
     >
       <template #title>
         <h5 class="mb-0">
-          Створення запису
-          <span v-if="cloneSourceId" class="text-muted fw-normal fs-6">(копія #{{ cloneSourceId }})</span>
+          {{ t('modal.create') }}
+          <span v-if="cloneSourceId" class="text-muted fw-normal fs-6">({{ t('modal.copy') }} #{{ cloneSourceId }})</span>
         </h5>
       </template>
 
       <div class="px-1">
         <div v-for="col in createColumns" :key="col.key" class="mb-3">
-          <label class="form-label small text-muted mb-1">{{ col.label }}</label>
+          <label class="form-label small text-muted mb-1">{{ translateLabel(col.label) }}</label>
           <component
             :is="resolveCellComponent(col)"
             v-model="createForm[col.key]"
@@ -351,9 +352,9 @@
       </div>
 
       <template #footer>
-        <button type="button" class="btn btn-sm btn-outline-secondary" @click="createOpen = false">Скасувати</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" @click="createOpen = false">{{ t('common.cancel') }}</button>
         <button type="button" class="btn btn-sm btn-primary ms-2" :disabled="creating" @click="submitCreate">
-          <span v-if="creating" class="spinner-border spinner-border-sm me-1"></span>Створити
+          <span v-if="creating" class="spinner-border spinner-border-sm me-1"></span>{{ t('common.create') }}
         </button>
       </template>
     </BaseModal>
@@ -362,6 +363,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import EmptyState from '@/components/EmptyState.vue'
 import TableSkeleton from '@/components/TableSkeleton.vue'
@@ -423,11 +425,22 @@ const props = defineProps({
   expandable: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['row-action', 'list-update'])
+const emit = defineEmits(['row-action', 'list-update', 'before-clone'])
 
+const { t } = useI18n({ useScope: 'global' })
 const auth = useAuth()
 const { notify } = useNotify()
-const { deleteWithUndo, deleteManyWithUndo, updateWithUndo } = useUndoableMutation()
+const { deleteWithUndo, deleteManyWithUndo, updateWithUndo, hasPending } = useUndoableMutation()
+
+// Translate label if it looks like a translation key (contains a dot)
+function translateLabel(label) {
+  if (!label) return ''
+  if (label.includes('.')) {
+    const translated = t(label)
+    return translated !== label ? translated : label
+  }
+  return label
+}
 
 // ── Filters state (по одному ref на кожне поле з filterConfig) ─────────────
 const filters = {}
@@ -723,6 +736,9 @@ function openCreate() {
  * лишається порожньою — інакше збереження впало б на duplicate key.
  */
 function openClone(row) {
+  // Emit event so parent can close detail modal if needed
+  emit('before-clone', row)
+
   const form = blankForm()
   for (const col of createColumns.value) {
     const v = row[col.key]

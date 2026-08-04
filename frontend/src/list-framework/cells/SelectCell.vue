@@ -1,6 +1,6 @@
 <!-- Copyright (c) 2026 Oleksandr Nosov. MIT License. -->
 <template>
-  <span v-if="readonly">{{ currentLabel }}</span>
+  <span v-if="readonly">{{ translateLabel(currentLabel) }}</span>
   <select
     v-else
     :value="modelValue"
@@ -9,13 +9,16 @@
     :disabled="loading"
     @change="$emit('update:modelValue', $event.target.value)"
   >
-    <option v-for="opt in options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+    <option v-for="opt in options" :key="opt.value" :value="opt.value">{{ translateLabel(opt.label) }}</option>
   </select>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRemoteOptions } from '../composables/useRemoteOptions'
+
+const { t } = useI18n({ useScope: 'global' })
 
 const props = defineProps({
   field: { type: Object, required: true },
@@ -24,6 +27,15 @@ const props = defineProps({
   row: { type: Object, default: () => ({}) },
 })
 defineEmits(['update:modelValue'])
+
+function translateLabel(label) {
+  if (!label) return ''
+  if (label.includes('.')) {
+    const translated = t(label)
+    return translated !== label ? translated : label
+  }
+  return label
+}
 
 const remote = props.field.optionsUrl
   ? useRemoteOptions(props.field.optionsUrl, {

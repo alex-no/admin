@@ -30,7 +30,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { availableLocales } from '@/locales'
 
-const { locale, t } = useI18n()
+const { locale, t } = useI18n({ useScope: 'global' })
 
 const currentLocaleName = computed(() => {
   const current = availableLocales.find(l => l.code === locale.value)
@@ -38,8 +38,11 @@ const currentLocaleName = computed(() => {
 })
 
 function changeLocale(newLocale) {
+  console.log('[LanguageSwitcher] Changing locale from', locale.value, 'to', newLocale)
   locale.value = newLocale
   localStorage.setItem('admin.locale', newLocale)
   document.documentElement.lang = newLocale
+  console.log('[LanguageSwitcher] Changed. Current locale:', locale.value)
+  console.log('[LanguageSwitcher] Test translation:', t('common.save'))
 }
 </script>

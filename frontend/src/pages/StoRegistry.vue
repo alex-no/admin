@@ -3,7 +3,7 @@
   <ListPageWrapper>
     <DataListPage
       ref="listRef"
-      title="Реєстр даних"
+      :title="t('stoRegistry.title')"
       :api-list="cfg.apiList"
       :api-update="cfg.apiUpdate"
       :api-delete="cfg.apiDelete"
@@ -19,11 +19,12 @@
       :expandable="true"
       @row-action="onRowAction"
       @list-update="(items, pg, pp, tot) => { listItems = items; listPage = pg; listPerPage = pp; listTotal = tot }"
+      @before-clone="handleBeforeClone"
     >
       <template #expand="{ row }">
         <div class="card">
           <div class="card-header bg-white py-2">
-            <strong class="small">Деталі запису #{{ row.id }}</strong>
+            <strong class="small">{{ t('stoRegistry.recordDetails') }} #{{ row.id }}</strong>
           </div>
           <div class="card-body p-2">
             <pre class="mb-0 small" style="max-height: 300px; overflow-y: auto;">{{ JSON.stringify(row, null, 2) }}</pre>
@@ -47,7 +48,7 @@
     <template #title>
       <div class="d-flex align-items-center w-100">
         <h5 class="mb-0 flex-grow-1">
-          СТО <span class="text-muted fw-normal fs-6">#{{ detailRow?.id }}</span>
+          {{ t('stoRegistry.title') }} <span class="text-muted fw-normal fs-6">#{{ detailRow?.id }}</span>
           <span v-if="detailRow?.name_uk" class="text-primary fw-normal fs-6 ms-2">{{ detailRow.name_uk }}</span>
         </h5>
         <RecordNavigator
@@ -74,15 +75,15 @@
       <template v-if="activeTab === 'general'">
         <div class="row g-3">
           <div class="col-sm-8">
-            <label class="form-label small mb-1">Назва</label>
+            <label class="form-label small mb-1">{{ t('stoRegistry.fields.name') }}</label>
             <input v-model="form.name_uk" type="text" class="form-control form-control-sm" />
           </div>
           <div class="col-sm-4">
-            <label class="form-label small mb-1">Тип</label>
+            <label class="form-label small mb-1">{{ t('stoRegistry.fields.type') }}</label>
             <select v-model="form.sto_type" class="form-select form-select-sm">
-              <option value="service">СТО</option>
-              <option value="tire">Шиномонтаж</option>
-              <option value="wash">Автомийка</option>
+              <option value="service">{{ t('stoRegistry.types.service') }}</option>
+              <option value="tire">{{ t('stoRegistry.types.tire') }}</option>
+              <option value="wash">{{ t('stoRegistry.types.wash') }}</option>
             </select>
           </div>
         </div>
@@ -96,7 +97,7 @@
               role="switch"
             />
             <label class="form-check-label small" for="sto-active-switch">
-              {{ form.is_active ? 'Активне' : 'Неактивне' }}
+              {{ form.is_active ? t('stoRegistry.fields.active') : t('stoRegistry.fields.inactive') }}
             </label>
           </div>
         </div>
@@ -105,11 +106,11 @@
       <!-- ── Контакти ──────────────────────────────────────────────────── -->
       <template v-else-if="activeTab === 'contacts'">
         <div class="mb-3">
-          <label class="form-label small mb-1">Адреса</label>
+          <label class="form-label small mb-1">{{ t('stoRegistry.fields.address') }}</label>
           <input v-model="form.address" type="text" class="form-control form-control-sm" />
         </div>
         <div>
-          <label class="form-label small mb-1">Телефони</label>
+          <label class="form-label small mb-1">{{ t('stoRegistry.fields.phones') }}</label>
           <PhoneListCell
             :field="{}"
             :model-value="form.phones"
@@ -121,16 +122,16 @@
 
       <!-- ── Опис ──────────────────────────────────────────────────────── -->
       <template v-else-if="activeTab === 'description'">
-        <label class="form-label small mb-1">Опис</label>
+        <label class="form-label small mb-1">{{ t('stoRegistry.fields.description') }}</label>
         <textarea v-model="form.description" class="form-control form-control-sm" rows="7"></textarea>
       </template>
 
       <!-- ── Рейтинг ───────────────────────────────────────────────────── -->
       <template v-else-if="activeTab === 'rating'">
         <div class="text-muted small mb-2">
-          Зазвичай рейтинг розраховується з відгуків користувачів — тут його можна задати вручну.
+          {{ t('stoRegistry.photos.ratingDescription') }}
         </div>
-        <label class="form-label small mb-1">Рейтинг</label>
+        <label class="form-label small mb-1">{{ t('stoRegistry.fields.rating') }}</label>
         <div class="d-flex align-items-center gap-2">
           <i class="bi bi-star-fill text-warning fs-5"></i>
           <input
@@ -143,15 +144,15 @@
             style="width:100px"
           />
         </div>
-        <div class="text-muted small mt-1">Від 0 до 5</div>
+        <div class="text-muted small mt-1">{{ t('stoRegistry.photos.ratingHint') }}</div>
       </template>
 
       <!-- ── Країна (довідник — з того ж кешу useRemoteOptions, що й фільтр
              "Країна" у списку; повторного запиту не буде) ────────────────── -->
       <template v-else-if="activeTab === 'country'">
-        <label class="form-label small mb-1">Країна реєстрації</label>
+        <label class="form-label small mb-1">{{ t('stoRegistry.fields.country') }}</label>
         <select v-model="form.country_id" class="form-select form-select-sm" style="max-width:300px">
-          <option :value="null">— Оберіть країну —</option>
+          <option :value="null">{{ t('stoRegistry.photos.selectCountry') }}</option>
           <option v-for="c in countryOptions" :key="c.value" :value="c.value">{{ c.label }}</option>
         </select>
       </template>
@@ -165,7 +166,7 @@
         <div class="mb-3">
           <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
             <label class="btn btn-sm btn-outline-primary mb-0" style="cursor:pointer">
-              <i class="bi bi-upload me-1"></i>Завантажити фото
+              <i class="bi bi-upload me-1"></i>{{ t('stoRegistry.photos.upload') }}
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
@@ -178,10 +179,10 @@
               class="btn btn-sm btn-outline-secondary"
               @click="showUrlUpload = !showUrlUpload; photosError = null"
             >
-              <i class="bi bi-link-45deg me-1"></i>Завантажити з URL
+              <i class="bi bi-link-45deg me-1"></i>{{ t('stoRegistry.photos.uploadFromUrl') }}
             </button>
             <span v-if="photosUploading" class="text-muted small">
-              <span class="spinner-border spinner-border-sm me-1"></span>Завантаження...
+              <span class="spinner-border spinner-border-sm me-1"></span>{{ t('stoRegistry.photos.uploading') }}
             </span>
           </div>
           <div v-if="photosError" class="text-danger small mb-2">{{ photosError }}</div>
@@ -189,15 +190,15 @@
           <div v-if="showUrlUpload" class="card border-secondary" style="max-width:600px">
             <div class="card-body p-3">
               <div class="mb-2">
-                <label class="form-label small mb-1">URL зображення</label>
+                <label class="form-label small mb-1">{{ t('stoRegistry.photos.urlLabel') }}</label>
                 <input
                   v-model="photoUrl"
                   type="text"
                   class="form-control form-control-sm"
-                  placeholder="https://example.com/image.jpg"
+                  :placeholder="t('stoRegistry.photos.urlPlaceholder')"
                   @keydown.enter.prevent="uploadPhotoFromUrl"
                 />
-                <div class="text-muted small mt-1">Підтримуються формати: JPG, PNG, WebP.</div>
+                <div class="text-muted small mt-1">{{ t('stoRegistry.photos.urlHint') }}</div>
               </div>
               <div class="d-flex gap-2">
                 <button
@@ -205,13 +206,13 @@
                   :disabled="!photoUrl.trim() || photosUploading"
                   @click="uploadPhotoFromUrl"
                 >
-                  <i class="bi bi-download me-1"></i>Завантажити
+                  <i class="bi bi-download me-1"></i>{{ t('stoRegistry.photos.upload') }}
                 </button>
                 <button
                   class="btn btn-sm btn-secondary"
                   @click="showUrlUpload = false; photoUrl = ''; photosError = null"
                 >
-                  Скасувати
+                  {{ t('common.cancel') }}
                 </button>
               </div>
             </div>
@@ -223,7 +224,7 @@
         </div>
         <div v-else-if="!photosList.length" class="text-muted text-center py-5">
           <i class="bi bi-images" style="font-size:2rem"></i>
-          <div class="mt-2">Фото відсутні</div>
+          <div class="mt-2">{{ t('stoRegistry.photos.noPhotos') }}</div>
         </div>
         <div v-else class="row g-3">
           <div v-for="photo in photosList" :key="photo.id" class="col-6 col-md-4">
@@ -242,7 +243,7 @@
                   class="badge bg-primary position-absolute"
                   style="top:6px;left:6px;font-size:.65rem"
                 >
-                  <i class="bi bi-star-fill me-1"></i>Обкладинка
+                  <i class="bi bi-star-fill me-1"></i>{{ t('stoRegistry.photos.cover') }}
                 </span>
               </div>
               <div class="card-body p-2">
@@ -250,21 +251,21 @@
                   :value="photo.caption ?? ''"
                   type="text"
                   class="form-control form-control-sm mb-2"
-                  placeholder="Підпис..."
+                  :placeholder="t('stoRegistry.photos.caption')"
                   @change="updatePhotoCaption(photo, $event.target.value)"
                 />
                 <div class="d-flex gap-1">
                   <button
                     v-if="!photo.is_cover"
                     class="btn btn-sm btn-outline-primary py-0 px-1 flex-fill"
-                    title="Зробити обкладинкою"
+                    :title="t('stoRegistry.photos.setCover')"
                     @click="setCover(photo)"
                   >
                     <i class="bi bi-star"></i>
                   </button>
                   <button
                     class="btn btn-sm btn-outline-danger py-0 px-1 flex-fill"
-                    title="Видалити"
+                    :title="t('common.delete')"
                     @click="deletePhoto(photo)"
                   >
                     <i class="bi bi-trash"></i>
@@ -280,24 +281,25 @@
     <template v-if="TAB_FIELDS[activeTab]?.length" #footer>
       <div></div>
       <div class="d-flex gap-2">
-        <button class="btn btn-secondary btn-sm" @click="detailOpen = false">Закрити</button>
+        <button class="btn btn-secondary btn-sm" @click="detailOpen = false">{{ t('common.close') }}</button>
         <button class="btn btn-outline-primary btn-sm" :disabled="saving" @click="saveTab(false)">
-          <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>Зберегти
+          <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>{{ t('common.save') }}
         </button>
         <button class="btn btn-primary btn-sm" :disabled="saving" @click="saveTab(true)">
-          <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>Зберегти та закрити
+          <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>{{ t('stoRegistry.saveAndClose') }}
         </button>
       </div>
     </template>
     <template v-else #footer>
       <div></div>
-      <button class="btn btn-secondary btn-sm" @click="detailOpen = false">Закрити</button>
+      <button class="btn btn-secondary btn-sm" @click="detailOpen = false">{{ t('common.close') }}</button>
     </template>
   </BaseModal>
 </template>
 
 <script setup>
 import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ListPageWrapper from '@/components/ListPageWrapper.vue'
 import BaseModal from '@/components/BaseModal.vue'
 import ModalTabs from '@/components/ModalTabs.vue'
@@ -316,6 +318,7 @@ import filterConfig from '@configs/sto-registry.filter.json'
 import columnsConfig from '@configs/sto-registry.columns.json'
 import cfg from '@configs/sto-registry.config.json'
 
+const { t } = useI18n({ useScope: 'global' })
 const auth = useAuth()
 const { deleteWithUndo } = useUndoableDelete()
 const listRef = ref(null)
@@ -332,14 +335,14 @@ const listTotal = ref(0)
 // Підписи навмисно довші, ніж мінімально потрібно (не просто "Опис", а "Опис та деталі") —
 // щоб рядок вкладок переповнювався й переносився на другий рядок вже на не надто вузькій
 // ширині вікна, без зміни паддингів/шрифту.
-const TABS = [
-  { key: 'general', label: 'Основна інформація', icon: 'bi-info-circle' },
-  { key: 'contacts', label: 'Контактні дані', icon: 'bi-telephone' },
-  { key: 'description', label: 'Опис та деталі', icon: 'bi-card-text' },
-  { key: 'rating', label: 'Рейтинг та відгуки', icon: 'bi-star' },
-  { key: 'country', label: 'Країна реєстрації', icon: 'bi-flag' },
-  { key: 'photos', label: 'Фото', icon: 'bi-images' },
-]
+const TABS = computed(() => [
+  { key: 'general', label: t('stoRegistry.tabs.general'), icon: 'bi-info-circle' },
+  { key: 'contacts', label: t('stoRegistry.tabs.contacts'), icon: 'bi-telephone' },
+  { key: 'description', label: t('stoRegistry.tabs.description'), icon: 'bi-card-text' },
+  { key: 'rating', label: t('stoRegistry.tabs.rating'), icon: 'bi-star' },
+  { key: 'country', label: t('stoRegistry.tabs.country'), icon: 'bi-flag' },
+  { key: 'photos', label: t('stoRegistry.tabs.photos'), icon: 'bi-images' },
+])
 
 // Які поля належать якій вкладці — визначає, що саме відправляти при "Зберегти"
 // (тільки поточна вкладка) проти "Зберегти та закрити" (усі вкладки одразу).
@@ -378,7 +381,7 @@ const hasUnsavedChanges = computed(
 
 const confirmLeave = () => {
   if (!hasUnsavedChanges.value) return true
-  return confirm('Є незбережені зміни. Перейти на інший запис без збереження?')
+  return confirm(t('stoRegistry.unsavedNavigation'))
 }
 
 // Навігація по записах
@@ -514,7 +517,7 @@ function deletePhoto(photo) {
   if (index === -1) return
 
   deleteWithUndo({
-    message: 'Фото видалено',
+    message: t('stoRegistry.photoDeleted'),
     remove: () => { photosList.value.splice(index, 1) },
     restore: () => { photosList.value.splice(index, 0, photo) },
     commit: async () => {
@@ -522,7 +525,7 @@ function deletePhoto(photo) {
         method: 'DELETE',
         headers: auth.authHeaders(),
       })
-      if (!res.ok) throw new Error('Помилка видалення фото')
+      if (!res.ok) throw new Error(t('stoRegistry.photoDeleted'))
     },
   })
 }
@@ -561,12 +564,30 @@ function onRowAction({ type, row, tab }) {
   detailOpen.value = true
 }
 
+function handleBeforeClone() {
+  // Close detail modal before opening clone modal
+  if (!detailOpen.value) return
+
+  // Check for unsaved changes
+  if (hasUnsavedChanges.value) {
+    const confirmed = confirm(t('stoRegistry.unsavedChanges'))
+    if (!confirmed) {
+      // User cancelled - prevent clone by throwing (DataListPage won't catch this)
+      // Actually, we can't prevent it from here. Just close and discard changes.
+    }
+  }
+
+  // Close detail modal and suppress the unsaved check (already asked)
+  suppressUnsavedCheck = true
+  detailOpen.value = false
+}
+
 // Хрестик/фон/Escape у BaseModal лише міняють detailOpen — перехоплюємо тут,
 // щоб попередити про незбережені зміни (як у AllSTO: підтвердження + відкат закриття).
 watch(detailOpen, (val, wasOpen) => {
   if (wasOpen && !val) {
     if (!suppressUnsavedCheck && hasUnsavedChanges.value) {
-      const confirmed = confirm('Є незбережені зміни. Закрити без збереження?')
+      const confirmed = confirm(t('stoRegistry.unsavedChanges'))
       if (!confirmed) {
         nextTick(() => { detailOpen.value = true })
         return

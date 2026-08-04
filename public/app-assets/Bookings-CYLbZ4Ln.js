@@ -1,0 +1,1 @@
+import{_ as e,mt as t,qt as n,v as r}from"./runtime-core.esm-bundler-BKdLzFmX.js";import{t as i}from"./BaseLayout-BS3vgApM.js";var a={__name:`Bookings`,setup(a){return(a,o)=>(t(),r(i,null,{default:n(()=>[...o[0]||=[e(`h5`,{class:`mb-3`},`Записи`,-1),e(`p`,{class:`text-muted`},`В розробці…`,-1)]]),_:1}))}};export{a as default};

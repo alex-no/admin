@@ -26,19 +26,22 @@
         placeholder="+38 (0__) ___-__-__"
         @input="onInput(i, $event.target.value)"
       />
-      <button type="button" class="btn btn-sm btn-outline-danger" title="Видалити номер" @click="removePhone(i)">
+      <button type="button" class="btn btn-sm btn-outline-danger" :title="t('common.removePhone')" @click="removePhone(i)">
         <i class="bi bi-x-lg"></i>
       </button>
     </div>
     <button type="button" class="btn btn-sm btn-outline-secondary" @click="addPhone">
-      <i class="bi bi-plus-lg me-1"></i>Додати номер
+      <i class="bi bi-plus-lg me-1"></i>{{ t('common.addPhone') }}
     </button>
   </div>
 </template>
 
 <script setup>
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { formatPhoneUA } from '@/utils/phone'
+
+const { t } = useI18n({ useScope: 'global' })
 
 const props = defineProps({
   field: { type: Object, required: true },

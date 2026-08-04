@@ -3,7 +3,7 @@
   <nav aria-label="breadcrumb" class="px-4 py-2 border-bottom flex-shrink-0" style="background-color: var(--bs-secondary-bg);">
     <ol class="breadcrumb mb-0 small">
       <li class="breadcrumb-item">
-        <router-link to="/">Головна</router-link>
+        <router-link to="/">{{ t('nav.home') }}</router-link>
       </li>
 
       <!-- Розділ — навмисно не посилання: у menu.json розділи не мають власного
@@ -38,11 +38,22 @@
  */
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import { findMenuLocation } from '@/utils/menuLocation'
 
+const { t } = useI18n({ useScope: 'global' })
 const route = useRoute()
 const auth = useAuth()
+
+function translateLabel(label) {
+  if (!label) return ''
+  if (label.includes('.')) {
+    const translated = t(label)
+    return translated !== label ? translated : label
+  }
+  return label
+}
 
 const location = computed(() => {
   const found = findMenuLocation(route.path)
@@ -51,7 +62,13 @@ const location = computed(() => {
   // опинився на URL. Тоді лишиться сама «Головна».
   if (found.section.permission && !auth.can(found.section.permission)) return null
   if (found.item.permission && !auth.can(found.item.permission)) return null
-  return found
+
+  // Translate labels
+  return {
+    ...found,
+    section: { ...found.section, label: translateLabel(found.section.label) },
+    item: { ...found.item, label: translateLabel(found.item.label) }
+  }
 })
 
 // Сторінки поза menu.json (`/change-password`, `/dashboard`) — беремо

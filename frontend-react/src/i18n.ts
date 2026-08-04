@@ -14,10 +14,17 @@ function getInitialLocale(): string {
   return 'uk'
 }
 
+// react-i18next expects resources in format: { lang: { translation: {...} } }
+const resources = {
+  uk: { translation: messages.uk },
+  en: { translation: messages.en },
+  ru: { translation: messages.ru },
+}
+
 i18n
   .use(initReactI18next)
   .init({
-    resources: messages,
+    resources,
     lng: getInitialLocale(),
     fallbackLng: 'uk',
     interpolation: {

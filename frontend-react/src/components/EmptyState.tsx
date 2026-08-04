@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 interface EmptyStateProps {
   /** Чи застосовано зараз хоч один фільтр (рахує той, хто рендерить) */
   filtered?: boolean
@@ -16,27 +18,28 @@ interface EmptyStateProps {
  */
 export default function EmptyState({
   filtered = false,
-  entityLabel = 'записів',
   canCreate = false,
   icon = 'bi-inbox',
   onCreate,
   onResetFilters,
 }: EmptyStateProps) {
+  const { t } = useTranslation()
+
   return (
     <div className="text-center py-5">
       <i className={`bi ${filtered ? 'bi-funnel' : icon}`} style={{ fontSize: '2.5rem', opacity: 0.35 }} />
 
       <p className="text-muted mt-3 mb-3">
-        {filtered ? 'За вибраними фільтрами нічого не знайдено' : `Ще немає ${entityLabel}`}
+        {filtered ? t('empty.noMatchingRecords') : t('empty.noRecords')}
       </p>
 
       {filtered ? (
         <button className="btn btn-sm btn-outline-secondary" onClick={onResetFilters}>
-          <i className="bi bi-x-circle me-1" />Скинути фільтри
+          <i className="bi bi-x-circle me-1" />{t('empty.clearFilters')}
         </button>
       ) : canCreate ? (
         <button className="btn btn-sm btn-primary" onClick={onCreate}>
-          <i className="bi bi-plus-lg me-1" />Створити
+          <i className="bi bi-plus-lg me-1" />{t('common.create')}
         </button>
       ) : null}
     </div>

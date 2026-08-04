@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTheme } from '@/composables/useTheme'
 import LanguageSwitcher from './LanguageSwitcher'
@@ -24,6 +25,7 @@ interface MenuSection {
 }
 
 export default function TopNav() {
+  const { t } = useTranslation()
   const { user, logout, can } = useAuth()
   const { mode, cycle } = useTheme()
   const location = useLocation()
@@ -131,13 +133,13 @@ export default function TopNav() {
                   to="/change-password"
                   onClick={() => setUserMenuOpen(false)}
                 >
-                  <i className="bi bi-key me-2"></i>Змінити пароль
+                  <i className="bi bi-key me-2"></i>{t('auth.changePassword')}
                 </Link>
               </li>
               <li><hr className="dropdown-divider" /></li>
               <li>
                 <a className="dropdown-item" href="#" onClick={handleLogout}>
-                  <i className="bi bi-box-arrow-right me-2"></i>Вийти
+                  <i className="bi bi-box-arrow-right me-2"></i>{t('auth.logout')}
                 </a>
               </li>
             </ul>

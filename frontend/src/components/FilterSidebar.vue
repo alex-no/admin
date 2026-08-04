@@ -2,11 +2,11 @@
 <template>
   <aside class="filter-sidebar" :class="{ collapsed }">
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h6 v-if="!collapsed" class="mb-0">Фільтри</h6>
+      <h6 v-if="!collapsed" class="mb-0">{{ labels.filter }}</h6>
       <button
         class="btn btn-sm btn-link p-0"
         @click="toggleCollapsed"
-        :title="collapsed ? 'Розгорнути' : 'Згорнути'"
+        :title="collapsed ? labels.expand : labels.collapse"
       >
         <i :class="['bi', collapsed ? 'bi-chevron-double-right' : 'bi-chevron-double-left']"></i>
       </button>
@@ -37,6 +37,14 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n({ useScope: 'global' })
+const labels = computed(() => ({
+  filter: t('common.filter'),
+  expand: t('filters.expand'),
+  collapse: t('filters.collapse'),
+}))
 
 const props = defineProps({
   /** Namespace для localStorage (щоб різні сторінки не ділили стан) */

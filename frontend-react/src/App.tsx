@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { BrowserRouter } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { AuthProvider } from './contexts/AuthContext'
 import { useTheme } from './composables/useTheme'
 import ToastContainer from './components/ToastContainer'
@@ -13,10 +14,19 @@ function ThemeApplier() {
   return null
 }
 
+function LocaleWatcher() {
+  const { i18n } = useTranslation()
+  useEffect(() => {
+    document.documentElement.lang = i18n.language
+  }, [i18n.language])
+  return null
+}
+
 function App() {
   return (
     <BrowserRouter>
       <ThemeApplier />
+      <LocaleWatcher />
       <ToastContainer />
       <AuthProvider>
         <AppRoutes />

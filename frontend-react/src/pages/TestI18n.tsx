@@ -1,12 +1,16 @@
 import { useTranslation } from 'react-i18next'
 import { availableLocales } from '@/locales'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 
 export default function TestI18n() {
   const { t, i18n } = useTranslation()
 
   return (
     <div className="container-fluid">
-      <h5 className="mb-4">{t('language.selectLanguage')} — i18n тест</h5>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h5 className="mb-0">{t('language.selectLanguage')} — i18n тест</h5>
+        <LanguageSwitcher />
+      </div>
 
       <div className="card mb-4">
         <div className="card-header">

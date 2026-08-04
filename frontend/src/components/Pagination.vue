@@ -3,14 +3,14 @@
     <ul class="pagination pagination-sm mb-0">
       <!-- First page -->
       <li class="page-item" :class="{ disabled: currentPage === 1 }">
-        <button class="page-link" @click="goTo(1)" :disabled="currentPage === 1" title="Перша сторінка">
+        <button class="page-link" @click="goTo(1)" :disabled="currentPage === 1" :title="t('pagination.first')">
           ‹‹
         </button>
       </li>
 
       <!-- Previous page -->
       <li class="page-item" :class="{ disabled: currentPage === 1 }">
-        <button class="page-link" @click="goTo(currentPage - 1)" :disabled="currentPage === 1" title="Попередня">
+        <button class="page-link" @click="goTo(currentPage - 1)" :disabled="currentPage === 1" :title="t('pagination.previous')">
           ‹
         </button>
       </li>
@@ -27,14 +27,14 @@
 
       <!-- Next page -->
       <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-        <button class="page-link" @click="goTo(currentPage + 1)" :disabled="currentPage === totalPages" title="Наступна">
+        <button class="page-link" @click="goTo(currentPage + 1)" :disabled="currentPage === totalPages" :title="t('pagination.next')">
           ›
         </button>
       </li>
 
       <!-- Last page -->
       <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-        <button class="page-link" @click="goTo(totalPages)" :disabled="currentPage === totalPages" title="Остання сторінка">
+        <button class="page-link" @click="goTo(totalPages)" :disabled="currentPage === totalPages" :title="t('pagination.last')">
           ››
         </button>
       </li>
@@ -44,6 +44,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n({ useScope: 'global' })
 
 const props = defineProps({
   currentPage: {

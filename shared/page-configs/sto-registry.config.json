@@ -10,14 +10,14 @@
   "createFields": ["name_uk", "sto_type", "address"],
   "bulkEditableFields": ["sto_type", "is_active", "country_id"],
   "bulkActions": [
-    { "action": "activate", "label": "Активувати", "icon": "bi-check-circle", "variant": "outline-success", "permission": "sto.edit" },
-    { "action": "deactivate", "label": "Деактивувати", "icon": "bi-slash-circle", "variant": "outline-secondary", "permission": "sto.edit" }
+    { "action": "activate", "label": "common.activate", "icon": "bi-check-circle", "variant": "outline-success", "permission": "sto.edit" },
+    { "action": "deactivate", "label": "common.deactivate", "icon": "bi-slash-circle", "variant": "outline-secondary", "permission": "sto.edit" }
   ],
   "actions": [
-    { "type": "detail", "icon": "bi-eye", "label": "Деталі" },
-    { "type": "detail", "icon": "bi-telephone", "label": "Контактні дані", "tab": "contacts" },
-    { "type": "detail", "icon": "bi-card-text", "label": "Опис", "tab": "description" },
-    { "type": "detail", "icon": "bi-star", "label": "Рейтинг та відгуки", "tab": "rating" },
-    { "type": "delete", "icon": "bi-trash", "label": "Видалити", "permission": "sto.delete" }
+    { "type": "detail", "icon": "bi-eye", "label": "common.details" },
+    { "type": "detail", "icon": "bi-telephone", "label": "common.contacts", "tab": "contacts" },
+    { "type": "detail", "icon": "bi-card-text", "label": "common.description", "tab": "description" },
+    { "type": "detail", "icon": "bi-star", "label": "common.ratingReviews", "tab": "rating" },
+    { "type": "delete", "icon": "bi-trash", "label": "common.delete", "permission": "sto.delete" }
   ]
 }

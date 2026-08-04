@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { ColumnConfig } from '../types'
 
 interface ColumnSelectorProps {
@@ -22,6 +23,7 @@ export default function ColumnSelector({
   onToggle,
   onReset,
 }: ColumnSelectorProps) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   // Унікальний префікс для id чекбоксів: на сторінці може бути кілька таблиць
@@ -106,7 +108,7 @@ export default function ColumnSelector({
                 disabled={!hasHidden}
                 onClick={onReset}
               >
-                Скинути
+                {t('table.resetColumns')}
               </button>
             </>
           )}

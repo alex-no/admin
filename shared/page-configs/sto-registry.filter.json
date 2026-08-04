@@ -1,33 +1,33 @@
 [
-  { "key": "search", "type": "text", "label": "Пошук", "placeholder": "Пошук за назвою..." },
+  { "key": "search", "type": "text", "label": "filter.search", "placeholder": "filter.searchPlaceholder" },
   {
     "key": "sto_type",
     "type": "select",
-    "label": "Тип",
-    "placeholderOption": { "value": "", "label": "Всі типи" },
+    "label": "filter.type",
+    "placeholderOption": { "value": "", "label": "filter.allTypes" },
     "options": [
-      { "value": "service", "label": "СТО" },
-      { "value": "tire", "label": "Шиномонтаж" },
-      { "value": "wash", "label": "Автомийка" }
+      { "value": "service", "label": "filter.typeService" },
+      { "value": "tire", "label": "filter.typeTire" },
+      { "value": "wash", "label": "filter.typeWash" }
     ]
   },
   {
     "key": "status",
     "type": "select",
-    "label": "Статус",
-    "placeholderOption": { "value": "", "label": "Всі статуси" },
+    "label": "filter.status",
+    "placeholderOption": { "value": "", "label": "filter.allStatuses" },
     "options": [
-      { "value": "active", "label": "Активні" },
-      { "value": "inactive", "label": "Неактивні" }
+      { "value": "active", "label": "filter.active" },
+      { "value": "inactive", "label": "filter.inactive" }
     ]
   },
   {
     "key": "country_id",
     "type": "select",
-    "label": "Країна",
+    "label": "filter.country",
     "optionsUrl": "/api/admin/geography/countries",
     "optionsValueKey": "id",
     "optionsLabelKey": "name_uk",
-    "placeholderOption": { "value": "", "label": "Всі країни" }
+    "placeholderOption": { "value": "", "label": "filter.allCountries" }
   }
 ]

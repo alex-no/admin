@@ -28,7 +28,14 @@ const i18n = createI18n({
   locale: getInitialLocale(),
   fallbackLocale: 'uk',
   messages,
+  globalInjection: true, // Make $t available globally
 })
+
+// Set initial document language
+document.documentElement.lang = i18n.global.locale.value
+
+console.log('[i18n] Initialized with locale:', i18n.global.locale.value)
+console.log('[i18n] Available messages:', Object.keys(messages))
 
 const app = createApp(App)
 app.use(router)

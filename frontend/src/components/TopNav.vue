@@ -70,13 +70,13 @@
           <ul class="dropdown-menu dropdown-menu-end" :class="{ show: userMenuOpen }">
             <li>
               <router-link class="dropdown-item" to="/change-password" @click="userMenuOpen = false">
-                <i class="bi bi-key me-2"></i>Змінити пароль
+                <i class="bi bi-key me-2"></i>{{ labels.changePassword }}
               </router-link>
             </li>
             <li><hr class="dropdown-divider"></li>
             <li>
               <a class="dropdown-item" href="#" @click.prevent="doLogout">
-                <i class="bi bi-box-arrow-right me-2"></i>Вийти
+                <i class="bi bi-box-arrow-right me-2"></i>{{ labels.logout }}
               </a>
             </li>
           </ul>
@@ -89,11 +89,18 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import { useTheme } from '@/composables/useTheme'
 import LanguageSwitcher from './LanguageSwitcher.vue'
 import menu from '@/config/menu.json'
 import { findMenuLocation } from '@/utils/menuLocation'
+
+const { t } = useI18n({ useScope: 'global' })
+const labels = computed(() => ({
+  changePassword: t('auth.changePassword'),
+  logout: t('auth.logout'),
+}))
 
 const auth   = useAuth()
 const theme  = useTheme()
@@ -103,8 +110,18 @@ const router = useRouter()
 const openMenu = ref(null)
 const userMenuOpen = ref(false)
 
+// Translate menu items
 const visibleMenu = computed(() =>
-  menu.filter(s => auth.can(s.permission))
+  menu
+    .filter(s => auth.can(s.permission))
+    .map(section => ({
+      ...section,
+      label: t(section.label),
+      items: section.items.map(item => ({
+        ...item,
+        label: t(item.label)
+      }))
+    }))
 )
 
 // Через findMenuLocation, а не голий startsWith: `/sto-managers` збігався б із

@@ -27,9 +27,21 @@
     "selected": "Выбрано",
     "page": "Страница",
     "of": "из",
-    "perPage": "На странице"
+    "perPage": "На странице",
+    "prevRecord": "Предыдущая запись",
+    "nextRecord": "Следующая запись",
+    "resize": "Изменить размер",
+    "addPhone": "Добавить номер",
+    "removePhone": "Удалить номер",
+    "details": "Детали",
+    "contacts": "Контактные данные",
+    "description": "Описание",
+    "ratingReviews": "Рейтинг и отзывы",
+    "activate": "Активировать",
+    "deactivate": "Деактивировать"
   },
   "nav": {
+    "home": "Главная",
     "dashboard": "Главная",
     "sto": "СТО",
     "dataRegistry": "Реестр данных",
@@ -50,11 +62,16 @@
     "email": "Email",
     "password": "Пароль",
     "signIn": "Войти",
-    "welcome": "Добро пожаловать"
+    "welcome": "Добро пожаловать",
+    "changePassword": "Изменить пароль"
   },
   "table": {
     "id": "ID",
     "name": "Название",
+    "type": "Тип",
+    "address": "Адрес",
+    "phones": "Телефоны",
+    "rating": "Рейтинг",
     "status": "Статус",
     "createdAt": "Создано",
     "updatedAt": "Обновлено",
@@ -62,14 +79,28 @@
     "selectColumns": "Выбрать колонки",
     "resetColumns": "Сбросить",
     "hideColumn": "Скрыть",
-    "showColumn": "Показать"
+    "showColumn": "Показать",
+    "activeStatus": "Активное",
+    "inactiveStatus": "Неактивное",
+    "selectAllOnPage": "Выбрать все на странице",
+    "sort": "Сортировать",
+    "sortMulti": "Клик — сортировать. Ctrl+клик — добавить к сортировке",
+    "clone": "Создать копию"
+  },
+  "pagination": {
+    "first": "Первая страница",
+    "previous": "Предыдущая",
+    "next": "Следующая",
+    "last": "Последняя страница"
   },
   "filters": {
     "resetFilters": "Сбросить фильтры",
     "saveFilter": "Сохранить фильтр",
     "savedFilters": "Сохраненные фильтры...",
     "filterName": "Название фильтра",
-    "deleteFilter": "Удалить фильтр"
+    "deleteFilter": "Удалить фильтр",
+    "expand": "Развернуть",
+    "collapse": "Свернуть"
   },
   "bulk": {
     "selectAll": "Выделить все {count}",
@@ -91,7 +122,12 @@
     "edit": "Редактирование записи",
     "detail": "Детали записи",
     "confirm": "Подтверждение",
-    "confirmDelete": "Вы уверены, что хотите удалить эту запись?"
+    "confirmDelete": "Вы уверены, что хотите удалить эту запись?",
+    "copy": "копия",
+    "dockRight": "Закрепить справа",
+    "dockBottom": "Закрепить снизу",
+    "undock": "Открепить (плавающее окно)",
+    "changeMode": "Изменить режим"
   },
   "validation": {
     "required": "Это поле обязательно",
@@ -113,5 +149,98 @@
     "en": "English",
     "ru": "Русский",
     "selectLanguage": "Выберите язык"
+  },
+  "menu": {
+    "data": "Данные",
+    "dataRegistry": "Реестр данных",
+    "analytics": "Аналитика",
+    "visits": "Посещения",
+    "stats": "Статистика",
+    "charts": "Графики",
+    "rbac": "Роли и права",
+    "roles": "Роли",
+    "permissions": "Права доступа",
+    "system": "Система",
+    "errorLogs": "Логи ошибок",
+    "errorStats": "Статистика ошибок",
+    "devTools": "Инструменты разработчика",
+    "apiDocs": "API Docs (Admin)"
+  },
+  "dataList": {
+    "searchPlaceholder": "Поиск по названию...",
+    "savedFilters": "Сохраненные фильтры...",
+    "saveCurrentFilter": "Сохранить текущий фильтр",
+    "deleteFilter": "Удалить сохраненный фильтр",
+    "exportCsv": "Экспорт в CSV",
+    "autoRefreshOn": "Автообновление включено",
+    "autoRefreshOff": "Автообновление выключено",
+    "add": "Добавить",
+    "filterName": "Название фильтра...",
+    "total": "Всего",
+    "perPage": "на странице",
+    "selected": "Выбрано",
+    "clearSelection": "Очистить выделение"
+  },
+  "filter": {
+    "search": "Поиск",
+    "searchPlaceholder": "Поиск по названию...",
+    "type": "Тип",
+    "allTypes": "Все типы",
+    "status": "Статус",
+    "allStatuses": "Все статусы",
+    "active": "Активные",
+    "inactive": "Неактивные",
+    "country": "Страна",
+    "allCountries": "Все страны",
+    "typeService": "СТО",
+    "typeTire": "Шиномонтаж",
+    "typeWash": "Автомойка"
+  },
+  "stoRegistry": {
+    "title": "Реестр данных",
+    "recordDetails": "Детали записи",
+    "tabs": {
+      "general": "Основная информация",
+      "contacts": "Контактные данные",
+      "description": "Описание и детали",
+      "rating": "Рейтинг и отзывы",
+      "country": "Страна регистрации",
+      "photos": "Фото"
+    },
+    "fields": {
+      "name": "Название",
+      "type": "Тип",
+      "address": "Адрес",
+      "phones": "Телефоны",
+      "description": "Описание",
+      "rating": "Рейтинг",
+      "country": "Страна регистрации",
+      "active": "Активное",
+      "inactive": "Неактивное"
+    },
+    "types": {
+      "service": "СТО",
+      "tire": "Шиномонтаж",
+      "wash": "Автомойка"
+    },
+    "photos": {
+      "upload": "Загрузить фото",
+      "uploadFromUrl": "Загрузить с URL",
+      "uploading": "Загрузка...",
+      "urlLabel": "URL изображения",
+      "urlPlaceholder": "https://example.com/image.jpg",
+      "urlHint": "Поддерживаются форматы: JPG, PNG, WebP.",
+      "noPhotos": "Фото отсутствуют",
+      "cover": "Обложка",
+      "setCover": "Сделать обложкой",
+      "caption": "Подпись...",
+      "ratingHint": "От 0 до 5",
+      "ratingDescription": "Обычно рейтинг рассчитывается из отзывов пользователей — здесь его можно задать вручную.",
+      "selectCountry": "— Выберите страну —"
+    },
+    "unsavedChanges": "Есть несохраненные изменения. Закрыть без сохранения?",
+    "unsavedNavigation": "Есть несохраненные изменения. Перейти на другую запись без сохранения?",
+    "saveAndClose": "Сохранить и закрыть",
+    "photoDeleted": "Фото удалено"
   }
 }

@@ -50,7 +50,8 @@
     "email": "Email",
     "password": "Пароль",
     "signIn": "Увійти",
-    "welcome": "Ласкаво просимо"
+    "welcome": "Ласкаво просимо",
+    "changePassword": "Змінити пароль"
   },
   "table": {
     "id": "ID",
@@ -69,7 +70,9 @@
     "saveFilter": "Зберегти фільтр",
     "savedFilters": "Збережені фільтри...",
     "filterName": "Назва фільтра",
-    "deleteFilter": "Видалити фільтр"
+    "deleteFilter": "Видалити фільтр",
+    "expand": "Розгорнути",
+    "collapse": "Згорнути"
   },
   "bulk": {
     "selectAll": "Виділити всі {count}",

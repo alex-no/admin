@@ -1,6 +1,9 @@
 <template>
   <div class="container-fluid">
-    <h5 class="mb-4">{{ t('language.selectLanguage') }} — i18n тест</h5>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h5 class="mb-0">{{ t('language.selectLanguage') }} — i18n тест</h5>
+      <LanguageSwitcher />
+    </div>
 
     <div class="card mb-4">
       <div class="card-header">
@@ -103,6 +106,7 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
 import { availableLocales } from '@/locales'
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 
 const { t, locale } = useI18n()
 </script>

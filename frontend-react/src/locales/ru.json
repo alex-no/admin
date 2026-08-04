@@ -50,7 +50,8 @@
     "email": "Email",
     "password": "Пароль",
     "signIn": "Войти",
-    "welcome": "Добро пожаловать"
+    "welcome": "Добро пожаловать",
+    "changePassword": "Изменить пароль"
   },
   "table": {
     "id": "ID",
@@ -69,7 +70,9 @@
     "saveFilter": "Сохранить фильтр",
     "savedFilters": "Сохраненные фильтры...",
     "filterName": "Название фильтра",
-    "deleteFilter": "Удалить фильтр"
+    "deleteFilter": "Удалить фильтр",
+    "expand": "Развернуть",
+    "collapse": "Свернуть"
   },
   "bulk": {
     "selectAll": "Выделить все {count}",
