@@ -27,6 +27,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import BaseLayout from '@/layouts/BaseLayout.vue'
 import SystemHealthWidget from '@/components/SystemHealthWidget.vue'
@@ -34,8 +35,18 @@ import menu from '@/config/menu.json'
 import P from '@/config/permissions'
 
 const auth = useAuth()
+const { t } = useI18n({ useScope: 'global' })
 
 const visibleMenu = computed(() =>
-  menu.filter(s => auth.can(s.permission))
+  menu
+    .filter(s => auth.can(s.permission))
+    .map(section => ({
+      ...section,
+      label: t(section.label),
+      items: section.items.map(item => ({
+        ...item,
+        label: t(item.label)
+      }))
+    }))
 )
 </script>
