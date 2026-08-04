@@ -116,16 +116,31 @@ reverse-proxy (у проді — хостовий Apache з Let's Encrypt).
 |---|---|---|
 | Універсальне вікно деталей | `frontend/src/components/BaseModal.vue` + `frontend/src/composables/useModalWindow.js` | Три режими (floating / docked-right / docked-bottom), drag & resize, автозбереження режиму в localStorage, закриття по Escape — вбудовано, окремо додавати не потрібно. Контент — через slots (`#title`, `#subheader`, default, `#footer`), детальніше — 4.4. Це буквально **один і той самий** компонент у всій адмінці — жодна картка/форма (каталог, геодовідники, аналітика тощо) не тримає власної копії розмітки вікна |
 | Каркас списку (список+фільтр+пейджинг+масові операції) | `frontend/src/list-framework/` | `DataListPage.vue` + реєстри типів (`filterTypes.js`, `cellTypes.js`) + `useRemoteOptions.js`. Колонки та фільтри задаються JSON-конфігом, а не хардкодяться в шаблоні. Вибір кількості рядків на сторінці та масові операції (чекбокси, bulk-редагування/видалення) — теж без додаткового конфігу, див. 4.2 |
+| Селектор видимих колонок | `frontend/src/composables/useColumnPrefs.js` + `components/ColumnSelector.vue` | Показати/приховати колонки таблиці, налаштування в localStorage окремо для кожного `apiList`; `"hideable": false` у конфізі колонки закриває її від приховування |
+| Порожній список із CTA | `frontend/src/components/EmptyState.vue` | Два стани замість одного сірого «Немає даних»: записів немає (→ кнопка «Створити», якщо є право) і фільтр нічого не знайшов (→ «Скинути фільтри») |
+| Навігація «попередній/наступний запис» | `frontend/src/composables/useRecordNav.js` + `components/RecordNavigator.vue` | Стрілки й позиція «N / total» у заголовку картки деталей; перехід через межу поточної сторінки списку сам довантажує сусідню |
+| Клонування запису | кнопка «Створити копію» в `DataListPage.vue` | Відкриває форму створення, попередньо заповнену значеннями вихідного запису — той самий `apiCreate`, що й для «Додати» |
+| Розкривні рядки (row expand) | `frontend/src/composables/useRowExpand.js` | Стрілка розкриває додатковий рядок під основним із довільним вмістом (slot); кілька рядків розкриваються одночасно, скидається при зміні сторінки/фільтра |
+| Skeleton замість спінера | `frontend/src/components/TableSkeleton.vue` | Рядки-заглушки на час завантаження замість повноекранного спінера — верстка не «стрибає» |
+| Виділення всіх записів за фільтром | `frontend/src/composables/useRowSelection.js` | «Виділити всі N за фільтром» (не лише на сторінці) — масові дії йдуть як `{all:true, filters}`; бекенд рахує `COUNT(*)` і обмежує лімітом (`BULK_ALL_LIMIT`) |
+| Undo для inline-редагування | `frontend/src/composables/useUndoableMutation.js` | Toast «Скасувати» на 5 секунд перед відправкою `PATCH`; черга дедуплікується за `id:поле`, незбережене флешиться через `beforeunload` + `keepalive` |
+| Сайдбар фільтрів із лічильниками (facets) | `frontend/src/components/FilterSidebar.vue` | Групи значень із бейджами-лічильниками, які бекенд рахує окремим запитом (`?facets=поле1,поле2`) без урахування власного фільтра; клік одразу застосовує значення |
+| Live-оновлення списку | `frontend/src/composables/useListPolling.js` | Тихе автооновлення раз на хвилину; пауза при неактивній вкладці, відкритій модалці або незбережених inline-правках |
 | Зсув контенту при відкритому докері | `frontend/src/components/ListPageWrapper.vue` + `usePageLayout.js` | Докнуте вікно не перекриває список, а зсуває його |
 | Синхронізація фільтрів/сортування/відкритої картки з URL | `frontend/src/composables/useUrlFilters.js` | Фільтри, сортування (зокрема мульти-колоночне) і відкрита детальна картка (id + активна вкладка) переживають перезавантаження сторінки і передаються в посиланні — див. 4.2 |
+| Темна тема | `frontend/src/composables/useTheme.js` | `light`/`dark`/`auto`, перемикач у `TopNav.vue`, без «блимання» при першому завантаженні сторінки |
 | Меню, кероване JSON | `frontend/src/config/menu.json` | Пункти меню + права доступу + (задел) ролі — без правки Vue-компонентів |
+| Breadcrumbs | `frontend/src/components/Breadcrumbs.vue` | Ланцюжок «Головна / Розділ / Сторінка» будується з того самого `menu.json`, що й меню, — крихти й підсвічування активного пункту не можуть розійтися |
 | Авторизація з dev-заглушкою | `frontend/src/composables/useAuth.js` | `VITE_MOCK_AUTH=true` — пускає з будь-якими даними, поки немає справжнього бекенда; `=false` — ходить у реальний `/api/admin/auth/*` |
+| Багатомовність (i18n): українська/англійська/російська | `frontend/src/locales/*.json` + `vue-i18n` (`main.js`) | Перемикач мови — `components/LanguageSwitcher.vue` у `TopNav.vue`; локаль зберігається в localStorage (`admin.locale`), зміна без перезавантаження. Підпис у JSON-конфігах (колонки, фільтри, `menu.json`) — або звичайний текст, або ключ перекладу (`"table.name"`): рендерер сам розрізняє за наявністю крапки в рядку, окремого прапорця не потрібно |
 
 Якщо цільовий проект на React — усе перелічене вище є і там, з тими самими іменами
 й тим самим контрактом (див. розділ 6): `frontend-react/src/list-framework/`,
 `components/BaseModal.tsx`, `hooks/useModalWindow.ts`, `usePageLayout.ts`,
-`useUrlFilters.ts`, `contexts/AuthContext.tsx`. Кроки інтеграції нижче однакові для обох —
-відрізняються лише розширення файлів.
+`useUrlFilters.ts`, `contexts/AuthContext.tsx`, `src/locales/*.json` + `i18n.ts`
+(`react-i18next`). Кроки інтеграції нижче однакові для обох — відрізняються лише
+розширення файлів. Два місця, де контракт розходиться на практиці (область
+видимості перекладів і механізм зсуву контенту при докнутому вікні) — розділ 6.
 
 ### Кроки інтеграції в існуючий проект
 
@@ -272,19 +287,21 @@ AI добре справляється саме з цим видом робот�
      (`?per_page=100`) через той самий `useUrlFilters`. Бекенд повинен вміти приймати
      `per_page` в `GET {apiList}` — див. `AdminStoController::list()` (там же максимум,
      до якого обмежується значення, — під свій бекенд можна зменшити/збільшити).
-   - **Масові операції** — чекбокс перед кожним рядком (і «вибрати всі на сторінці»
-     в заголовку). Щойно вибрано хоч один рядок, над таблицею з'являється панель: випадаючий
+   - **Масові операції** — чекбокс перед кожним рядком (і «вибрати всі на сторінці» /
+     «виділити всі N за фільтром» у заголовку, останнє — `useRowSelection.js`, задача 08).
+     Щойно вибрано хоч один рядок, над таблицею з'являється панель: випадаючий
      список полів — це рівно ті колонки, у яких у конфігу стоїть `"editable": true`
      (нічого окремо перелічувати не потрібно), а під ним — **той самий** компонент комірки,
      що й для inline-редагування цього поля в таблиці (той самий `cellTypes`-реєстр, той самий
      контракт `field`/`modelValue`/`readonly`/`row`+`update:modelValue`) — новий тип UI під
-     bulk-редагування писати не довелося. «Застосувати» проганяє `PATCH {apiUpdate}/{id}`
-     по черзі (не паралельно — SQLite-подібні бекенди погано переносять пачку одночасних
-     записів) для кожного вибраного id. Кнопка «Видалити» з'являється лише тоді, якщо в `actions`
-     конфігу сутності є дія `type: "delete"` і в користувача є її `permission`
-     (використовується та сама перевірка, що й для кнопки видалення в рядку) — окремо налаштовувати
-     її для bulk-панелі не потрібно. Вибір завжди обмежений поточною завантаженою сторінкою і
-     скидається при зміні сторінки/фільтра/сортування/розміру сторінки.
+     bulk-редагування писати не довелося. «Застосувати» шле **один** `POST {apiBulk}` з тілом
+     `{ action: "update", field, value, ids }` (або `{ all: true, filters }` у режимі «всі за
+     фільтром») — одна транзакція на бекенді, а не `PATCH` по черзі на кожен id (див. `apiBulk`/
+     `bulkActions` у 4.2 п.3 і контракт у `shared/page-configs/README.md`). Кнопка «Видалити»
+     з'являється лише тоді, якщо заданий `apiDelete` і в `actions` конфігу є дія `type: "delete"`,
+     на яку в користувача є `permission` (та сама перевірка, що й для кнопки видалення в рядку).
+     Вибір обмежений поточною завантаженою сторінкою (крім режиму
+     «всі за фільтром») і скидається при зміні сторінки/фільтра/сортування/розміру сторінки.
 
 5. **Сторінка** — тонкий `.vue`-файл, який просто передає ці три JSON у `DataListPage`
    (див. `StoRegistry.vue` цілком — там же приклад відкриття детальної картки в `BaseModal`
@@ -489,14 +506,27 @@ Claude сам розпізнає, що це саме `admin-audit-log`/`admin-op
 | Каркас списку | `list-framework/DataListPage.vue` | `list-framework/components/DataTable.tsx` + `hooks/useTableState.ts` |
 | Реєстр типів комірок | `cellTypes.js` + `cells/*.vue` | `cellTypes.ts` + `cells/*.tsx` |
 | Вікно деталей (3 режими, drag/resize) | `BaseModal.vue` + `useModalWindow.js` | `BaseModal.tsx` + `useModalWindow.ts` |
+| Клонування запису | кнопка в `DataListPage.vue` | кнопка в `DataTable.tsx` |
 | Стан у URL | `useUrlFilters.js` | `useUrlFilters.ts` |
 | Тости замість `alert()` | `useNotify.js` + `ToastContainer.vue` | `useNotify.ts` + `ToastContainer.tsx` |
 | Видалення з «Скасувати» (5 с) | `useUndoableDelete.js` | `useUndoableDelete.ts` |
+| Undo для inline-редагування | `useUndoableMutation.js` | `useUndoableMutation.ts` |
 | Збережені фільтри, кеш списку | `useSavedFilters.js`, `useListCache.js` | `useSavedFilters.ts`, `useListCache.ts` |
 | Незбережені зміни | `useUnsavedChanges.js` | `useUnsavedChanges.ts` |
 | Довідники з кешем за URL | `useRemoteOptions.js` | `useRemoteOptions.ts` |
+| Селектор видимих колонок | `useColumnPrefs.js` + `ColumnSelector.vue` | `useColumnPrefs.ts` + `list-framework/components/ColumnSelector.tsx` |
+| Порожній список із CTA | `EmptyState.vue` | `EmptyState.tsx` |
+| Навігація попередній/наступний запис | `useRecordNav.js` + `RecordNavigator.vue` | `useRecordNav.ts` + `RecordNavigator.tsx` |
+| Розкривні рядки | `useRowExpand.js` | `useRowExpand.ts` |
+| Skeleton замість спінера | `TableSkeleton.vue` | `TableSkeleton.tsx` |
+| Виділення всіх за фільтром | `useRowSelection.js` | `useRowSelection.ts` |
+| Сайдбар фільтрів із лічильниками | `FilterSidebar.vue` | `FilterSidebar.tsx` |
+| Live-оновлення (polling) | `useListPolling.js` | `useListPolling.ts` |
+| Темна тема | `useTheme.js` | `useTheme.ts` |
+| Breadcrumbs | `Breadcrumbs.vue` + `utils/menuLocation.js` | `Breadcrumbs.tsx` + `utils/menuLocation.ts` |
 | Права доступу | `useAuth.js` (`can()`) | `contexts/AuthContext.tsx` (`can()`) |
 | SVG-графіки | `TrendChart`/`PieChart`/`BarChart`/`HourlyChart`.vue | ті самі, `.tsx` |
+| Багатомовність (uk/en/ru) | `locales/*.json` + `vue-i18n` (`main.js`) | `locales/*.json` + `react-i18next` (`i18n.ts`) |
 
 Сторінки — усі: реєстр даних, аналітика (список + статистика + графіки), ролі, права,
 логи помилок і їх статистика, Swagger. Разом із масовими операціями, експортом у CSV,
@@ -519,6 +549,21 @@ Claude сам розпізнає, що це саме `admin-audit-log`/`admin-op
 - **Гейт маршрутів за правами.** У React є (`RequirePermission.tsx`), у Vue роутер перевіряє
   лише наявність токена. Карта «шлях → право» будується з того самого `menu.json`, що малює
   меню, — щоб гейт і видимість пункту не могли розійтися.
+- **Область видимості перекладів (i18n).** У Vue `useI18n()` Composition API за замовчуванням
+  створює **локальний** екземпляр перекладів для кожного компонента — зміна мови в одному
+  місці (наприклад, у `LanguageSwitcher.vue`) не оновлює інші, доки скрізь не вказано
+  `useI18n({ useScope: 'global' })`. Пастка непомітна: компонент і далі показує переклад,
+  просто застрягає на мові, яка була активна при монтуванні. У React `useTranslation()`
+  (`react-i18next`) завжди глобальний, такої проблеми немає в принципі.
+- **Зсув контенту при докнутому вікні.** У Vue кожна сторінка зі списком свідомо обгортається
+  в `ListPageWrapper.vue`, яка сама слухає подію від `BaseModal` і зсуває **лише свій** вміст.
+  У React той самий ефект (`usePageLayout.ts`) підключений один раз, глобально, у
+  `layouts/BaseLayout.tsx` — застосовується до `<main>` одразу для всіх маршрутів, окремого
+  `ListPageWrapper.tsx` немає. Звідси практичний нюанс: на конкретній React-сторінці **не**
+  можна ще раз обгорнути її вміст у той самий `contentMargin` за аналогією з Vue — відступ
+  застосується двічі, і таблиця зсунеться вдвічі далі, ніж треба, а при закритті докера
+  вернеться не повністю. Заодно й назва самої `CustomEvent` відрізняється
+  (`modal-content-margin-change` у Vue, `modal-margin-change` у React).
 
 ### Розробка
 

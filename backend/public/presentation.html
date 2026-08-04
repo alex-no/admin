@@ -155,6 +155,7 @@
       <div class="chip"><span>◆</span> Docker Compose</div>
       <div class="chip"><span>◆</span> REST API + Swagger</div>
       <div class="chip"><span>◆</span> JSON-driven UI</div>
+      <div class="chip"><span>◆</span> i18n: uk / en / ru</div>
     </div>
     <div class="authorbox">
       <div class="who"><b>Носов Олександр Георгійович</b><br><span>Автор проєкту · admin.4n.com.ua · admin-react.4n.com.ua</span></div>
@@ -190,7 +191,7 @@
       <div>
         <div class="kicker">Питання 1 — Що реалізовано</div>
         <h2>Готова адмінка «під ключ»</h2>
-        <p class="lead" style="margin:14px 0 4px">Дашборд, реєстри з фільтрами й пейджингом, inline- та масове редагування, універсальні вікна деталей, аналітика з графіками, логи помилок та мережева діагностика.</p>
+        <p class="lead" style="margin:14px 0 4px">Дашборд, реєстри з фільтрами й пейджингом, inline- та масове редагування, універсальні вікна деталей, аналітика з графіками, логи помилок, мережева діагностика та багатомовний інтерфейс (uk/en/ru).</p>
         <div class="stats">
           <div class="stat"><b>2</b><span>фронтенди · Vue 3 і React</span></div>
           <div class="stat"><b>5</b><span>розділів меню</span></div>
@@ -216,6 +217,7 @@
           <li><b>Inline-редагування</b> прямо в таблиці для полів <code class="inline">editable:true</code></li>
           <li><b>Пейджинг</b> із вибором 5–250 рядків на сторінці</li>
           <li><b>Синхронізація з URL</b> — фільтри, сортування й відкрита картка переживають перезавантаження й діляться посиланням</li>
+          <li><b>Готові UX-деталі з коробки:</b> вибір видимих колонок, розкривні рядки, skeleton замість спінера, навігація «попередній/наступний запис», клонування, порожній стан з CTA</li>
           <li><b>Дві реалізації, одна поведінка:</b> <code class="inline">DataListPage.vue</code> у Vue та <code class="inline">DataTable.tsx</code> + хук <code class="inline">useTableState</code> у React</li>
         </ul>
       </div>
@@ -250,10 +252,11 @@
         <div class="kicker">Масові операції</div>
         <h2>Редагувати десятки рядків одразу</h2>
         <ul class="clean">
-          <li>Чекбокси в рядках і «вибрати всі на сторінці»</li>
+          <li>Чекбокси в рядках, «вибрати всі на сторінці» або <b>всі N за фільтром</b></li>
           <li>Панель bulk-редагування <b>з'являється автоматично</b></li>
           <li>Список полів = колонки з <code class="inline">editable:true</code></li>
           <li>Той самий компонент комірки, що й для inline — <b>окремого UI писати не треба</b></li>
+          <li>Один запит на весь вибір, з undo-тостом на 5 секунд для inline-правок</li>
           <li>Масове видалення — якщо в користувача є відповідне право</li>
         </ul>
       </div>
@@ -426,11 +429,11 @@ docker compose restart backend</pre>
       </div>
       <div class="card">
         <h3><span class="ico">◆</span> Повний набір фіч</h3>
-        <p>Усі сторінки: реєстр, аналітика зі SVG-графіками, ролі, права, логи. Масові операції, експорт у CSV, мульти-сортування, інлайн-редагування, undo-видалення, тости, мережева діагностика.</p>
+        <p>Усі сторінки: реєстр, аналітика зі SVG-графіками, ролі, права, логи. Масові операції, експорт у CSV, мульти-сортування, інлайн-редагування, undo-видалення, тости, мережева діагностика, багатомовність (i18n: uk/en/ru).</p>
       </div>
       <div class="card">
         <h3><span class="ico">◆</span> Де розійшлося навмисно</h3>
-        <p>Замість спілкування сторінки з модалкою через глобальні події — звичайні пропси. Плюс гейт маршрутів за правами, карта яких будується з того самого <code class="inline">menu.json</code>, що малює меню.</p>
+        <p>Замість спілкування сторінки з модалкою через глобальні події — звичайні пропси. Гейт маршрутів за правами, карта яких будується з того самого <code class="inline">menu.json</code>, що малює меню. І i18n: у Vue переклади в компоненті локальні за замовчуванням, у React <code class="inline">useTranslation()</code> завжди глобальний.</p>
       </div>
     </div>
     <p class="lead" style="margin-top:20px">Порт не тягне жодної додаткової залежності — лише <code class="inline">react</code>, <code class="inline">react-dom</code>, <code class="inline">react-router-dom</code> і той самий Bootstrap; SVG-графіки та редактор списку телефонів написані вручну. Плюс повна типізація: <code class="inline">tsc</code> входить у <code class="inline">npm run build</code>, тож помилка типів зупиняє деплой.</p>
@@ -465,7 +468,7 @@ docker compose restart backend</pre>
       <div class="card"><h3><span class="ico">◆</span> Backend (демо)</h3><p>Yii3 на PSR (DI/router/middleware), SQLite через PDO без ORM, сідинг із CSV. Тулінг: Codeception, Psalm, PHP CS Fixer, Rector. Лише приклад — підійде будь-який REST API.</p></div>
       <div class="card"><h3><span class="ico">◆</span> API & Docs</h3><p>REST + Swagger (zircote/swagger-php), єдиний контракт відповідей, атрибути <code class="inline">#[OA\...]</code> — спільні для обох фронтендів.</p></div>
       <div class="card"><h3><span class="ico">◆</span> DevOps</h3><p>Docker Compose (dev і prod), обидва фронтенди в одному prod-контейнері під двома vhost'ами, деплой за reverse-proxy (Apache + Let's Encrypt).</p></div>
-      <div class="card"><h3><span class="ico">◆</span> UX-фішки</h3><p>Стан у URL, мульти-сортування, три режими вікна, масові операції, undo-видалення, реальна мережева діагностика — однаково в обох версіях.</p></div>
+      <div class="card"><h3><span class="ico">◆</span> UX-фішки</h3><p>Стан у URL, мульти-сортування, три режими вікна, масові операції, undo-видалення, реальна мережева діагностика, темна тема, breadcrumbs, сайдбар фільтрів-лічильників, live-оновлення списку — однаково в обох версіях.</p></div>
     </div>
   </section>
 
