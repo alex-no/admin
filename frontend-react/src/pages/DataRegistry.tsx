@@ -1,5 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { DataTable, useRecordNav } from '@/list-framework'
 import DataRegistryDetail from './DataRegistryDetail'
 import { authHeaders } from '@/utils/api'
@@ -19,6 +20,7 @@ import columnsConfig from '@configs/sto-registry.columns.json'
 import cfg from '@configs/sto-registry.config.json'
 
 export default function DataRegistry() {
+  const { t } = useTranslation()
   const listRef = useRef<DataTableHandle>(null)
   const [searchParams, setSearchParams] = useSearchParams()
   const [detailRow, setDetailRow] = useState<any>(null)
@@ -41,7 +43,7 @@ export default function DataRegistry() {
     } else {
       params.delete('tab')
     }
-    setSearchParams(params, { replace: true })
+    setSearchParams(params)
   }
 
   const closeDetail = () => {
@@ -50,7 +52,7 @@ export default function DataRegistry() {
     const params = new URLSearchParams(searchParams)
     params.delete('detail')
     params.delete('tab')
-    setSearchParams(params, { replace: true })
+    setSearchParams(params)
   }
 
   const handleTabChange = (tab: string) => {
@@ -62,7 +64,7 @@ export default function DataRegistry() {
     } else {
       params.delete('tab')
     }
-    setSearchParams(params, { replace: true })
+    setSearchParams(params)
   }
 
   // Відновлення з URL при завантаженні або зміні ?detail=
@@ -90,7 +92,7 @@ export default function DataRegistry() {
           const params = new URLSearchParams(searchParams)
           params.delete('detail')
           params.delete('tab')
-          setSearchParams(params, { replace: true })
+          setSearchParams(params)
           return
         }
         setDetailRow(json.data)
@@ -140,10 +142,10 @@ export default function DataRegistry() {
   )
 
   return (
-    <div>
+    <>
       <DataTable
         ref={listRef}
-        title="Реєстр даних"
+        title={t('stoRegistry.title')}
         apiList={cfg.apiList}
         apiUpdate={cfg.apiUpdate}
         apiDelete={cfg.apiDelete}
@@ -164,7 +166,7 @@ export default function DataRegistry() {
         renderExpanded={(row) => (
           <div className="card">
             <div className="card-header bg-white py-2">
-              <strong className="small">Деталі запису #{row.id}</strong>
+              <strong className="small">{t('stoRegistry.recordDetails')} #{row.id}</strong>
             </div>
             <div className="card-body p-2">
               <pre className="mb-0 small" style={{ maxHeight: '300px', overflowY: 'auto' }}>
@@ -185,6 +187,6 @@ export default function DataRegistry() {
           recordNav={recordNav}
         />
       )}
-    </div>
+    </>
   )
 }

@@ -27,9 +27,21 @@
     "selected": "Selected",
     "page": "Page",
     "of": "of",
-    "perPage": "Per page"
+    "perPage": "Per page",
+    "prevRecord": "Previous record",
+    "nextRecord": "Next record",
+    "resize": "Resize",
+    "addPhone": "Add phone",
+    "removePhone": "Remove phone",
+    "details": "Details",
+    "contacts": "Contact details",
+    "description": "Description",
+    "ratingReviews": "Rating & Reviews",
+    "activate": "Activate",
+    "deactivate": "Deactivate"
   },
   "nav": {
+    "home": "Home",
     "dashboard": "Dashboard",
     "sto": "Service Centers",
     "dataRegistry": "Data Registry",
@@ -56,6 +68,10 @@
   "table": {
     "id": "ID",
     "name": "Name",
+    "type": "Type",
+    "address": "Address",
+    "phones": "Phones",
+    "rating": "Rating",
     "status": "Status",
     "createdAt": "Created",
     "updatedAt": "Updated",
@@ -63,7 +79,20 @@
     "selectColumns": "Select columns",
     "resetColumns": "Reset",
     "hideColumn": "Hide",
-    "showColumn": "Show"
+    "showColumn": "Show",
+    "activeStatus": "Active",
+    "inactiveStatus": "Inactive",
+    "selectAllOnPage": "Select all on page",
+    "sort": "Sort",
+    "sortMulti": "Click to sort. Ctrl+click to add to sorting",
+    "clone": "Create copy",
+    "noHideableColumns": "No columns can be hidden"
+  },
+  "pagination": {
+    "first": "First page",
+    "previous": "Previous",
+    "next": "Next",
+    "last": "Last page"
   },
   "filters": {
     "resetFilters": "Reset filters",
@@ -81,7 +110,8 @@
     "updateField": "Update field...",
     "selectField": "Select field",
     "activate": "Activate",
-    "deactivate": "Deactivate"
+    "deactivate": "Deactivate",
+    "deleteWarning": "Bulk delete by filter is unavailable — select records manually"
   },
   "empty": {
     "noRecords": "No records yet",
@@ -94,7 +124,12 @@
     "edit": "Edit record",
     "detail": "Record details",
     "confirm": "Confirmation",
-    "confirmDelete": "Are you sure you want to delete this record?"
+    "confirmDelete": "Are you sure you want to delete this record?",
+    "copy": "copy",
+    "dockRight": "Dock to right",
+    "dockBottom": "Dock to bottom",
+    "undock": "Undock (floating window)",
+    "changeMode": "Change mode"
   },
   "validation": {
     "required": "This field is required",
@@ -116,5 +151,106 @@
     "en": "English",
     "ru": "Русский",
     "selectLanguage": "Select language"
+  },
+  "menu": {
+    "data": "Data",
+    "dataRegistry": "Data Registry",
+    "analytics": "Analytics",
+    "visits": "Visits",
+    "stats": "Statistics",
+    "charts": "Charts",
+    "rbac": "Roles & Permissions",
+    "roles": "Roles",
+    "permissions": "Permissions",
+    "system": "System",
+    "errorLogs": "Error Logs",
+    "errorStats": "Error Statistics",
+    "devTools": "Dev Tools",
+    "apiDocs": "API Docs (Admin)"
+  },
+  "dataList": {
+    "searchPlaceholder": "Search by name...",
+    "savedFilters": "Saved filters...",
+    "saveCurrentFilter": "Save current filter",
+    "deleteFilter": "Delete saved filter",
+    "exportCsv": "Export to CSV",
+    "autoRefreshOn": "Auto-refresh enabled",
+    "autoRefreshOff": "Auto-refresh disabled",
+    "add": "Add",
+    "filterName": "Filter name...",
+    "total": "Total",
+    "perPage": "per page",
+    "selected": "Selected",
+    "clearSelection": "Clear selection",
+    "apply": "Apply"
+  },
+  "filter": {
+    "search": "Search",
+    "searchPlaceholder": "Search by name...",
+    "type": "Type",
+    "allTypes": "All types",
+    "status": "Status",
+    "allStatuses": "All statuses",
+    "active": "Active",
+    "inactive": "Inactive",
+    "country": "Country",
+    "allCountries": "All countries",
+    "typeService": "Service Center",
+    "typeTire": "Tire Service",
+    "typeWash": "Car Wash"
+  },
+  "stoRegistry": {
+    "title": "Data Registry",
+    "recordDetails": "Record details",
+    "tabs": {
+      "general": "General Information",
+      "contacts": "Contact Details",
+      "description": "Description & Details",
+      "rating": "Rating & Reviews",
+      "country": "Country of Registration",
+      "photos": "Photos"
+    },
+    "fields": {
+      "name": "Name",
+      "type": "Type",
+      "address": "Address",
+      "phones": "Phones",
+      "description": "Description",
+      "rating": "Rating",
+      "country": "Country of Registration",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "types": {
+      "service": "Service Center",
+      "tire": "Tire Service",
+      "wash": "Car Wash"
+    },
+    "photos": {
+      "upload": "Upload photo",
+      "uploadFromUrl": "Upload from URL",
+      "uploading": "Uploading...",
+      "urlLabel": "Image URL",
+      "urlPlaceholder": "https://example.com/image.jpg",
+      "urlHint": "Supported formats: JPG, PNG, WebP.",
+      "noPhotos": "No photos",
+      "cover": "Cover",
+      "setCover": "Set as cover",
+      "caption": "Caption...",
+      "ratingHint": "From 0 to 5",
+      "ratingDescription": "Usually rating is calculated from user reviews — here you can set it manually.",
+      "selectCountry": "— Select country —",
+      "fileTooLarge": "file too large",
+      "maxSize": "maximum"
+    },
+    "unsavedChanges": "There are unsaved changes. Close without saving?",
+    "unsavedNavigation": "There are unsaved changes. Navigate to another record without saving?",
+    "saveAndClose": "Save and close",
+    "photoDeleted": "Photo deleted"
+  },
+  "theme": {
+    "light": "Light theme",
+    "dark": "Dark theme",
+    "auto": "Auto (system)"
   }
 }

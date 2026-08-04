@@ -35,6 +35,15 @@ export default function TopNav() {
 
   const menu = menuConfig as MenuSection[]
 
+  const translateLabel = (label?: string): string => {
+    if (!label) return ''
+    if (label.includes('.')) {
+      const translated = t(label)
+      return translated !== label ? translated : label
+    }
+    return label
+  }
+
   // Розділ показуємо, якщо є право на нього або хоча б на один його пункт —
   // інакше заголовок групи висів би з порожнім списком.
   const visibleMenu = menu.filter(
@@ -46,7 +55,7 @@ export default function TopNav() {
   const activeSection = findMenuLocation(location.pathname)?.section.id ?? null
 
   const themeIcon = mode === 'light' ? 'bi-sun-fill' : mode === 'dark' ? 'bi-moon-stars-fill' : 'bi-circle-half'
-  const themeTitle = mode === 'light' ? 'Світла тема' : mode === 'dark' ? 'Темна тема' : 'Авто (за системою)'
+  const themeTitle = mode === 'light' ? t('theme.light') : mode === 'dark' ? t('theme.dark') : t('theme.auto')
 
   const handleLogout = async () => {
     logout()
@@ -81,7 +90,7 @@ export default function TopNav() {
                 }}
               >
                 <i className={`bi ${section.icon} me-1`}></i>
-                {section.label}
+                {translateLabel(section.label)}
               </a>
               {/* Second level */}
               <ul className={`dropdown-menu mt-0 ${openMenu === section.id ? 'show' : ''}`}>
@@ -93,7 +102,7 @@ export default function TopNav() {
                       onClick={() => setOpenMenu(null)}
                     >
                       <i className={`bi ${item.icon} me-2 text-muted`}></i>
-                      {item.label}
+                      {translateLabel(item.label)}
                     </Link>
                   </li>
                 ))}

@@ -51,12 +51,21 @@ export default function ColumnSelector({
     }
   }, [open])
 
+  const translateLabel = (label?: string): string => {
+    if (!label) return ''
+    if (label.includes('.')) {
+      const translated = t(label)
+      return translated !== label ? translated : label
+    }
+    return label
+  }
+
   return (
     <div ref={rootRef} className="position-relative d-inline-block">
       <button
         type="button"
         className="btn btn-sm btn-outline-secondary"
-        title={hasHidden ? 'Колонки таблиці (частина прихована)' : 'Колонки таблиці'}
+        title={t('table.selectColumns')}
         onClick={() => setOpen(v => !v)}
       >
         <i className="bi bi-layout-three-columns" />
@@ -90,13 +99,13 @@ export default function ColumnSelector({
                 onChange={() => onToggle(col.key)}
               />
               <label className="form-check-label small" htmlFor={`colsel-${uid}-${col.key}`}>
-                {col.label}
+                {translateLabel(col.label)}
               </label>
             </div>
           ))}
 
           {hideableColumns.length === 0 && (
-            <div className="text-muted small px-1">Немає колонок, які можна приховати</div>
+            <div className="text-muted small px-1">{t('table.noHideableColumns')}</div>
           )}
 
           {hideableColumns.length > 0 && (

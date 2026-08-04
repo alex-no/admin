@@ -1,4 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useState, useMemo, Fragment } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useTableState } from '../hooks/useTableState'
 import { useColumnPrefs } from '../hooks/useColumnPrefs'
 import { useRowExpand } from '../hooks/useRowExpand'
@@ -45,6 +46,18 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
   expandable = false,
   renderExpanded,
 }: DataTableProps, ref) {
+  const { t } = useTranslation()
+
+  // Translate label if it looks like a translation key (contains a dot)
+  const translateLabel = (label?: string): string => {
+    if (!label) return ''
+    if (label.includes('.')) {
+      const translated = t(label)
+      return translated !== label ? translated : label
+    }
+    return label
+  }
+
   const {
     items,
     total,
@@ -277,14 +290,14 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
     try {
       await apiPost(apiCreate!, createForm)
       setCreateOpen(false)
-      notify('Запис створено', { type: 'success' })
+      notify(t('messages.created'), { type: 'success' })
       reload()
     } catch (err) {
       // Бекенд може повернути errors: { поле: "текст" } — показуємо біля поля,
       // а не одним тостом "перевірте заповнення".
       const apiErr = err as ApiError
       if (apiErr?.errors) setCreateErrors(apiErr.errors)
-      notify(err instanceof Error ? err.message : 'Помилка створення', { type: 'error' })
+      notify(err instanceof Error ? err.message : t('messages.error'), { type: 'error' })
     } finally {
       setCreating(false)
     }
@@ -388,7 +401,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
           key={f.key}
           value={filters[f.key] || ''}
           onChange={(v) => setFilter(f.key, v)}
-          placeholder={f.placeholder ?? f.label}
+          placeholder={translateLabel(f.placeholder) || translateLabel(f.label)}
         />
       )
     }
@@ -399,24 +412,29 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
           key={f.key}
           value={filters[f.key] || ''}
           onChange={(v) => setFilter(f.key, v)}
-          label={f.label}
+          label={translateLabel(f.label)}
         />
       )
     }
 
     if (f.type === 'select' && (f.options || f.optionsUrl)) {
+      const translatedPlaceholder = f.placeholderOption ? {
+        ...f.placeholderOption,
+        label: translateLabel(f.placeholderOption.label)
+      } : undefined
+
       return (
         <SelectFilter
           key={f.key}
           value={filters[f.key] || ''}
           onChange={(v) => setFilter(f.key, v)}
-          options={f.options}
+          options={f.options?.map(o => ({ ...o, label: translateLabel(o.label) }))}
           optionsUrl={f.optionsUrl}
           optionsValueKey={f.optionsValueKey}
           optionsLabelKey={f.optionsLabelKey}
           optionsLabelTemplate={f.optionsLabelTemplate}
-          placeholderOption={f.placeholderOption}
-          label={f.label}
+          placeholderOption={translatedPlaceholder}
+          label={translateLabel(f.label)}
           required={f.required}
           defaultFirstOption={f.defaultFirstOption}
           dependsOn={f.dependsOn}
@@ -446,13 +464,13 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                 className="form-select form-select-sm"
                 style={{ width: 'auto' }}
               >
-                <option value="">Збережені фільтри...</option>
+                <option value="">{t('dataList.savedFilters')}</option>
                 {presets.map(p => <option key={p.name} value={p.name}>{p.name}</option>)}
               </select>
               <button
                 type="button"
                 className="btn btn-sm btn-outline-secondary"
-                title="Зберегти поточний фільтр"
+                title={t('dataList.saveCurrentFilter')}
                 onClick={() => setShowSaveInput(v => !v)}
               >
                 <i className="bi bi-bookmark-plus" />
@@ -461,7 +479,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                 <button
                   type="button"
                   className="btn btn-sm btn-outline-danger"
-                  title="Видалити збережений фільтр"
+                  title={t('dataList.deleteFilter')}
                   onClick={deleteSelectedPreset}
                 >
                   <i className="bi bi-trash" />
@@ -474,7 +492,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
             type="button"
             className="btn btn-sm btn-outline-secondary"
             disabled={exporting}
-            title="Експорт у CSV"
+            title={t('dataList.exportCsv')}
             onClick={() => exportCsv(columnsConfig)}
           >
             {exporting
@@ -486,7 +504,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
           <button
             type="button"
             className={`btn btn-sm ${enablePolling ? 'btn-outline-success' : 'btn-outline-secondary'}`}
-            title={enablePolling ? 'Автооновлення увімкнено' : 'Автооновлення вимкнено'}
+            title={enablePolling ? t('dataList.autoRefreshOn') : t('dataList.autoRefreshOff')}
             onClick={() => setEnablePolling(!enablePolling)}
           >
             <i className={`bi ${enablePolling ? 'bi-arrow-repeat' : 'bi-pause-circle'}`} />
@@ -502,7 +520,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
 
           {canCreate && (
             <button type="button" className="btn btn-sm btn-success" onClick={openCreate}>
-              <i className="bi bi-plus-lg me-1" />Додати
+              <i className="bi bi-plus-lg me-1" />{t('dataList.add')}
             </button>
           )}
 
@@ -530,19 +548,19 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
           closeOnBackdrop={false}
           title={
             <h5 className="mb-0">
-              Створення запису
+              {t('modal.create')}
               {cloneSourceId != null && (
-                <span className="text-muted fw-normal fs-6"> (копія #{cloneSourceId})</span>
+                <span className="text-muted fw-normal fs-6"> ({t('modal.copy')} #{cloneSourceId})</span>
               )}
             </h5>
           }
           footer={
             <>
               <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setCreateOpen(false)}>
-                Скасувати
+                {t('common.cancel')}
               </button>
               <button type="button" className="btn btn-sm btn-primary" disabled={creating} onClick={submitCreate}>
-                {creating && <span className="spinner-border spinner-border-sm me-1" />}Створити
+                {creating && <span className="spinner-border spinner-border-sm me-1" />}{t('common.create')}
               </button>
             </>
           }
@@ -552,7 +570,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
               const Cell = resolveCellType(col.type)
               return (
                 <div key={col.key} className="mb-3">
-                  <label className="form-label small text-muted mb-1">{col.label}</label>
+                  <label className="form-label small text-muted mb-1">{translateLabel(col.label)}</label>
                   {Cell && (
                     <Cell
                       field={col}
@@ -584,17 +602,17 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
             type="text"
             className="form-control form-control-sm"
             style={{ width: '220px' }}
-            placeholder="Назва фільтру..."
+            placeholder={t('dataList.filterName')}
           />
           <button type="button" className="btn btn-sm btn-primary" onClick={confirmSavePreset}>
-            Зберегти
+            {t('common.save')}
           </button>
           <button
             type="button"
             className="btn btn-sm btn-outline-secondary"
             onClick={() => setShowSaveInput(false)}
           >
-            Скасувати
+            {t('common.cancel')}
           </button>
         </div>
       )}
@@ -613,8 +631,8 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
               <div className="d-flex align-items-center gap-2 flex-wrap">
                 <span className="fw-semibold small">
                   {selectAllMatching
-                    ? `Обрано всі ${selectedCount} за фільтром`
-                    : `Обрано: ${selectedCount}`
+                    ? t('bulk.selectedAll', { count: selectedCount })
+                    : t('bulk.selected', { count: selectedCount })
                   }
                 </span>
                 {canSelectAllMatching && (
@@ -623,7 +641,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                     className="btn btn-sm btn-link p-0 small text-decoration-none"
                     onClick={selectAllMatchingOn}
                   >
-                    Виділити всі {total}
+                    {t('bulk.selectAll', { count: total })}
                   </button>
                 )}
                 {selectAllMatching && (
@@ -632,7 +650,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                     className="btn btn-sm btn-link p-0 small text-decoration-none"
                     onClick={clearSelection}
                   >
-                    Зняти виділення
+                    {t('dataList.clearSelection')}
                   </button>
                 )}
               </div>
@@ -648,9 +666,9 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                     className="form-select form-select-sm"
                     style={{ width: 'auto' }}
                   >
-                    <option value="">Змінити поле...</option>
+                    <option value="">{t('bulk.updateField')}</option>
                     {editableColumns.map(col => (
-                      <option key={col.key} value={col.key}>{col.label}</option>
+                      <option key={col.key} value={col.key}>{translateLabel(col.label)}</option>
                     ))}
                   </select>
                 )}
@@ -672,7 +690,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                     onClick={() => applyBulkUpdate(bulkField, bulkValue)}
                   >
                     {bulkApplying && <span className="spinner-border spinner-border-sm me-1" />}
-                    Застосувати
+                    {t('dataList.apply')}
                   </button>
                 )}
 
@@ -683,10 +701,10 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                     key={a.action}
                     className={`btn btn-sm btn-${a.variant ?? 'outline-primary'}`}
                     disabled={bulkApplying}
-                    onClick={() => applyBulkAction(a.action, a.label)}
+                    onClick={() => applyBulkAction(a.action, translateLabel(a.label))}
                   >
                     {a.icon && <i className={`bi me-1 ${a.icon}`} />}
-                    {a.label}
+                    {translateLabel(a.label)}
                   </button>
                 ))}
 
@@ -694,10 +712,10 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                   <button
                     className="btn btn-sm btn-outline-danger"
                     disabled={bulkApplying || selectAllMatching}
-                    title={selectAllMatching ? 'Масове видалення за фільтром недоступне — виділіть записи вручну' : ''}
+                    title={selectAllMatching ? t('bulk.deleteWarning') : ''}
                     onClick={applyBulkDelete}
                   >
-                    <i className="bi bi-trash" /> Видалити
+                    <i className="bi bi-trash" /> {t('common.delete')}
                   </button>
                 )}
 
@@ -705,7 +723,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                   className="btn btn-sm btn-outline-secondary ms-auto"
                   onClick={() => { clearSelection(); setBulkField(''); setBulkValue(null) }}
                 >
-                  Скасувати
+                  {t('common.cancel')}
                 </button>
               </div>
             </div>
@@ -722,7 +740,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                         className="form-check-input"
                         checked={allOnPageSelected}
                         onChange={toggleSelectAll}
-                        title="Вибрати всі на сторінці"
+                        title={t('table.selectAllOnPage')}
                       />
                     </th>
                     {expandable && <th style={{ width: '32px' }}></th>}
@@ -731,10 +749,10 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                         key={col.key}
                         style={col.width ? { width: col.width } : undefined}
                         className={`${col.align ? `text-${col.align}` : ''} ${col.sortable ? 'th-sortable' : ''}`}
-                        title={col.sortable ? 'Клік — сортувати. Ctrl+клік — додати до сортування' : undefined}
+                        title={col.sortable ? t('table.sortMulti') : undefined}
                         onClick={col.sortable ? (e) => toggleSort(col.key, e.ctrlKey) : undefined}
                       >
-                        {col.label}
+                        {translateLabel(col.label)}
                         {col.sortable && <SortIcon column={col.key} sortItems={sortItems} />}
                       </th>
                     ))}
@@ -766,7 +784,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                           <td style={{ width: '32px' }}>
                             <button
                               className="btn btn-sm btn-link p-0 text-secondary"
-                              title={isExpanded(row[rowKey]) ? 'Згорнути' : 'Деталі'}
+                              title={isExpanded(row[rowKey]) ? t('filters.collapse') : t('common.details')}
                               onClick={(e) => { e.stopPropagation(); toggleExpand(row[rowKey]) }}
                             >
                               <i className={`bi ${isExpanded(row[rowKey]) ? 'bi-chevron-down' : 'bi-chevron-right'}`}></i>
@@ -786,7 +804,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                                 // кілька разів, по одному на вкладку картки
                                 key={`${action.type}:${action.tab ?? ''}`}
                                 className={`btn btn-sm me-1 ${action.type === 'delete' ? 'btn-outline-danger' : 'btn-outline-secondary'}`}
-                                title={action.label}
+                                title={translateLabel(action.label)}
                                 onClick={() => handleAction(action, row)}
                               >
                                 <i className={`bi ${action.icon}`}></i>
@@ -795,7 +813,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                             {canCreate && (
                               <button
                                 className="btn btn-sm btn-outline-secondary"
-                                title="Створити копію"
+                                title={t('table.clone')}
                                 onClick={() => openClone(row)}
                               >
                                 <i className="bi bi-copy"></i>
@@ -840,12 +858,12 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
           {/* Pagination */}
           <div className="d-flex justify-content-between align-items-center mt-3">
             <span className="text-muted small">
-              Всього: {total}
+              {t('dataList.total')}: {total}
               {revalidating && (
                 <span
                   className="spinner-border spinner-border-sm ms-1"
                   style={{ width: '.7rem', height: '.7rem' }}
-                  title="Оновлення..."
+                  title={t('common.loading')}
                 />
               )}
             </span>
@@ -860,7 +878,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
                 style={{ width: 'auto' }}
               >
                 {[5, 10, 20, 50, 100, 250].map(n => (
-                  <option key={n} value={n}>{n} на сторінці</option>
+                  <option key={n} value={n}>{n} {t('dataList.perPage')}</option>
                 ))}
               </select>
             </div>

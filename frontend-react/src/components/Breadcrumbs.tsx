@@ -1,4 +1,5 @@
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { findMenuLocation } from '@/utils/menuLocation'
 
@@ -10,9 +11,19 @@ import { findMenuLocation } from '@/utils/menuLocation'
  * тобто лише під авторизацією — на логіні його немає взагалі.
  */
 export default function Breadcrumbs() {
+  const { t } = useTranslation()
   const { pathname } = useLocation()
   const [searchParams] = useSearchParams()
   const { can } = useAuth()
+
+  const translateLabel = (label?: string): string => {
+    if (!label) return ''
+    if (label.includes('.')) {
+      const translated = t(label)
+      return translated !== label ? translated : label
+    }
+    return label
+  }
 
   const found = findMenuLocation(pathname)
   // Розділ/пункт, закритий правами, не називаємо — навіть якщо адмін якось
@@ -30,7 +41,7 @@ export default function Breadcrumbs() {
     <nav aria-label="breadcrumb" className="px-4 py-2 border-bottom flex-shrink-0" style={{ backgroundColor: 'var(--bs-secondary-bg)' }}>
       <ol className="breadcrumb mb-0 small">
         <li className="breadcrumb-item">
-          <Link to="/">Головна</Link>
+          <Link to="/">{t('nav.home')}</Link>
         </li>
 
         {/* Розділ — навмисно не посилання: у menu.json розділи не мають власного
@@ -38,13 +49,13 @@ export default function Breadcrumbs() {
         {location && (
           <li className="breadcrumb-item text-muted">
             {location.section.icon && <i className={`bi ${location.section.icon} me-1`} />}
-            {location.section.label}
+            {translateLabel(location.section.label)}
           </li>
         )}
 
         {location && (
           <li className="breadcrumb-item active" aria-current="page">
-            {location.item.label}
+            {translateLabel(location.item.label)}
           </li>
         )}
 

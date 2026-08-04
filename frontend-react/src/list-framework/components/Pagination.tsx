@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface PaginationProps {
   currentPage: number
@@ -12,6 +13,8 @@ interface PageItem {
 }
 
 export default function Pagination({ currentPage, totalPages, onChange }: PaginationProps) {
+  const { t } = useTranslation()
+
   const pageItems = useMemo((): PageItem[] => {
     if (totalPages <= 1) return []
 
@@ -76,7 +79,7 @@ export default function Pagination({ currentPage, totalPages, onChange }: Pagina
             className="page-link"
             onClick={() => goTo(1)}
             disabled={currentPage === 1}
-            title="Перша сторінка"
+            title={t('pagination.first')}
           >
             ‹‹
           </button>
@@ -88,7 +91,7 @@ export default function Pagination({ currentPage, totalPages, onChange }: Pagina
             className="page-link"
             onClick={() => goTo(currentPage - 1)}
             disabled={currentPage === 1}
-            title="Попередня"
+            title={t('pagination.previous')}
           >
             ‹
           </button>
@@ -118,7 +121,7 @@ export default function Pagination({ currentPage, totalPages, onChange }: Pagina
             className="page-link"
             onClick={() => goTo(currentPage + 1)}
             disabled={currentPage === totalPages}
-            title="Наступна"
+            title={t('pagination.next')}
           >
             ›
           </button>
@@ -130,7 +133,7 @@ export default function Pagination({ currentPage, totalPages, onChange }: Pagina
             className="page-link"
             onClick={() => goTo(totalPages)}
             disabled={currentPage === totalPages}
-            title="Остання сторінка"
+            title={t('pagination.last')}
           >
             ››
           </button>

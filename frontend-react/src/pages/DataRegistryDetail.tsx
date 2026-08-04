@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import BaseModal from '@/components/BaseModal'
 import PhoneListInput from '@/components/PhoneListInput'
 import DataRegistryPhotos from './DataRegistryPhotos'
@@ -28,12 +29,6 @@ interface DataRegistryDetailProps {
   }
 }
 
-const STO_TYPES = [
-  { value: 'service', label: 'СТО' },
-  { value: 'tire', label: 'Шиномонтаж' },
-  { value: 'wash', label: 'Автомийка' },
-]
-
 // Які поля належать якій вкладці — визначає, що саме відправляти при "Зберегти"
 // (тільки поточна вкладка) проти "Зберегти та закрити" (усі вкладки одразу).
 // Порожній масив = вкладка тільки для перегляду, кнопки збереження на ній сховані.
@@ -45,15 +40,6 @@ const TAB_FIELDS: Record<string, string[]> = {
   country: ['country_id'],
   photos: [],
 }
-
-const TABS = [
-  { key: 'general', label: 'Основна інформація', icon: 'bi-info-circle' },
-  { key: 'contacts', label: 'Контактні дані', icon: 'bi-telephone' },
-  { key: 'description', label: 'Опис та деталі', icon: 'bi-card-text' },
-  { key: 'rating', label: 'Рейтинг та відгуки', icon: 'bi-star' },
-  { key: 'country', label: 'Країна реєстрації', icon: 'bi-flag' },
-  { key: 'photos', label: 'Фото', icon: 'bi-images' },
-]
 
 function formFromRow(row: any) {
   return {
@@ -76,6 +62,23 @@ export default function DataRegistryDetail({
   onTabChange,
   recordNav,
 }: DataRegistryDetailProps) {
+  const { t } = useTranslation()
+
+  const STO_TYPES = useMemo(() => [
+    { value: 'service', label: t('stoRegistry.types.service') },
+    { value: 'tire', label: t('stoRegistry.types.tire') },
+    { value: 'wash', label: t('stoRegistry.types.wash') },
+  ], [t])
+
+  const TABS = useMemo(() => [
+    { key: 'general', label: t('stoRegistry.tabs.general'), icon: 'bi-info-circle' },
+    { key: 'contacts', label: t('stoRegistry.tabs.contacts'), icon: 'bi-telephone' },
+    { key: 'description', label: t('stoRegistry.tabs.description'), icon: 'bi-card-text' },
+    { key: 'rating', label: t('stoRegistry.tabs.rating'), icon: 'bi-star' },
+    { key: 'country', label: t('stoRegistry.tabs.country'), icon: 'bi-flag' },
+    { key: 'photos', label: t('stoRegistry.tabs.photos'), icon: 'bi-images' },
+  ], [t])
+
   const [activeTab, setActiveTab] = useState(initialTab)
 
   const handleTabChange = (tab: string) => {
@@ -136,7 +139,7 @@ export default function DataRegistryDetail({
       onSaved?.()
       if (close) onClose()
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Помилка збереження')
+      setSaveError(err instanceof Error ? err.message : t('messages.error'))
     } finally {
       setSaving(false)
     }
@@ -145,7 +148,7 @@ export default function DataRegistryDetail({
   const title = (
     <div className="d-flex align-items-center w-100">
       <h5 className="mb-0 flex-grow-1">
-        СТО <span className="text-muted fw-normal fs-6">#{row.id}</span>
+        {t('stoRegistry.title')} <span className="text-muted fw-normal fs-6">#{row.id}</span>
         {form.name_uk && (
           <span className="text-primary fw-normal fs-6 ms-2">{form.name_uk}</span>
         )}
@@ -184,19 +187,19 @@ export default function DataRegistryDetail({
     <>
       <div></div>
       <div className="d-flex gap-2">
-        <button className="btn btn-secondary btn-sm" onClick={handleClose}>Закрити</button>
+        <button className="btn btn-secondary btn-sm" onClick={handleClose}>{t('common.close')}</button>
         <button className="btn btn-outline-primary btn-sm" disabled={saving} onClick={() => handleSave(false)}>
-          {saving && <span className="spinner-border spinner-border-sm me-1" />}Зберегти
+          {saving && <span className="spinner-border spinner-border-sm me-1" />}{t('common.save')}
         </button>
         <button className="btn btn-primary btn-sm" disabled={saving} onClick={() => handleSave(true)}>
-          {saving && <span className="spinner-border spinner-border-sm me-1" />}Зберегти та закрити
+          {saving && <span className="spinner-border spinner-border-sm me-1" />}{t('stoRegistry.saveAndClose')}
         </button>
       </div>
     </>
   ) : (
     <>
       <div></div>
-      <button className="btn btn-secondary btn-sm" onClick={handleClose}>Закрити</button>
+      <button className="btn btn-secondary btn-sm" onClick={handleClose}>{t('common.close')}</button>
     </>
   )
 
@@ -208,6 +211,7 @@ export default function DataRegistryDetail({
       subheader={subheader}
       footer={footer}
       storageKey="sto-registry-detail"
+      defaultMode="docked-right"
       defaultWidth={700}
       minWidth={480}
       maxWidth={1000}
@@ -223,7 +227,7 @@ export default function DataRegistryDetail({
         <>
           <div className="row g-3">
             <div className="col-sm-8">
-              <label className="form-label small mb-1">Назва</label>
+              <label className="form-label small mb-1">{t('stoRegistry.fields.name')}</label>
               <input
                 type="text"
                 className="form-control form-control-sm"
@@ -232,7 +236,7 @@ export default function DataRegistryDetail({
               />
             </div>
             <div className="col-sm-4">
-              <label className="form-label small mb-1">Тип</label>
+              <label className="form-label small mb-1">{t('stoRegistry.fields.type')}</label>
               <select
                 className="form-select form-select-sm"
                 value={form.sto_type}
@@ -255,7 +259,7 @@ export default function DataRegistryDetail({
                 onChange={(e) => updateForm('is_active', e.target.checked)}
               />
               <label className="form-check-label small" htmlFor="sto-active-switch">
-                {form.is_active ? 'Активне' : 'Неактивне'}
+                {form.is_active ? t('stoRegistry.fields.active') : t('stoRegistry.fields.inactive')}
               </label>
             </div>
           </div>
@@ -266,7 +270,7 @@ export default function DataRegistryDetail({
       {activeTab === 'contacts' && (
         <>
           <div className="mb-3">
-            <label className="form-label small mb-1">Адреса</label>
+            <label className="form-label small mb-1">{t('stoRegistry.fields.address')}</label>
             <input
               type="text"
               className="form-control form-control-sm"
@@ -275,7 +279,7 @@ export default function DataRegistryDetail({
             />
           </div>
           <div>
-            <label className="form-label small mb-1">Телефони</label>
+            <label className="form-label small mb-1">{t('stoRegistry.fields.phones')}</label>
             <PhoneListInput
               value={form.phones}
               onChange={(phones) => updateForm('phones', phones)}
@@ -287,7 +291,7 @@ export default function DataRegistryDetail({
       {/* ── Опис та деталі ─────────────────────────────────────────────── */}
       {activeTab === 'description' && (
         <>
-          <label className="form-label small mb-1">Опис</label>
+          <label className="form-label small mb-1">{t('stoRegistry.fields.description')}</label>
           <textarea
             className="form-control form-control-sm"
             rows={7}
@@ -301,9 +305,9 @@ export default function DataRegistryDetail({
       {activeTab === 'rating' && (
         <>
           <div className="text-muted small mb-2">
-            Зазвичай рейтинг розраховується з відгуків користувачів — тут його можна задати вручну.
+            {t('stoRegistry.photos.ratingDescription')}
           </div>
-          <label className="form-label small mb-1">Рейтинг</label>
+          <label className="form-label small mb-1">{t('stoRegistry.fields.rating')}</label>
           <div className="d-flex align-items-center gap-2">
             <i className="bi bi-star-fill text-warning fs-5" />
             <input
@@ -317,21 +321,21 @@ export default function DataRegistryDetail({
               onChange={(e) => updateForm('rating', e.target.value === '' ? null : Number(e.target.value))}
             />
           </div>
-          <div className="text-muted small mt-1">Від 0 до 5</div>
+          <div className="text-muted small mt-1">{t('stoRegistry.photos.ratingHint')}</div>
         </>
       )}
 
       {/* ── Країна реєстрації ──────────────────────────────────────────── */}
       {activeTab === 'country' && (
         <>
-          <label className="form-label small mb-1">Країна реєстрації</label>
+          <label className="form-label small mb-1">{t('stoRegistry.fields.country')}</label>
           <select
             className="form-select form-select-sm"
             style={{ maxWidth: '300px' }}
             value={form.country_id ?? ''}
             onChange={(e) => updateForm('country_id', e.target.value === '' ? null : Number(e.target.value))}
           >
-            <option value="">— Оберіть країну —</option>
+            <option value="">{t('stoRegistry.photos.selectCountry')}</option>
             {countryOptions.map(c => (
               <option key={String(c.value)} value={c.value}>{c.label}</option>
             ))}

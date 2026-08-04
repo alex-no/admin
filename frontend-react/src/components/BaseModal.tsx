@@ -10,6 +10,7 @@ interface BaseModalProps {
   footer?: React.ReactNode
   subheader?: React.ReactNode
   storageKey?: string
+  defaultMode?: 'floating' | 'docked-right' | 'docked-bottom'
   defaultWidth?: number
   defaultHeight?: number
   minWidth?: number
@@ -27,6 +28,7 @@ export default function BaseModal({
   footer,
   subheader,
   storageKey = 'modal-window-settings',
+  defaultMode,
   defaultWidth = 700,
   defaultHeight = 500,
   minWidth = 400,
@@ -50,6 +52,7 @@ export default function BaseModal({
     cycleMode,
   } = useModalWindow({
     storageKey,
+    mode: defaultMode,
     defaultWidth,
     defaultHeight,
     minWidth,
@@ -63,6 +66,11 @@ export default function BaseModal({
     if (visible) {
       window.dispatchEvent(new CustomEvent('modal-margin-change', { detail: contentMargin }))
     } else {
+      window.dispatchEvent(new CustomEvent('modal-margin-change', { detail: {} }))
+    }
+
+    // Cleanup: скидаємо margin при демонтуванні компонента
+    return () => {
       window.dispatchEvent(new CustomEvent('modal-margin-change', { detail: {} }))
     }
   }, [visible, contentMargin])

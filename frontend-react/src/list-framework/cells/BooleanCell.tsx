@@ -1,7 +1,21 @@
+import { useTranslation } from 'react-i18next'
 import type { CellProps } from '../types'
 
 export default function BooleanCell({ field, value, readonly, onChange }: CellProps) {
-  const label = value ? (field.trueLabel ?? 'Так') : (field.falseLabel ?? 'Ні')
+  const { t } = useTranslation()
+
+  const translateLabel = (label?: string): string => {
+    if (!label) return ''
+    if (label.includes('.')) {
+      const translated = t(label)
+      return translated !== label ? translated : label
+    }
+    return label
+  }
+
+  const label = value
+    ? translateLabel(field.trueLabel) || t('common.yes')
+    : translateLabel(field.falseLabel) || t('common.no')
   const color = value ? 'bg-success' : 'bg-danger'
 
   if (readonly) {

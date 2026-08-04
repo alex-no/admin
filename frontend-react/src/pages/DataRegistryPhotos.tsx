@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { apiGet, apiPost, apiPatch, apiDelete, apiUpload } from '@/utils/api'
 import { notify } from '@/hooks/useNotify'
 import { deleteWithUndo } from '@/hooks/useUndoableDelete'
@@ -29,6 +30,7 @@ function formatBytes(bytes: number): string {
  * кожна дія (аплоад / обкладинка / підпис / видалення) зберігається одразу.
  */
 export default function DataRegistryPhotos({ stoId }: DataRegistryPhotosProps) {
+  const { t } = useTranslation()
   const [photos, setPhotos] = useState<Photo[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -47,7 +49,7 @@ export default function DataRegistryPhotos({ stoId }: DataRegistryPhotosProps) {
         if (alive) setPhotos(res.data ?? [])
       })
       .catch(err => {
-        if (alive) setLoadError(err instanceof Error ? err.message : 'Не вдалося завантажити фото')
+        if (alive) setLoadError(err instanceof Error ? err.message : t('messages.error'))
       })
       .finally(() => {
         if (alive) setLoading(false)
@@ -66,7 +68,7 @@ export default function DataRegistryPhotos({ stoId }: DataRegistryPhotosProps) {
     for (const file of files) {
       if (file.size > MAX_UPLOAD_BYTES) {
         notify(
-          `${file.name}: файл завеликий — ${formatBytes(file.size)}, максимум ${formatBytes(MAX_UPLOAD_BYTES)}`,
+          `${file.name}: ${t('stoRegistry.photos.fileTooLarge')} — ${formatBytes(file.size)}, ${t('stoRegistry.photos.maxSize')} ${formatBytes(MAX_UPLOAD_BYTES)}`,
           { type: 'error' }
         )
         continue
@@ -79,7 +81,7 @@ export default function DataRegistryPhotos({ stoId }: DataRegistryPhotosProps) {
         setPhotos(prev => [...prev, res.data])
       } catch (err) {
         notify(
-          `${file.name}: ${err instanceof Error ? err.message : 'помилка завантаження'}`,
+          `${file.name}: ${err instanceof Error ? err.message : t('messages.error')}`,
           { type: 'error' }
         )
       }
@@ -98,7 +100,7 @@ export default function DataRegistryPhotos({ stoId }: DataRegistryPhotosProps) {
       setPhotoUrl('')
       setShowUrlUpload(false)
     } catch (err) {
-      notify(err instanceof Error ? err.message : 'Помилка завантаження', { type: 'error' })
+      notify(err instanceof Error ? err.message : t('messages.error'), { type: 'error' })
     } finally {
       setUploading(false)
     }
@@ -111,7 +113,7 @@ export default function DataRegistryPhotos({ stoId }: DataRegistryPhotosProps) {
       await apiPatch(`/admin/sto/${stoId}/media/${photo.id}`, { is_cover: true })
     } catch (err) {
       setPhotos(prev)
-      notify(err instanceof Error ? err.message : 'Не вдалося змінити обкладинку', { type: 'error' })
+      notify(err instanceof Error ? err.message : t('messages.error'), { type: 'error' })
     }
   }
 
@@ -124,7 +126,7 @@ export default function DataRegistryPhotos({ stoId }: DataRegistryPhotosProps) {
       await apiPatch(`/admin/sto/${stoId}/media/${photo.id}`, { caption })
     } catch (err) {
       setPhotos(prev)
-      notify(err instanceof Error ? err.message : 'Не вдалося зберегти підпис', { type: 'error' })
+      notify(err instanceof Error ? err.message : t('messages.error'), { type: 'error' })
     }
   }
 
@@ -133,7 +135,7 @@ export default function DataRegistryPhotos({ stoId }: DataRegistryPhotosProps) {
     if (index === -1) return
 
     deleteWithUndo({
-      message: 'Фото видалено',
+      message: t('stoRegistry.photoDeleted'),
       remove: () => setPhotos(list => list.filter(p => p.id !== photo.id)),
       restore: () => setPhotos(list => {
         const restored = [...list]
@@ -157,7 +159,7 @@ export default function DataRegistryPhotos({ stoId }: DataRegistryPhotosProps) {
             onClick={() => fileInputRef.current?.click()}
           >
             <i className="bi bi-upload me-1" />
-            Завантажити фото
+            {t('stoRegistry.photos.upload')}
           </button>
           <input
             ref={fileInputRef}
@@ -173,12 +175,12 @@ export default function DataRegistryPhotos({ stoId }: DataRegistryPhotosProps) {
             onClick={() => setShowUrlUpload(v => !v)}
           >
             <i className="bi bi-link-45deg me-1" />
-            Завантажити з URL
+            {t('stoRegistry.photos.uploadFromUrl')}
           </button>
           {uploading && (
             <span className="text-muted small">
               <span className="spinner-border spinner-border-sm me-1" />
-              Завантаження...
+              {t('stoRegistry.photos.uploading')}
             </span>
           )}
         </div>
@@ -187,7 +189,7 @@ export default function DataRegistryPhotos({ stoId }: DataRegistryPhotosProps) {
           <div className="card border-secondary" style={{ maxWidth: '600px' }}>
             <div className="card-body p-3">
               <div className="mb-2">
-                <label className="form-label small mb-1">URL зображення</label>
+                <label className="form-label small mb-1">{t('stoRegistry.photos.urlLabel')}</label>
                 <input
                   value={photoUrl}
                   onChange={(e) => setPhotoUrl(e.target.value)}
@@ -199,10 +201,10 @@ export default function DataRegistryPhotos({ stoId }: DataRegistryPhotosProps) {
                   }}
                   type="text"
                   className="form-control form-control-sm"
-                  placeholder="https://example.com/image.jpg"
+                  placeholder={t('stoRegistry.photos.urlPlaceholder')}
                 />
                 <div className="text-muted small mt-1">
-                  Підтримуються формати: JPG, PNG, WebP. Максимум {formatBytes(MAX_UPLOAD_BYTES)}.
+                  {t('stoRegistry.photos.urlHint')}
                 </div>
               </div>
               <div className="d-flex gap-2">
@@ -213,14 +215,14 @@ export default function DataRegistryPhotos({ stoId }: DataRegistryPhotosProps) {
                   onClick={uploadFromUrl}
                 >
                   <i className="bi bi-download me-1" />
-                  Завантажити
+                  {t('stoRegistry.photos.upload')}
                 </button>
                 <button
                   type="button"
                   className="btn btn-sm btn-secondary"
                   onClick={() => { setShowUrlUpload(false); setPhotoUrl('') }}
                 >
-                  Скасувати
+                  {t('common.cancel')}
                 </button>
               </div>
             </div>
@@ -242,7 +244,7 @@ export default function DataRegistryPhotos({ stoId }: DataRegistryPhotosProps) {
       {!loading && !loadError && photos.length === 0 && (
         <div className="text-muted text-center py-5">
           <i className="bi bi-images" style={{ fontSize: '2rem' }} />
-          <div className="mt-2">Фото відсутні</div>
+          <div className="mt-2">{t('stoRegistry.photos.noPhotos')}</div>
         </div>
       )}
 
@@ -266,7 +268,7 @@ export default function DataRegistryPhotos({ stoId }: DataRegistryPhotosProps) {
                       style={{ top: '6px', left: '6px', fontSize: '.65rem' }}
                     >
                       <i className="bi bi-star-fill me-1" />
-                      Обкладинка
+                      {t('stoRegistry.photos.cover')}
                     </span>
                   )}
                 </div>
@@ -276,7 +278,7 @@ export default function DataRegistryPhotos({ stoId }: DataRegistryPhotosProps) {
                     key={`caption-${photo.id}-${photo.caption ?? ''}`}
                     type="text"
                     className="form-control form-control-sm mb-2"
-                    placeholder="Підпис..."
+                    placeholder={t('stoRegistry.photos.caption')}
                     onBlur={(e) => updateCaption(photo, e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') e.currentTarget.blur()
@@ -287,7 +289,7 @@ export default function DataRegistryPhotos({ stoId }: DataRegistryPhotosProps) {
                       <button
                         type="button"
                         className="btn btn-sm btn-outline-primary py-0 px-1 flex-fill"
-                        title="Зробити обкладинкою"
+                        title={t('stoRegistry.photos.setCover')}
                         onClick={() => setCover(photo)}
                       >
                         <i className="bi bi-star" />
@@ -296,7 +298,7 @@ export default function DataRegistryPhotos({ stoId }: DataRegistryPhotosProps) {
                     <button
                       type="button"
                       className="btn btn-sm btn-outline-danger py-0 px-1 flex-fill"
-                      title="Видалити"
+                      title={t('common.delete')}
                       onClick={() => removePhoto(photo)}
                     >
                       <i className="bi bi-trash" />

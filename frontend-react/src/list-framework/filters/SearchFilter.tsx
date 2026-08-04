@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface SearchFilterProps {
   value: string
@@ -6,7 +7,8 @@ interface SearchFilterProps {
   placeholder?: string
 }
 
-export default function SearchFilter({ value, onChange, placeholder = 'Пошук...' }: SearchFilterProps) {
+export default function SearchFilter({ value, onChange, placeholder }: SearchFilterProps) {
+  const { t } = useTranslation()
   const [localValue, setLocalValue] = useState(value)
 
   // Sync with external value changes
@@ -30,7 +32,7 @@ export default function SearchFilter({ value, onChange, placeholder = 'Пошу�
       type="text"
       className="form-control form-control-sm"
       style={{ width: '200px' }}
-      placeholder={placeholder}
+      placeholder={placeholder ?? t('common.search')}
       value={localValue}
       onChange={(e) => setLocalValue(e.target.value)}
     />

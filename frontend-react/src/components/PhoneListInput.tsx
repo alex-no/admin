@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { formatPhoneUA } from '@/utils/phone'
 
 interface PhoneListInputProps {
@@ -8,6 +9,7 @@ interface PhoneListInputProps {
 }
 
 export default function PhoneListInput({ value, onChange, readonly = false }: PhoneListInputProps) {
+  const { t } = useTranslation()
   const [texts, setTexts] = useState<string[]>([])
   const selfUpdateRef = useRef(false)
 
@@ -81,7 +83,7 @@ export default function PhoneListInput({ value, onChange, readonly = false }: Ph
           <button
             type="button"
             className="btn btn-sm btn-outline-danger"
-            title="Видалити номер"
+            title={t('common.removePhone')}
             onClick={() => removePhone(i)}
           >
             <i className="bi bi-x-lg" />
@@ -90,7 +92,7 @@ export default function PhoneListInput({ value, onChange, readonly = false }: Ph
       ))}
       <button type="button" className="btn btn-sm btn-outline-secondary" onClick={addPhone}>
         <i className="bi bi-plus-lg me-1" />
-        Додати номер
+        {t('common.addPhone')}
       </button>
     </div>
   )

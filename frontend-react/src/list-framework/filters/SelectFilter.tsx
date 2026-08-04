@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useRemoteOptions } from '../hooks/useRemoteOptions'
 import type { Option } from '../types'
 
@@ -48,6 +49,8 @@ export default function SelectFilter({
   dependsOn,
   filterValues = {},
 }: SelectFilterProps) {
+  const { t } = useTranslation()
+
   // Залежний фільтр: поки батько порожній — довідник не запитуємо і селект
   // вимкнений; варіантів «для всіх країн» тут не буває.
   // Дзеркало Vue: FilterSelect.vue → parentsFilled / resolvedUrl.
@@ -68,7 +71,7 @@ export default function SelectFilter({
   const list = optionsUrl ? remote.options : (options ?? [])
   // Порожня опція завжди від рендерера — у конфіга її в options бути не має,
   // інакше Vue-версія покаже її двічі.
-  const empty = placeholderOption ?? { value: '', label: label ?? 'Всі' }
+  const empty = placeholderOption ?? { value: '', label: label ?? t('common.all') }
 
   // Підстановка першого варіанта. Для `required` — щоразу, коли значення порожнє
   // (порожнього стану в такого фільтра не буває). Для `defaultFirstOption` — лише
