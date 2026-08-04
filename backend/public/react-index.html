@@ -5,11 +5,24 @@
     <!-- Той самий favicon, що й у Vue-версії — лежить у backend/public/ -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content="React 18.3" />
+    <meta name="copyright" content="Copyright © 2026 Oleksandr Nosov. Licensed under MIT License." />
     <title>Admin Panel (React)</title>
-    <script type="module" crossorigin src="/react-assets/index-D4hpVM3b.js"></script>
-    <link rel="stylesheet" crossorigin href="/react-assets/index-Cz6NIjX9.css">
+    <script>
+      // Виставляємо тему до завантаження бандла — інакше в темному режимі буде
+      // біле блимання на час парсингу JS.
+      // ⚠️ STORAGE_KEY ('admin.theme') мусить збігатись з useTheme.ts
+      (function () {
+        var m = localStorage.getItem('admin.theme') || 'auto';
+        var dark = m === 'dark' || (m === 'auto' &&
+          window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.setAttribute('data-bs-theme', dark ? 'dark' : 'light');
+      })();
+    </script>
+    <script type="module" crossorigin src="/react-assets/index-duupx60z.js"></script>
+    <link rel="stylesheet" crossorigin href="/react-assets/index-XYarA8wD.css">
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"></div>
   </body>
 </html>

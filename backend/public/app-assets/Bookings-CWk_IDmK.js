@@ -1,1 +1,0 @@
-import{A as e,I as t,_ as n,v as r}from"./index-DXf5S2ks.js";import{t as i}from"./BaseLayout-Df-s8fM3.js";var a={__name:`Bookings`,setup(a){return(a,o)=>(e(),r(i,null,{default:t(()=>[...o[0]||=[n(`h5`,{class:`mb-3`},`Записи`,-1),n(`p`,{class:`text-muted`},`В розробці…`,-1)]]),_:1}))}};export{a as default};

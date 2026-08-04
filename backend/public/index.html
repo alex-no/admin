@@ -3,12 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content="Vue 3.5" />
+    <meta name="copyright" content="Copyright © 2026 Oleksandr Nosov. Licensed under MIT License." />
     <title>Admin — Admin Panel</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <script type="module" crossorigin src="/app-assets/index-DXf5S2ks.js"></script>
-    <link rel="stylesheet" crossorigin href="/app-assets/index-DOIQYwBk.css">
+    <script>
+      // Виставляємо тему до завантаження бандла — інакше в темному режимі буде
+      // біле блимання на час парсингу JS.
+      // ⚠️ STORAGE_KEY ('admin.theme') мусить збігатись з useTheme.js
+      (function () {
+        var m = localStorage.getItem('admin.theme') || 'auto';
+        var dark = m === 'dark' || (m === 'auto' &&
+          window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.setAttribute('data-bs-theme', dark ? 'dark' : 'light');
+      })();
+    </script>
+    <script type="module" crossorigin src="/app-assets/index-fAQQD0WS.js"></script>
+    <link rel="modulepreload" crossorigin href="/app-assets/runtime-dom.esm-bundler-C17KNYok.js">
+    <link rel="stylesheet" crossorigin href="/app-assets/index-B5BsgJQK.css">
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app"></div>
   </body>
 </html>
