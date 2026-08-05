@@ -75,7 +75,12 @@ export function useModalWindow(options: UseModalWindowOptions = {}) {
   const dockedRightStyle = computeDockedRightStyle({ mode, dockedWidth, minWidth, maxWidth })
   const dockedBottomStyle = computeDockedBottomStyle({ mode, dockedHeight, minHeight, maxHeight })
 
-  // Content margin for page (memoized to prevent infinite loops)
+  // Content margin for page (memoized to prevent infinite loops).
+  // Без paddingCompensation (0 за замовчуванням): <main class="p-4"> в
+  // BaseLayout.tsx і скролиться, і має власний padding сам, на відміну від
+  // Vue, де це два різні елементи — компенсацію padding віднімати не треба,
+  // інакше контент/скролбар заїжджає під доковане вікно
+  // (див. @core/modalWindow → computeContentMargin).
   const contentMargin = useMemo(
     () => computeContentMargin({ mode, dockedWidth, dockedHeight }),
     [mode, dockedWidth, dockedHeight]

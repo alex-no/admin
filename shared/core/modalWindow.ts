@@ -98,14 +98,33 @@ export function computeDockedBottomStyle(opts: {
 }
 
 /**
- * Відступ контенту сторінки під докованим вікном. -24px компенсує padding
- * card-body, щоб scrollbar був впритул до розділювача (див. Vue-оригінал,
- * composables/useModalWindow.js). React-версія цієї компенсації не мала —
- * контент був на 24px вужчим, ніж мав бути.
+ * Відступ контенту сторінки під докованим вікном.
+ *
+ * `paddingCompensation` — НЕ універсальна константа, а залежить від DOM-структури
+ * конкретного фронтенда:
+ *  - Vue: скролиться внутрішній `.list-page-wrapper` (без власного padding),
+ *    вкладений у `<main class="p-4">` (зовнішній padding 24px). Скролбар
+ *    рендериться на межі wrapper'а, тому потрібно відняти ці 24px, інакше
+ *    сумарний відступ (padding + margin) перевищить ширину докованого вікна.
+ *  - React: `<main class="p-4" style="overflow-y:auto">` — один і той самий
+ *    елемент одночасно має padding І скролиться. Скролбар рендериться по краю
+ *    border-box, padding на нього не впливає — компенсація не потрібна
+ *    (paddingCompensation: 0), інакше контент (і скролбар) заїжджає під
+ *    доковане вікно.
+ *
+ * Раніше тут була захардкоджена -24 для обох — React-версія без реального
+ * власного padding-компенсуючого wrapper'а від цього ховала скролбар таблиці
+ * під доковеним вікном.
  */
-export function computeContentMargin(opts: { mode: ModalMode; dockedWidth: number; dockedHeight: number }): StyleLike {
-  if (opts.mode === 'docked-right') return { marginRight: `${opts.dockedWidth - 24}px` }
-  if (opts.mode === 'docked-bottom') return { marginBottom: `${opts.dockedHeight - 24}px` }
+export function computeContentMargin(opts: {
+  mode: ModalMode
+  dockedWidth: number
+  dockedHeight: number
+  paddingCompensation?: number
+}): StyleLike {
+  const pad = opts.paddingCompensation ?? 0
+  if (opts.mode === 'docked-right') return { marginRight: `${opts.dockedWidth - pad}px` }
+  if (opts.mode === 'docked-bottom') return { marginBottom: `${opts.dockedHeight - pad}px` }
   return {}
 }
 

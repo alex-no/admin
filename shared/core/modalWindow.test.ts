@@ -143,19 +143,28 @@ describe('computeDockedRightStyle / computeDockedBottomStyle', () => {
 })
 
 describe('computeContentMargin', () => {
-  it('subtracts 24px card-body padding for docked-right', () => {
+  it('defaults to no compensation (full dockedWidth/Height) when paddingCompensation is omitted', () => {
     expect(computeContentMargin({ mode: 'docked-right', dockedWidth: 500, dockedHeight: 400 })).toEqual({
-      marginRight: '476px',
+      marginRight: '500px',
     })
-  })
-
-  it('subtracts 24px card-body padding for docked-bottom', () => {
     expect(computeContentMargin({ mode: 'docked-bottom', dockedWidth: 500, dockedHeight: 400 })).toEqual({
-      marginBottom: '376px',
+      marginBottom: '400px',
     })
   })
 
-  it('no margin in floating mode', () => {
+  it('subtracts an explicit paddingCompensation for docked-right', () => {
+    expect(
+      computeContentMargin({ mode: 'docked-right', dockedWidth: 500, dockedHeight: 400, paddingCompensation: 24 })
+    ).toEqual({ marginRight: '476px' })
+  })
+
+  it('subtracts an explicit paddingCompensation for docked-bottom', () => {
+    expect(
+      computeContentMargin({ mode: 'docked-bottom', dockedWidth: 500, dockedHeight: 400, paddingCompensation: 24 })
+    ).toEqual({ marginBottom: '376px' })
+  })
+
+  it('no margin in floating mode regardless of paddingCompensation', () => {
     expect(computeContentMargin({ mode: 'floating', dockedWidth: 500, dockedHeight: 400 })).toEqual({})
   })
 })

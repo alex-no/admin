@@ -83,9 +83,17 @@ export function useModalWindow(options = {}) {
     computeDockedBottomStyle({ mode: mode.value, dockedHeight: dockedHeight.value, minHeight, maxHeight })
   )
 
-  // Отступы для контента страницы (чтобы освободить место для docked окна)
+  // Отступы для контента страницы (чтобы освободить место для docked окна).
+  // paddingCompensation: 24 — скроловний .list-page-wrapper не має власного
+  // padding, він вкладений у <main class="p-4">, тому 24px вже "безкоштовні"
+  // (див. @core/modalWindow → computeContentMargin).
   const contentMargin = computed(() =>
-    computeContentMargin({ mode: mode.value, dockedWidth: dockedWidth.value, dockedHeight: dockedHeight.value })
+    computeContentMargin({
+      mode: mode.value,
+      dockedWidth: dockedWidth.value,
+      dockedHeight: dockedHeight.value,
+      paddingCompensation: 24,
+    })
   )
 
   const cursorClass = computed(() =>
