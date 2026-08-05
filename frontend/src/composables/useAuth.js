@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { hasPermission } from '@core/permissions'
 
 const TOKEN_KEY = 'admin_token'
 const user = ref(null)
@@ -81,12 +82,7 @@ export function useAuth() {
   }
 
   function can(permission) {
-    const perms = user.value?.permissions ?? []
-    for (const p of perms) {
-      if (p === '*' || p === permission) return true
-      if (p.endsWith('.*') && permission.startsWith(p.slice(0, -2) + '.')) return true
-    }
-    return false
+    return hasPermission(user.value?.permissions, permission)
   }
 
   function authHeaders() {

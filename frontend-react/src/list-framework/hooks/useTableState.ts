@@ -6,42 +6,25 @@ import { useListPolling } from '@/hooks/useListPolling'
 import { getCached, setCached } from './useListCache'
 import { fetchOptions } from './useRemoteOptions'
 import { useRowSelection } from './useRowSelection'
-import { rowsToCsv, downloadCsv } from '@/utils/csv'
-import { formatPhoneUA, normalizePhoneE164 } from '@/utils/phone'
+import { normalizePhoneE164 } from '@/utils/phone'
 import {
   useUrlFilters,
   readFiltersFromUrl,
   readMultiSortFromUrl,
 } from '@/hooks/useUrlFilters'
+import {
+  buildListQueryParams,
+  buildBulkBody,
+  formatValueForExport,
+  toggleSort as coreToggleSort,
+  rowsToCsv,
+  downloadCsv,
+} from '@core'
+import type { ExportColumnLike } from '@core'
 import type { SortItem, FilterConfig, ColumnConfig, Option, PaginatedResponse } from '../types'
 
 const EXPORT_PAGE_SIZE = 500
 const EXPORT_MAX_ROWS = 20000
-
-/**
- * Значення для CSV: коди замінюємо на те, що користувач бачить у таблиці.
- * remoteOptions — довідники select-колонок з optionsUrl, підвантажені заздалегідь.
- */
-function formatForExport(
-  col: ColumnConfig,
-  row: any,
-  remoteOptions: Map<string, Option[]>
-): any {
-  const value = row[col.key]
-
-  if (col.type === 'boolean') {
-    return value ? (col.trueLabel ?? 'Так') : (col.falseLabel ?? 'Ні')
-  }
-  if (col.type === 'phone-list') {
-    return (value ?? []).map(formatPhoneUA).join(', ')
-  }
-  if (col.type === 'select') {
-    const options = col.optionsUrl ? (remoteOptions.get(col.key) ?? []) : (col.options ?? [])
-    const found = options.find(o => String(o.value) === String(value))
-    return found ? found.label : (value ?? '')
-  }
-  return value ?? ''
-}
 
 interface UseTableStateOptions {
   apiList: string
@@ -146,29 +129,7 @@ export function useTableState({
 
   // Revalidate (для polling, без спінера, обходить кеш)
   const revalidate = useCallback(async () => {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      per_page: perPage.toString(),
-    })
-
-    for (const f of filterConfig) {
-      const value = filters[f.key]
-      if (value !== '' && value !== null && value !== undefined && value !== false) {
-        params.set(f.param ?? f.key, String(value))
-      }
-    }
-    for (const [key, value] of Object.entries(filters)) {
-      if (filterConfig.some(f => f.key === key)) continue
-      if (value !== '' && value !== null && value !== undefined) {
-        params.set(key, String(value))
-      }
-    }
-
-    if (sortItems.length > 0) {
-      params.append('sort_by', sortItems.map(s => s.key).join(','))
-      params.append('sort_dir', sortItems.map(s => s.dir).join(','))
-    }
-
+    const params = buildListQueryParams({ page, perPage, sortItems, filterConfig, filters })
     const url = `${apiList}?${params.toString()}`
 
     try {
@@ -193,37 +154,9 @@ export function useTableState({
     enabled: enablePolling,
   })
 
-  // Toggle sort
+  // Toggle sort — алгоритм у @core/sort (спільний з Vue: DataListPage.vue → toggleSort).
   const toggleSort = useCallback((key: string, ctrlKey = false) => {
-    setSortItems(prev => {
-      let newSortItems: SortItem[]
-
-      if (ctrlKey) {
-        const existing = prev.find(s => s.key === key)
-        if (existing) {
-          if (existing.dir === 'asc') {
-            newSortItems = prev.map(s =>
-              s.key === key ? { ...s, dir: 'desc' as const } : s
-            )
-          } else {
-            newSortItems = prev.filter(s => s.key !== key)
-          }
-        } else {
-          newSortItems = [...prev, { key, dir: 'asc' }]
-        }
-      } else {
-        const existing = prev.find(s => s.key === key)
-        if (existing && existing.dir === 'asc') {
-          newSortItems = [{ key, dir: 'desc' }]
-        } else if (existing && existing.dir === 'desc') {
-          newSortItems = []
-        } else {
-          newSortItems = [{ key, dir: 'asc' }]
-        }
-      }
-
-      return newSortItems
-    })
+    setSortItems(prev => coreToggleSort(prev, key, ctrlKey))
   }, [])
 
   // Set filter value
@@ -327,34 +260,9 @@ export function useTableState({
       return
     }
 
-    const params = new URLSearchParams({
-      page: page.toString(),
-      per_page: perPage.toString(),
-    })
-
-    // Порядок конфіга, а не обʼєкта: кілька фільтрів можуть писати в один
-    // query-параметр (`param`), і виграє останній непорожній — тому set, не append.
-    // Дзеркало Vue: DataListPage.vue → params.set(f.param ?? f.key, v).
-    for (const f of filterConfig) {
-      const value = filters[f.key]
-      if (value !== '' && value !== null && value !== undefined && value !== false) {
-        params.set(f.param ?? f.key, String(value))
-      }
-    }
-    // Фільтри без опису в конфізі (задані сторінкою напряму) — як і раніше
-    for (const [key, value] of Object.entries(filters)) {
-      if (filterConfig.some(f => f.key === key)) continue
-      if (value !== '' && value !== null && value !== undefined) {
-        params.set(key, String(value))
-      }
-    }
-
-    // Add sort (Vue admin format: separate sort_by and sort_dir)
-    if (sortItems.length > 0) {
-      params.append('sort_by', sortItems.map(s => s.key).join(','))
-      params.append('sort_dir', sortItems.map(s => s.dir).join(','))
-    }
-
+    // Спільна збірка query-параметрів (page/per_page/сортування/фільтри) — @core/listQuery,
+    // той самий набір, що й у Vue: DataListPage.vue → load().
+    const params = buildListQueryParams({ page, perPage, sortItems, filterConfig, filters })
     const url = `${apiList}?${params.toString()}`
 
     // stale-while-revalidate: якщо цей самий запит уже був — показуємо збережене
@@ -419,18 +327,6 @@ export function useTableState({
     })
   }, [apiDelete, rowKey, items])
 
-  // Збирає фільтри для bulk all: true — ті самі, що і для list()
-  const buildBulkFilters = useCallback(() => {
-    const result: Record<string, any> = {}
-    for (const f of filterConfig) {
-      const v = filters[f.key]
-      if (v !== '' && v !== null && v !== undefined && v !== false) {
-        result[f.key] = v
-      }
-    }
-    return result
-  }, [filters, filterConfig])
-
   // Використовує bulk-ендпоінт для одночасного оновлення обраного поля у всіх
   // вибраних записах. Режим selectAllMatching надсилає фільтри замість ids.
   const applyBulkUpdate = useCallback(async (field: string, value: any) => {
@@ -439,18 +335,15 @@ export function useTableState({
 
     setBulkApplying(true)
     try {
-      const body: any = {
+      const body = buildBulkBody({
         action: 'update',
         field,
         value,
-      }
-
-      if (selectAllMatching) {
-        body.all = true
-        body.filters = buildBulkFilters()
-      } else {
-        body.ids = Array.from(selectedIds)
-      }
+        selectAllMatching,
+        selectedIds,
+        filterConfig,
+        filters,
+      })
 
       const res = await apiPost<{ affected?: number }>(apiBulk, body)
       notify(`Оновлено: ${res.affected ?? 0} запис(ів)`, { type: 'success' })
@@ -461,7 +354,7 @@ export function useTableState({
     } finally {
       setBulkApplying(false)
     }
-  }, [apiBulk, selectAllMatching, selectedIds, buildBulkFilters, clearRowSelection, reload])
+  }, [apiBulk, selectAllMatching, selectedIds, filterConfig, filters, clearRowSelection, reload])
 
   // Іменована масова дія (activate/deactivate/archive тощо). Undo тут немає навмисно:
   // activate/deactivate не деструктивні й скасовуються зворотною дією.
@@ -471,14 +364,13 @@ export function useTableState({
 
     setBulkApplying(true)
     try {
-      const body: any = { action }
-
-      if (selectAllMatching) {
-        body.all = true
-        body.filters = buildBulkFilters()
-      } else {
-        body.ids = Array.from(selectedIds)
-      }
+      const body = buildBulkBody({
+        action,
+        selectAllMatching,
+        selectedIds,
+        filterConfig,
+        filters,
+      })
 
       const res = await apiPost<{ affected?: number }>(apiBulk, body)
       notify(`${label}: ${res.affected ?? 0} запис(ів)`, { type: 'success' })
@@ -489,7 +381,7 @@ export function useTableState({
     } finally {
       setBulkApplying(false)
     }
-  }, [apiBulk, selectAllMatching, selectedIds, buildBulkFilters, clearRowSelection, reload])
+  }, [apiBulk, selectAllMatching, selectedIds, filterConfig, filters, clearRowSelection, reload])
 
   const applyBulkDelete = useCallback(() => {
     if (!apiDelete || selectedIds.size === 0) return
@@ -550,26 +442,9 @@ export function useTableState({
           })
       )
 
-      const params = new URLSearchParams()
-      params.set('per_page', String(EXPORT_PAGE_SIZE))
-      if (sortItems.length) {
-        params.set('sort_by', sortItems.map(s => s.key).join(','))
-        params.set('sort_dir', sortItems.map(s => s.dir).join(','))
-      }
       // Той самий порядок і той самий `param`, що й у списку — інакше експорт
-      // вивантажив би не те, що показано на екрані.
-      for (const f of filterConfig) {
-        const value = filters[f.key]
-        if (value !== '' && value !== null && value !== undefined && value !== false) {
-          params.set(f.param ?? f.key, String(value))
-        }
-      }
-      for (const [key, value] of Object.entries(filters)) {
-        if (filterConfig.some(f => f.key === key)) continue
-        if (value !== '' && value !== null && value !== undefined && value !== false) {
-          params.set(key, String(value))
-        }
-      }
+      // вивантажив би не те, що показано на екрані. page ставиться нижче, за ітерацію.
+      const params = buildListQueryParams({ perPage: EXPORT_PAGE_SIZE, sortItems, filterConfig, filters })
 
       let allRows: any[] = []
       let fetchPage = 1
@@ -590,8 +465,10 @@ export function useTableState({
       }
 
       const headers = columnsConfig.map(c => c.label)
+      const resolveOptions = (col: ExportColumnLike): Option[] =>
+        col.optionsUrl ? (remoteOptions.get(col.key) ?? []) : (col.options ?? [])
       const csvRows = allRows.map(row =>
-        columnsConfig.map(col => formatForExport(col, row, remoteOptions))
+        columnsConfig.map(col => formatValueForExport(col, row, resolveOptions))
       )
       downloadCsv(
         `export-${new Date().toISOString().slice(0, 10)}.csv`,

@@ -376,8 +376,7 @@ import { useRowSelection } from '@/composables/useRowSelection'
 import { useRowExpand } from '@/composables/useRowExpand'
 import { useListCache } from '@/composables/useListCache'
 import { useListPolling } from '@/composables/useListPolling'
-import { formatPhoneUA, normalizePhoneE164 } from '@/utils/phone'
-import { rowsToCsv, downloadCsv } from '@/utils/csv'
+import { normalizePhoneE164 } from '@/utils/phone'
 import Pagination from '@/components/Pagination.vue'
 import ColumnSelector from '@/components/ColumnSelector.vue'
 import BaseModal from '@/components/BaseModal.vue'
@@ -385,6 +384,14 @@ import SortIcon from '@/components/SortIcon.vue'
 import { resolveFilterType } from './filterTypes'
 import { resolveCellType } from './cellTypes'
 import { useRemoteOptions } from './composables/useRemoteOptions'
+import {
+  buildListQueryParams,
+  buildBulkBody,
+  formatValueForExport as coreFormatValueForExport,
+  toggleSort as coreToggleSort,
+  rowsToCsv,
+  downloadCsv,
+} from '@core'
 
 const props = defineProps({
   title: { type: String, default: '' },
@@ -850,26 +857,20 @@ async function ensureColumnOptionsLoaded() {
   }
 }
 
+// resolveOptions для @core/exportFormat: у Vue довідники синхронно доступні
+// з кешу useRemoteOptions одразу після ensureColumnOptionsLoaded() нижче.
+function resolveExportOptions(col) {
+  return col.optionsUrl
+    ? useRemoteOptions(col.optionsUrl, {
+        valueKey: col.optionsValueKey ?? 'id',
+        labelKey: col.optionsLabelKey ?? 'name_uk',
+        labelTemplate: col.optionsLabelTemplate ?? null,
+      }).options.value
+    : (col.options ?? [])
+}
+
 function formatValueForExport(col, row) {
-  const v = row[col.key]
-  if (col.type === 'boolean') {
-    return v ? (col.trueLabel ?? 'Так') : (col.falseLabel ?? 'Ні')
-  }
-  if (col.type === 'phone-list') {
-    return (v ?? []).map(formatPhoneUA).join(', ')
-  }
-  if (col.type === 'select') {
-    const options = col.optionsUrl
-      ? useRemoteOptions(col.optionsUrl, {
-          valueKey: col.optionsValueKey ?? 'id',
-          labelKey: col.optionsLabelKey ?? 'name_uk',
-          labelTemplate: col.optionsLabelTemplate ?? null,
-        }).options.value
-      : (col.options ?? [])
-    const found = options.find((o) => String(o.value) === String(v))
-    return found ? found.label : (v ?? '')
-  }
-  return v ?? ''
+  return coreFormatValueForExport(col, row, resolveExportOptions)
 }
 
 async function exportCsv() {
@@ -877,18 +878,14 @@ async function exportCsv() {
   try {
     await ensureColumnOptionsLoaded()
 
-    const params = new URLSearchParams()
-    params.set('per_page', String(EXPORT_PAGE_SIZE))
-    if (sortItems.value.length) {
-      params.set('sort_by', sortItems.value.map((s) => s.key).join(','))
-      params.set('sort_dir', sortItems.value.map((s) => s.dir).join(','))
-    }
-    for (const f of props.filterConfig) {
-      const v = filters[f.key].value
-      if (v !== '' && v !== null && v !== undefined && v !== false) {
-        params.set(f.param ?? f.key, v)
-      }
-    }
+    // Той самий порядок і той самий param, що й у списку — page ставиться
+    // нижче, за ітерацію.
+    const params = buildListQueryParams({
+      perPage: EXPORT_PAGE_SIZE,
+      sortItems: sortItems.value,
+      filterConfig: props.filterConfig,
+      filters: filterValues.value,
+    })
 
     let allRows = []
     let fetchPage = 1
@@ -933,19 +930,13 @@ async function load(p = 1) {
   // Скид розкритих рядків: id з іншої вибірки (інша сторінка/фільтр) нам не потрібні
   collapseAllExpanded()
 
-  const params = new URLSearchParams()
-  params.set('page', String(p))
-  params.set('per_page', String(perPage.value))
-  if (sortItems.value.length) {
-    params.set('sort_by', sortItems.value.map((s) => s.key).join(','))
-    params.set('sort_dir', sortItems.value.map((s) => s.dir).join(','))
-  }
-  for (const f of props.filterConfig) {
-    const v = filters[f.key].value
-    if (v !== '' && v !== null && v !== undefined && v !== false) {
-      params.set(f.param ?? f.key, v)
-    }
-  }
+  const params = buildListQueryParams({
+    page: p,
+    perPage: perPage.value,
+    sortItems: sortItems.value,
+    filterConfig: props.filterConfig,
+    filters: filterValues.value,
+  })
   const cacheKey = `${props.apiList}?${params}`
 
   // Stale-while-revalidate: кеш-хіт малюється миттєво (без спінера на весь
@@ -985,43 +976,26 @@ async function load(p = 1) {
 // Ctrl/Cmd+клік — додає колонку до вже вибраного сортування (або перемикає
 // її напрямок/прибирає, якщо вона вже там) — так можна сортувати спершу
 // по "Тип", потім (додатково) по "Назва".
+// Алгоритм у @core/sort (спільний з React: useTableState.ts → toggleSort).
+// Внутрішній стан Vue лишається у форматі 'ASC'/'DESC' (SortIcon.vue,
+// useUrlFilters.js та інші сторінки з ним працюють) — ядро оперує 'asc'/'desc',
+// тому конвертація регістру відбувається тут, локально, на межі виклику.
 function toggleSort(key, event) {
   const additive = !!(event && (event.ctrlKey || event.metaKey))
-  const idx = sortItems.value.findIndex((s) => s.key === key)
-
-  if (!additive) {
-    if (sortItems.value.length === 1 && idx === 0) {
-      sortItems.value = sortItems.value[0].dir === 'ASC' ? [{ key, dir: 'DESC' }] : []
-    } else {
-      sortItems.value = [{ key, dir: 'ASC' }]
-    }
-    return
-  }
-
-  if (idx === -1) {
-    sortItems.value = [...sortItems.value, { key, dir: 'ASC' }]
-  } else if (sortItems.value[idx].dir === 'ASC') {
-    sortItems.value = sortItems.value.map((s, i) => (i === idx ? { ...s, dir: 'DESC' } : s))
-  } else {
-    sortItems.value = sortItems.value.filter((_, i) => i !== idx)
-  }
+  const current = sortItems.value.map((s) => ({ key: s.key, dir: s.dir.toLowerCase() }))
+  const next = coreToggleSort(current, key, additive)
+  sortItems.value = next.map((s) => ({ key: s.key, dir: s.dir.toUpperCase() }))
 }
 
 // ── Revalidate (для polling, без спінера, обходить кеш) ───────────────────
 async function revalidate() {
-  const params = new URLSearchParams()
-  params.set('page', String(page.value))
-  params.set('per_page', String(perPage.value))
-  if (sortItems.value.length) {
-    params.set('sort_by', sortItems.value.map((s) => s.key).join(','))
-    params.set('sort_dir', sortItems.value.map((s) => s.dir).join(','))
-  }
-  for (const f of props.filterConfig) {
-    const v = filters[f.key].value
-    if (v !== '' && v !== null && v !== undefined && v !== false) {
-      params.set(f.param ?? f.key, v)
-    }
-  }
+  const params = buildListQueryParams({
+    page: page.value,
+    perPage: perPage.value,
+    sortItems: sortItems.value,
+    filterConfig: props.filterConfig,
+    filters: filterValues.value,
+  })
 
   try {
     const res = await fetch(`${props.apiList}?${params}`, { headers: auth.authHeaders() })
@@ -1131,18 +1105,6 @@ function clearSelection() {
   bulkValue.value = null
 }
 
-// Збирає фільтри для bulk all: true — ті самі, що і для list()
-function buildBulkFilters() {
-  const result = {}
-  for (const f of props.filterConfig) {
-    const v = filters[f.key].value
-    if (v !== '' && v !== null && v !== undefined && v !== false) {
-      result[f.key] = v
-    }
-  }
-  return result
-}
-
 // Використовує bulk-ендпоінт для одночасного оновлення обраного поля у всіх
 // вибраних записах. Режим selectAllMatching надсилає фільтри замість ids.
 async function applyBulkUpdate() {
@@ -1151,18 +1113,15 @@ async function applyBulkUpdate() {
 
   bulkApplying.value = true
   try {
-    const body = {
+    const body = buildBulkBody({
       action: 'update',
       field: bulkField.value,
       value: bulkValue.value,
-    }
-
-    if (selectAllMatching.value) {
-      body.all = true
-      body.filters = buildBulkFilters()
-    } else {
-      body.ids = Array.from(selectedIds.value)
-    }
+      selectAllMatching: selectAllMatching.value,
+      selectedIds: selectedIds.value,
+      filterConfig: props.filterConfig,
+      filters: filterValues.value,
+    })
 
     const res = await fetch(props.apiBulk, {
       method: 'POST',
@@ -1193,14 +1152,13 @@ async function applyNamedBulk(action) {
 
   bulkApplying.value = true
   try {
-    const body = { action: action.action }
-
-    if (selectAllMatching.value) {
-      body.all = true
-      body.filters = buildBulkFilters()
-    } else {
-      body.ids = Array.from(selectedIds.value)
-    }
+    const body = buildBulkBody({
+      action: action.action,
+      selectAllMatching: selectAllMatching.value,
+      selectedIds: selectedIds.value,
+      filterConfig: props.filterConfig,
+      filters: filterValues.value,
+    })
 
     const res = await fetch(props.apiBulk, {
       method: 'POST',

@@ -7,6 +7,8 @@ import path from 'path'
 // ../shared/page-configs/README.md). Вираз однаковий у контейнері (__dirname == /app,
 // ./shared змонтований у /shared) і при локальному npm run dev.
 const sharedConfigs = path.resolve(__dirname, '../shared/page-configs')
+// Чиста логіка (без Vue/React), спільна з frontend/ — див. ../shared/core/README.md
+const sharedCore = path.resolve(__dirname, '../shared/core')
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -15,6 +17,7 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
       '@configs': sharedConfigs,
+      '@core': sharedCore,
     },
   },
   build: {
@@ -29,7 +32,7 @@ export default defineConfig({
     port: 5174,
     // Без цього dev-сервер не віддає файли поза своїм root — а @configs саме там
     fs: {
-      allow: [path.resolve(__dirname), sharedConfigs],
+      allow: [path.resolve(__dirname), sharedConfigs, sharedCore],
     },
     watch: {
       usePolling: true,

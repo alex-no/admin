@@ -25,9 +25,16 @@
     "paths": {
       "@/*": ["./src/*"],
       /* Конфіги сторінок, спільні з Vue-версією — див. ../shared/page-configs/README.md */
-      "@configs/*": ["../shared/page-configs/*"]
+      "@configs/*": ["../shared/page-configs/*"],
+      /* Чиста логіка, спільна з Vue-версією — див. ../shared/core/README.md */
+      "@core/*": ["../shared/core/*"],
+      "@core": ["../shared/core/index.ts"]
     }
   },
   "include": ["src", "../shared/page-configs"],
+  /* shared/core has its own package.json + vitest — не тягнути *.test.ts і
+     vitest.config.ts у білд React (vitest тут не встановлений). Модулі ядра
+     все одно потрапляють у програму транзитивно, через імпорт з @core. */
+  "exclude": ["../shared/core/*.test.ts", "../shared/core/vitest.config.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

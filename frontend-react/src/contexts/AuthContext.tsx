@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import { apiGet, apiPost } from '@/utils/api'
 import type { User, LoginResponse } from '@/types'
+import { hasPermission } from '@core/permissions'
 
 interface AuthContextType {
   user: User | null
@@ -85,16 +86,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  /**
-   * Перевірка права. Підтримує ті самі два спецвипадки, що й Vue-версія:
-   * "*" — усі права, "module.*" — усі права модуля.
-   */
   const can = useCallback((permission: string): boolean => {
-    for (const p of user?.permissions ?? []) {
-      if (p === '*' || p === permission) return true
-      if (p.endsWith('.*') && permission.startsWith(p.slice(0, -2) + '.')) return true
-    }
-    return false
+    return hasPermission(user?.permissions, permission)
   }, [user])
 
   return (

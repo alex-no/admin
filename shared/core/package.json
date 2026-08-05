@@ -1,0 +1,15 @@
+{
+  "name": "@admin/shared-core",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Framework-agnostic pure logic shared by frontend/ (Vue) and frontend-react/ (React). No vue/react/angular imports allowed here.",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}

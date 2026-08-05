@@ -7,6 +7,8 @@ import { fileURLToPath, URL } from 'url'
 // ../shared/page-configs/README.md). Вираз однаковий у контейнері (__dirname == /app,
 // ./shared змонтований у /shared) і при локальному npm run dev.
 const sharedConfigs = fileURLToPath(new URL('../shared/page-configs', import.meta.url))
+// Чиста логіка (без Vue/React), спільна з frontend-react — див. ../shared/core/README.md
+const sharedCore = fileURLToPath(new URL('../shared/core', import.meta.url))
 
 export default defineConfig({
   plugins: [vue()],
@@ -14,6 +16,7 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       '@configs': sharedConfigs,
+      '@core': sharedCore,
     },
   },
   build: {
@@ -27,7 +30,7 @@ export default defineConfig({
     port: 5173,
     // Без цього dev-сервер не віддає файли поза своїм root — а @configs саме там
     fs: {
-      allow: [fileURLToPath(new URL('.', import.meta.url)), sharedConfigs],
+      allow: [fileURLToPath(new URL('.', import.meta.url)), sharedConfigs, sharedCore],
     },
     // Bind-mount на Windows (Docker Desktop) не пробрасує inotify-події файлової
     // системи хосту всередину контейнера — без polling Vite не бачить змін у
