@@ -131,7 +131,7 @@
                діями) селект був би порожнім рядком «Змінити поле...» ні про що -->
           <select v-if="editableColumns.length" v-model="bulkField" class="form-select form-select-sm" style="width:auto">
             <option value="">{{ t('bulk.updateField') }}</option>
-            <option v-for="col in editableColumns" :key="col.key" :value="col.key">{{ col.label }}</option>
+            <option v-for="col in editableColumns" :key="col.key" :value="col.key">{{ translateLabel(col.label) }}</option>
           </select>
 
           <component

@@ -28,7 +28,7 @@
           @change="emit('toggle', col.key)"
         />
         <label class="form-check-label small" :for="`colsel-${uid}-${col.key}`">
-          {{ col.label }}
+          {{ translateLabel(col.label) }}
         </label>
       </div>
 
@@ -59,6 +59,17 @@ const { t } = useI18n({ useScope: 'global' })
 const labels = computed(() => ({
   reset: t('table.resetColumns'),
 }))
+
+// Дзеркало DataListPage.vue → translateLabel: лейбл перекладається, лише якщо
+// схожий на i18n-ключ (містить крапку) — конфіги колонок не завжди його дають.
+function translateLabel(label) {
+  if (!label) return ''
+  if (label.includes('.')) {
+    const translated = t(label)
+    return translated !== label ? translated : label
+  }
+  return label
+}
 
 const props = defineProps({
   // Повний конфіг колонок таблиці; показуємо лише hideable !== false
