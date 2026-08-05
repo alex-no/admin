@@ -1,6 +1,21 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-
-type ModalMode = 'floating' | 'docked-right' | 'docked-bottom'
+import {
+  loadModalWindowSettings,
+  saveModalWindowSettings,
+  modalWindowStorageKey,
+  nextModalMode,
+  computeFloatingStyle,
+  computeDockedRightStyle,
+  computeDockedBottomStyle,
+  computeContentMargin,
+  computeCursorClass,
+  computeDragPosition,
+  clampSizeFromRect,
+  computeResizedDockedWidth,
+  computeResizedDockedHeight,
+  computeResizedFloatingSize,
+  type ModalMode,
+} from '@core/modalWindow'
 
 interface UseModalWindowOptions {
   mode?: ModalMode
@@ -13,48 +28,29 @@ interface UseModalWindowOptions {
   maxHeight?: number
 }
 
-interface SavedSettings {
-  mode?: ModalMode
-  dockedWidth?: number
-  dockedHeight?: number
-  floatingWidth?: number
-  floatingHeight?: number
-  floatingResized?: boolean
-}
-
+/**
+ * Хук для управления модальным окном з можливістю перетягування й ресайзу.
+ * Чисті обчислення (стилі, clamp, дельти, збереження налаштувань) — в ядрі
+ * (@core/modalWindow), спільному з Vue; тут — стан і DOM-листенери.
+ *
+ * Дзеркало Vue: composables/useModalWindow.js. `contentMargin` раніше НЕ мав
+ * компенсації -24px (padding card-body), яка є у Vue-версії — контент був на
+ * 24px вужчим, ніж мав бути. Тепер обидва рахують через те саме @core/modalWindow.
+ */
 export function useModalWindow(options: UseModalWindowOptions = {}) {
-  const storageKey = options.storageKey || 'modal-window-settings'
-
-  // Load saved settings
-  const getSavedSettings = (): SavedSettings => {
-    const saved = localStorage.getItem(storageKey)
-    if (!saved) return {}
-    try {
-      const settings = JSON.parse(saved)
-      // Migration: 'modal' → 'floating', 'side-panel' → 'docked-right'
-      if (settings.mode === 'modal') settings.mode = 'floating'
-      if (settings.mode === 'side-panel') settings.mode = 'docked-right'
-      return settings
-    } catch {
-      return {}
-    }
-  }
-
-  const settings = getSavedSettings()
+  const storageKey = modalWindowStorageKey(options.storageKey)
+  const settings = useMemo(() => loadModalWindowSettings(storageKey), [storageKey])
 
   const [mode, setMode] = useState<ModalMode>(settings.mode || options.mode || 'floating')
   const [isDragging, setIsDragging] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
 
-  // Position for floating window
   const [position, setPosition] = useState<{ x: number | null; y: number | null }>({ x: null, y: null })
   const dragStartRef = useRef({ x: 0, y: 0, mouseX: 0, mouseY: 0 })
 
-  // Sizes for docked modes
   const [dockedWidth, setDockedWidth] = useState(settings.dockedWidth || options.defaultWidth || 600)
   const [dockedHeight, setDockedHeight] = useState(settings.dockedHeight || options.defaultHeight || 400)
 
-  // Sizes for floating mode
   const [floatingWidth, setFloatingWidth] = useState(settings.floatingWidth || options.defaultWidth || 700)
   const [floatingHeight, setFloatingHeight] = useState(settings.floatingHeight || options.defaultHeight || 500)
   const [floatingResized, setFloatingResized] = useState(Boolean(settings.floatingResized))
@@ -66,75 +62,29 @@ export function useModalWindow(options: UseModalWindowOptions = {}) {
 
   const resizeStartRef = useRef({ x: 0, y: 0, width: 0, height: 0 })
 
-  // Floating style
-  const floatingStyle = (): React.CSSProperties | null => {
-    if (mode !== 'floating') return null
+  const floatingStyle = computeFloatingStyle({
+    mode,
+    floatingResized,
+    floatingWidth,
+    floatingHeight,
+    maxWidth,
+    maxHeight,
+    position,
+  })
 
-    const style: React.CSSProperties = {}
-
-    if (floatingResized) {
-      style.width = `${floatingWidth}px`
-      style.height = `${floatingHeight}px`
-      style.maxWidth = `${maxWidth}px`
-      style.maxHeight = `${maxHeight}px`
-    }
-
-    if (position.x !== null && position.y !== null) {
-      style.left = `${position.x}px`
-      style.top = `${position.y}px`
-      style.transform = 'none'
-    }
-
-    return Object.keys(style).length ? style : null
-  }
-
-  // Docked right style
-  const dockedRightStyle = (): React.CSSProperties | null => {
-    if (mode !== 'docked-right') return null
-
-    return {
-      width: `${dockedWidth}px`,
-      minWidth: `${minWidth}px`,
-      maxWidth: `${maxWidth}px`,
-    }
-  }
-
-  // Docked bottom style
-  const dockedBottomStyle = (): React.CSSProperties | null => {
-    if (mode !== 'docked-bottom') return null
-
-    return {
-      height: `${dockedHeight}px`,
-      minHeight: `${minHeight}px`,
-      maxHeight: `${maxHeight}px`,
-    }
-  }
+  const dockedRightStyle = computeDockedRightStyle({ mode, dockedWidth, minWidth, maxWidth })
+  const dockedBottomStyle = computeDockedBottomStyle({ mode, dockedHeight, minHeight, maxHeight })
 
   // Content margin for page (memoized to prevent infinite loops)
-  const contentMargin = useMemo((): React.CSSProperties => {
-    if (mode === 'docked-right') {
-      return { marginRight: `${dockedWidth}px` }
-    }
-    if (mode === 'docked-bottom') {
-      return { marginBottom: `${dockedHeight}px` }
-    }
-    return {}
-  }, [mode, dockedWidth, dockedHeight])
+  const contentMargin = useMemo(
+    () => computeContentMargin({ mode, dockedWidth, dockedHeight }),
+    [mode, dockedWidth, dockedHeight]
+  )
 
-  // Cursor class
-  const cursorClass = (): string => {
-    if (isDragging) return 'cursor-grabbing'
-    if (isResizing) {
-      if (mode === 'docked-right') return 'cursor-resizing-x'
-      if (mode === 'docked-bottom') return 'cursor-resizing-y'
-      if (mode === 'floating') return 'cursor-resizing-both'
-    }
-    return ''
-  }
+  const cursorClass = computeCursorClass({ isDragging, isResizing, mode })
 
   const isDraggable = mode === 'floating'
 
-  // Start drag
   const startDrag = useCallback((event: React.MouseEvent, element: HTMLElement | null) => {
     if (mode !== 'floating' || !element) return
 
@@ -152,7 +102,6 @@ export function useModalWindow(options: UseModalWindowOptions = {}) {
     event.preventDefault()
   }, [mode])
 
-  // Start resize
   const startResize = useCallback((event: React.MouseEvent, element: HTMLElement | null) => {
     if (!['docked-right', 'docked-bottom', 'floating'].includes(mode)) return
 
@@ -175,17 +124,16 @@ export function useModalWindow(options: UseModalWindowOptions = {}) {
 
       if (!floatingResized && element) {
         const rect = element.getBoundingClientRect()
-        const newWidth = Math.min(Math.max(rect.width, minWidth), maxWidth)
-        const newHeight = Math.min(Math.max(rect.height, minHeight), maxHeight)
-        setFloatingWidth(newWidth)
-        setFloatingHeight(newHeight)
+        const clamped = clampSizeFromRect(rect, minWidth, maxWidth, minHeight, maxHeight)
+        setFloatingWidth(clamped.width)
+        setFloatingHeight(clamped.height)
 
         if (position.x === null) {
           setPosition({ x: rect.left, y: rect.top })
         }
 
-        resizeStartRef.current.width = newWidth
-        resizeStartRef.current.height = newHeight
+        resizeStartRef.current.width = clamped.width
+        resizeStartRef.current.height = clamped.height
       }
       setFloatingResized(true)
     }
@@ -195,53 +143,47 @@ export function useModalWindow(options: UseModalWindowOptions = {}) {
   useEffect(() => {
     const onDragMove = (event: MouseEvent) => {
       if (!isDragging) return
-
-      const deltaX = event.clientX - dragStartRef.current.mouseX
-      const deltaY = event.clientY - dragStartRef.current.mouseY
-
-      setPosition({
-        x: dragStartRef.current.x + deltaX,
-        y: dragStartRef.current.y + deltaY,
-      })
+      setPosition(computeDragPosition(dragStartRef.current, event.clientX, event.clientY))
     }
 
     const onResizeMove = (event: MouseEvent) => {
       if (!isResizing) return
 
       if (mode === 'docked-right') {
-        const delta = resizeStartRef.current.x - event.clientX
-        const newWidth = resizeStartRef.current.width + delta
-
-        if (newWidth >= minWidth && newWidth <= maxWidth) {
-          setDockedWidth(newWidth)
-        }
+        const next = computeResizedDockedWidth(
+          resizeStartRef.current.x,
+          resizeStartRef.current.width,
+          event.clientX,
+          minWidth,
+          maxWidth
+        )
+        if (next !== null) setDockedWidth(next)
       } else if (mode === 'docked-bottom') {
-        const delta = resizeStartRef.current.y - event.clientY
-        const newHeight = resizeStartRef.current.height + delta
-
-        if (newHeight >= minHeight && newHeight <= maxHeight) {
-          setDockedHeight(newHeight)
-        }
+        const next = computeResizedDockedHeight(
+          resizeStartRef.current.y,
+          resizeStartRef.current.height,
+          event.clientY,
+          minHeight,
+          maxHeight
+        )
+        if (next !== null) setDockedHeight(next)
       } else if (mode === 'floating') {
-        const newWidth = resizeStartRef.current.width + (event.clientX - resizeStartRef.current.x)
-        const newHeight = resizeStartRef.current.height + (event.clientY - resizeStartRef.current.y)
-
-        if (newWidth >= minWidth && newWidth <= maxWidth) {
-          setFloatingWidth(newWidth)
-        }
-        if (newHeight >= minHeight && newHeight <= maxHeight) {
-          setFloatingHeight(newHeight)
-        }
+        const next = computeResizedFloatingSize(
+          resizeStartRef.current,
+          event.clientX,
+          event.clientY,
+          minWidth,
+          maxWidth,
+          minHeight,
+          maxHeight
+        )
+        if (next.width !== null) setFloatingWidth(next.width)
+        if (next.height !== null) setFloatingHeight(next.height)
       }
     }
 
-    const stopDrag = () => {
-      setIsDragging(false)
-    }
-
-    const stopResize = () => {
-      setIsResizing(false)
-    }
+    const stopDrag = () => setIsDragging(false)
+    const stopResize = () => setIsResizing(false)
 
     if (isDragging) {
       document.addEventListener('mousemove', onDragMove)
@@ -268,36 +210,29 @@ export function useModalWindow(options: UseModalWindowOptions = {}) {
     }
   }, [mode])
 
-  // Cycle mode
   const cycleMode = useCallback(() => {
-    const modes: ModalMode[] = ['floating', 'docked-right', 'docked-bottom']
-    const currentIndex = modes.indexOf(mode)
-    const nextIndex = (currentIndex + 1) % modes.length
-    setMode(modes[nextIndex])
-  }, [mode])
+    setMode(prev => nextModalMode(prev))
+  }, [])
 
   // Save settings
   useEffect(() => {
-    localStorage.setItem(
-      storageKey,
-      JSON.stringify({
-        mode,
-        dockedWidth,
-        dockedHeight,
-        floatingWidth,
-        floatingHeight,
-        floatingResized,
-      })
-    )
+    saveModalWindowSettings(storageKey, {
+      mode,
+      dockedWidth,
+      dockedHeight,
+      floatingWidth,
+      floatingHeight,
+      floatingResized,
+    })
   }, [mode, dockedWidth, dockedHeight, floatingWidth, floatingHeight, floatingResized, storageKey])
 
   return {
     mode,
-    floatingStyle: floatingStyle(),
-    dockedRightStyle: dockedRightStyle(),
-    dockedBottomStyle: dockedBottomStyle(),
+    floatingStyle,
+    dockedRightStyle,
+    dockedBottomStyle,
     contentMargin,
-    cursorClass: cursorClass(),
+    cursorClass,
     isDragging,
     isResizing,
     isDraggable,

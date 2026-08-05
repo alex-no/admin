@@ -1,5 +1,10 @@
 import { useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import {
+  coerceUrlValue,
+  parseMultiSort as coreParseMultiSort,
+  serializeMultiSort as coreSerializeMultiSort,
+} from '@core/urlState'
 
 export interface SortState {
   sortKey: string
@@ -30,16 +35,14 @@ interface UseUrlFiltersOptions {
  *   2. useUrlFilters() — пише поточні значення назад в URL
  */
 
+// Ядро (@core/urlState) уже повертає 'asc'/'desc' — той самий регістр, що й
+// у runtime-стані list-framework (types.ts → SortItem). Раніше ця функція
+// нормалізувала до 'ASC'/'DESC', а buildQuery нижче писала в URL те, що
+// прийшло (фактично lowercase) — після перезавантаження сторінки з посилання
+// сортування читалося назад у "неправильному" регістрі й іконка/toggleSort
+// плутались. Тепер обидва боки узгоджені.
 function parseMultiSort(raw: string | null): MultiSortItem[] {
-  if (!raw) return []
-  return raw
-    .split(',')
-    .map(part => {
-      const [key, dir] = part.split(':')
-      if (!key) return null
-      return { key, dir: String(dir ?? 'ASC').toUpperCase() === 'DESC' ? 'DESC' : 'ASC' }
-    })
-    .filter((x): x is MultiSortItem => x !== null)
+  return coreParseMultiSort(raw)
 }
 
 function currentParams(): URLSearchParams {
@@ -55,14 +58,7 @@ export function readFiltersFromUrl<T extends Record<string, any>>(defaults: T): 
     const raw = params.get(key)
     if (raw === null || raw === '') continue
 
-    const def = defaults[key]
-    if (typeof def === 'number') {
-      (result as any)[key] = Number(raw) || def
-    } else if (typeof def === 'boolean') {
-      (result as any)[key] = raw === 'true' || raw === '1'
-    } else {
-      (result as any)[key] = raw
-    }
+    ;(result as any)[key] = coerceUrlValue(raw, defaults[key])
   }
 
   return result
@@ -103,7 +99,7 @@ function buildQuery({ filters = {}, sorting, multiSort, detailId }: UseUrlFilter
   }
 
   if (multiSort) {
-    const serialized = multiSort.map(s => `${s.key}:${s.dir}`).join(',')
+    const serialized = coreSerializeMultiSort(multiSort as { key: string; dir: 'asc' | 'desc' }[])
     if (serialized) params.set('sort', serialized)
     else params.delete('sort')
   }

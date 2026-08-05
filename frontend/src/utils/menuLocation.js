@@ -1,31 +1,13 @@
 // Copyright (c) 2026 Oleksandr Nosov. MIT License.
 import menu from '@/config/menu.json'
+import { findMenuLocation as coreFindMenuLocation } from '@core/menu'
 
 /**
- * Пункт меню за поточним шляхом — по **найдовшому** співпадінню префікса.
- *
- * У menu.json є вкладені шляхи (`/analytics` і `/analytics/stats`,
- * `/error-logs` і `/error-logs/stats`), тож перший-ліпший збіг дав би
- * батьківський пункт замість дочірнього.
- *
- * Умова саме `path === to || path.startsWith(to + '/')`, а не голий
- * `startsWith(to)`: інакше `/sto-managers` збігся б із `/sto` (це різні розділи
- * меню) і підсвітився б чужий розділ.
- *
- * @returns {{ section: object, item: object } | null}
+ * Пункт меню за поточним шляхом. Алгоритм — в ядрі (@core/menu), спільний з
+ * React; дані (menu.json) наразі окремі для кожного фронтенда — вже розійшлися
+ * на одне поле (note у демо-пункті), об'єднати в спільний файл не зроблено
+ * автоматично цим рефакторингом.
  */
 export function findMenuLocation(path) {
-  let best = null
-
-  for (const section of menu) {
-    for (const item of section.items) {
-      if (path === item.to || path.startsWith(item.to + '/')) {
-        if (!best || item.to.length > best.item.to.length) {
-          best = { section, item }
-        }
-      }
-    }
-  }
-
-  return best
+  return coreFindMenuLocation(menu, path)
 }

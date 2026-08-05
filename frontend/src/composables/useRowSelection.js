@@ -1,4 +1,11 @@
 import { ref, computed, watch } from 'vue'
+import {
+  isAllOnPageSelected,
+  computeSelectedCount,
+  canSelectAllMatching as coreCanSelectAllMatching,
+  toggleAllOnPage,
+  toggleRowSelection,
+} from '@core/rowSelection'
 
 /**
  * Виділення рядків для масових дій (react-admin: bulk selection +
@@ -17,17 +24,11 @@ export function useRowSelection({ items, total, resetOn = [] }) {
   const selectedIds = ref(new Set())
   const selectAllMatching = ref(false)
 
-  const allOnPageSelected = computed(() =>
-    items.value.length > 0 && items.value.every((row) => selectedIds.value.has(row.id))
-  )
+  const allOnPageSelected = computed(() => isAllOnPageSelected(items.value, selectedIds.value))
+  const selectedCount = computed(() => computeSelectedCount(selectAllMatching.value, total.value, selectedIds.value))
 
-  const selectedCount = computed(() =>
-    selectAllMatching.value ? total.value : selectedIds.value.size
-  )
-
-  // Пропонувати «виділити всі N» тільки якщо за фільтром є більше, ніж на сторінці
   const canSelectAllMatching = computed(() =>
-    allOnPageSelected.value && !selectAllMatching.value && total.value > items.value.length
+    coreCanSelectAllMatching(allOnPageSelected.value, selectAllMatching.value, total.value, items.value.length)
   )
 
   function clear() {
@@ -36,22 +37,12 @@ export function useRowSelection({ items, total, resetOn = [] }) {
   }
 
   function toggleSelectAll() {
-    if (allOnPageSelected.value) {
-      selectedIds.value = new Set()
-    } else {
-      selectedIds.value = new Set(items.value.map((row) => row.id))
-    }
+    selectedIds.value = toggleAllOnPage(items.value, selectedIds.value)
     selectAllMatching.value = false
   }
 
   function toggleSelectRow(id) {
-    const newSet = new Set(selectedIds.value)
-    if (newSet.has(id)) {
-      newSet.delete(id)
-    } else {
-      newSet.add(id)
-    }
-    selectedIds.value = newSet
+    selectedIds.value = toggleRowSelection(selectedIds.value, id)
     selectAllMatching.value = false
   }
 

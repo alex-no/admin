@@ -1,44 +1,14 @@
 import menuConfig from '@/config/menu.json'
+import { findMenuLocation as coreFindMenuLocation, type MenuItem, type MenuSection } from '@core/menu'
 
-export interface MenuItem {
-  label: string
-  to: string
-  icon?: string
-  permission?: string
-}
-
-export interface MenuSection {
-  id: string
-  label: string
-  icon?: string
-  permission?: string
-  items: MenuItem[]
-}
+export type { MenuItem, MenuSection }
 
 /**
- * Пункт меню за поточним шляхом — по **найдовшому** співпадінню префікса.
- * Дзеркало Vue: utils/menuLocation.js.
- *
- * У menu.json є вкладені шляхи (`/analytics` і `/analytics/stats`), тож
- * перший-ліпший збіг дав би батьківський пункт замість дочірнього. Умова саме
- * `path === to || path.startsWith(to + '/')`, а не голий `startsWith(to)`:
- * інакше `/sto-managers` збігся б із `/sto` — це різні розділи меню.
+ * Пункт меню за поточним шляхом. Алгоритм — в ядрі (@core/menu), спільний з
+ * Vue; дані (menu.json) наразі окремі для кожного фронтенда — вже розійшлися
+ * на одне поле (note у демо-пункті), об'єднати в спільний файл не зроблено
+ * автоматично цим рефакторингом.
  */
-export function findMenuLocation(
-  path: string
-): { section: MenuSection; item: MenuItem } | null {
-  const menu = menuConfig as MenuSection[]
-  let best: { section: MenuSection; item: MenuItem } | null = null
-
-  for (const section of menu) {
-    for (const item of section.items) {
-      if (path === item.to || path.startsWith(item.to + '/')) {
-        if (!best || item.to.length > best.item.to.length) {
-          best = { section, item }
-        }
-      }
-    }
-  }
-
-  return best
+export function findMenuLocation(path: string): { section: MenuSection; item: MenuItem } | null {
+  return coreFindMenuLocation(menuConfig as MenuSection[], path)
 }

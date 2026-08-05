@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiGet } from '@/utils/api'
+import { formatOptionLabel, withDefaultPerPage } from '@core/remoteOptions'
 import type { Option } from '../types'
 
 // Спільний кеш на весь застосунок: один і той самий optionsUrl не тягнеться
@@ -8,20 +9,11 @@ import type { Option } from '../types'
 // самий довідник із іншими valueKey/labelKey пішов би другим запитом.
 const cache = new Map<string, Promise<any[]>>()
 
-// "{utc_offset} ({count})" -> "+03:00 (12)". Дзеркало Vue: composables/useRemoteOptions.js
-function formatLabel(template: string, row: any): string {
-  return template.replace(/\{(\w+)\}/g, (_, key) => row[key] ?? '')
-}
-
 function fetchRows(url: string): Promise<any[]> {
   if (!cache.has(url)) {
-    // Додаємо per_page=500 якщо URL ще не має цього параметра
-    const separator = url.includes('?') ? '&' : '?'
-    const fetchUrl = url.includes('per_page') ? url : `${url}${separator}per_page=500`
-
     cache.set(
       url,
-      apiGet(fetchUrl)
+      apiGet(withDefaultPerPage(url))
         .then((res) => res.data ?? [])
         .catch(() => [])
     )
@@ -45,7 +37,7 @@ export function fetchOptions(
   return fetchRows(url).then((rows) =>
     rows.map((item: any) => ({
       value: item[valueKey],
-      label: labelTemplate ? formatLabel(labelTemplate, item) : item[labelKey],
+      label: labelTemplate ? formatOptionLabel(labelTemplate, item) : item[labelKey],
     }))
   )
 }
@@ -73,7 +65,7 @@ export function useRemoteOptions(
       setOptions(
         list.map((item: any) => ({
           value: item[valueKey],
-          label: labelTemplate ? formatLabel(labelTemplate, item) : item[labelKey],
+          label: labelTemplate ? formatOptionLabel(labelTemplate, item) : item[labelKey],
         }))
       )
       setLoading(false)

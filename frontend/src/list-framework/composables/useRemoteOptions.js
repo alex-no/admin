@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Oleksandr Nosov. MIT License.
 import { ref, computed } from 'vue'
 import { useAuth } from '@/composables/useAuth'
+import { formatOptionLabel, withDefaultPerPage } from '@core/remoteOptions'
 
 // Кеш по URL, спільний для всіх компонентів (filter + cell), щоб той самий
 // довідник (наприклад, країни) не запитувався з бекенду повторно.
@@ -8,11 +9,6 @@ import { useAuth } from '@/composables/useAuth'
 // виклику свій: інакше другий виклик того самого URL з іншими valueKey/labelKey
 // мовчки дістав би підписи, зроблені для першого. (Так само в React-версії.)
 const cache = new Map()
-
-// "{utc_offset} ({count})" -> "+03:00 (12)"
-function formatLabel(template, row) {
-  return template.replace(/\{(\w+)\}/g, (_, key) => row[key] ?? '')
-}
 
 /**
  * @param {string} url                       - ендпоінт, що повертає { data: [...] }
@@ -48,11 +44,7 @@ export function useRemoteOptions(url, opts = {}) {
 
     cache.set(url, { rows, loading, error, total, truncated })
 
-    // Додаємо per_page=500 якщо URL ще не має цього параметра
-    const separator = url.includes('?') ? '&' : '?'
-    const fetchUrl = url.includes('per_page') ? url : `${url}${separator}per_page=500`
-
-    fetch(fetchUrl, { headers: authHeaders() })
+    fetch(withDefaultPerPage(url), { headers: authHeaders() })
       .then(async (res) => {
         const json = await res.json().catch(() => ({}))
         if (!res.ok) throw new Error(json.message ?? `Помилка завантаження списку (HTTP ${res.status})`)
@@ -75,7 +67,7 @@ export function useRemoteOptions(url, opts = {}) {
   const options = computed(() => {
     const mapped = entry.rows.value.map((row) => ({
       value: row[valueKey],
-      label: labelTemplate ? formatLabel(labelTemplate, row) : row[labelKey],
+      label: labelTemplate ? formatOptionLabel(labelTemplate, row) : row[labelKey],
     }))
 
     // Якщо довідник обрізаний — додаємо інформаційний рядок

@@ -1,4 +1,11 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useEffect, useState, useMemo } from 'react'
+import {
+  isAllOnPageSelected,
+  computeSelectedCount,
+  canSelectAllMatching as coreCanSelectAllMatching,
+  toggleAllOnPage,
+  toggleRowSelection,
+} from '@core/rowSelection'
 
 /**
  * Виділення рядків для масових дій (react-admin: bulk selection +
@@ -6,6 +13,7 @@ import { useState, useMemo, useEffect } from 'react'
  *   - явний список id (виділення чекбоксами, працює тільки в межах сторінки);
  *   - selectAllMatching — «всі записи, що підходять під поточний фільтр»,
  *     тоді бекенд отримує фільтр, а не список id.
+ * Чисті предикати/редʼюсери — в ядрі (@core/rowSelection), спільні з Vue.
  */
 interface UseRowSelectionOptions {
   items: any[]
@@ -18,19 +26,13 @@ export function useRowSelection({ items, total, resetOn = [] }: UseRowSelectionO
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [selectAllMatching, setSelectAllMatching] = useState(false)
 
-  const allOnPageSelected = useMemo(
-    () => items.length > 0 && items.every((row) => selectedIds.has(row.id)),
-    [items, selectedIds]
-  )
-
+  const allOnPageSelected = useMemo(() => isAllOnPageSelected(items, selectedIds), [items, selectedIds])
   const selectedCount = useMemo(
-    () => (selectAllMatching ? total : selectedIds.size),
+    () => computeSelectedCount(selectAllMatching, total, selectedIds),
     [selectAllMatching, total, selectedIds]
   )
-
-  // Пропонувати «виділити всі N» тільки якщо за фільтром є більше, ніж на сторінці
   const canSelectAllMatching = useMemo(
-    () => allOnPageSelected && !selectAllMatching && total > items.length,
+    () => coreCanSelectAllMatching(allOnPageSelected, selectAllMatching, total, items.length),
     [allOnPageSelected, selectAllMatching, total, items.length]
   )
 
@@ -40,22 +42,12 @@ export function useRowSelection({ items, total, resetOn = [] }: UseRowSelectionO
   }
 
   const toggleSelectAll = () => {
-    if (allOnPageSelected) {
-      setSelectedIds(new Set())
-    } else {
-      setSelectedIds(new Set(items.map((row) => row.id)))
-    }
+    setSelectedIds(toggleAllOnPage(items, selectedIds))
     setSelectAllMatching(false)
   }
 
   const toggleSelectRow = (id: number) => {
-    const newSet = new Set(selectedIds)
-    if (newSet.has(id)) {
-      newSet.delete(id)
-    } else {
-      newSet.add(id)
-    }
-    setSelectedIds(newSet)
+    setSelectedIds(toggleRowSelection(selectedIds, id))
     setSelectAllMatching(false)
   }
 

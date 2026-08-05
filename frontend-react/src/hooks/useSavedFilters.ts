@@ -1,48 +1,38 @@
 import { useCallback, useState } from 'react'
+import {
+  readSavedFilters,
+  writeSavedFilters,
+  upsertSavedFilter,
+  removeSavedFilter,
+  type FilterPreset as CoreFilterPreset,
+} from '@core/savedFilters'
 
-export interface FilterPreset {
-  name: string
+export interface FilterPreset extends CoreFilterPreset {
   filters?: Record<string, any>
   sort?: Array<{ key: string; dir: string }>
   perPage?: number
 }
 
-function storageKey(namespace: string): string {
-  return `admin.savedFilters:${namespace}`
-}
-
-function readAll(namespace: string): FilterPreset[] {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(storageKey(namespace)) ?? '')
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
-}
-
-function writeAll(namespace: string, presets: FilterPreset[]) {
-  localStorage.setItem(storageKey(namespace), JSON.stringify(presets))
-}
-
 /**
  * Іменовані пресети фільтрів (як "Saved Queries" у react-admin) у localStorage,
  * без бекенду. namespace — apiList сторінки, що викликає хук.
+ * Сховище і редʼюсери — в ядрі (@core/savedFilters), спільні з Vue.
  */
 export function useSavedFilters(namespace: string) {
-  const [presets, setPresets] = useState<FilterPreset[]>(() => readAll(namespace))
+  const [presets, setPresets] = useState<FilterPreset[]>(() => readSavedFilters(namespace) as FilterPreset[])
 
   const save = useCallback((name: string, snapshot: Omit<FilterPreset, 'name'>) => {
     setPresets(prev => {
-      const next = [...prev.filter(p => p.name !== name), { name, ...snapshot }]
-      writeAll(namespace, next)
+      const next = upsertSavedFilter(prev, name, snapshot) as FilterPreset[]
+      writeSavedFilters(namespace, next)
       return next
     })
   }, [namespace])
 
   const remove = useCallback((name: string) => {
     setPresets(prev => {
-      const next = prev.filter(p => p.name !== name)
-      writeAll(namespace, next)
+      const next = removeSavedFilter(prev, name) as FilterPreset[]
+      writeSavedFilters(namespace, next)
       return next
     })
   }, [namespace])

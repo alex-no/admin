@@ -1,5 +1,10 @@
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import {
+  parseMultiSort as coreParseMultiSort,
+  serializeMultiSort as coreSerializeMultiSort,
+  coerceUrlValue,
+} from '@core/urlState'
 
 /**
  * Composable для синхронизации фильтров и сортировки с URL
@@ -20,20 +25,15 @@ export function useUrlFilters(config) {
 
   const { filters = {}, sorting = null, multiSort = null, detail = null, onUpdate = null, mappers = {} } = config
 
+  // Ядро (@core/urlState) оперує 'asc'/'desc'; тут — 'ASC'/'DESC', бо в цю
+  // конвенцію зав'язані SortIcon.vue та інші сторінки поза list-framework
+  // (як і в DataListPage.vue → toggleSort, конвертація лише на межі виклику).
   function parseMultiSort(raw) {
-    if (!raw) return []
-    return String(raw)
-      .split(',')
-      .map((part) => {
-        const [key, dir] = part.split(':')
-        if (!key) return null
-        return { key, dir: String(dir ?? 'ASC').toUpperCase() === 'DESC' ? 'DESC' : 'ASC' }
-      })
-      .filter(Boolean)
+    return coreParseMultiSort(raw).map((s) => ({ key: s.key, dir: s.dir.toUpperCase() }))
   }
 
   function serializeMultiSort(items) {
-    return (items ?? []).map((s) => `${s.key}:${s.dir}`).join(',')
+    return coreSerializeMultiSort((items ?? []).map((s) => ({ key: s.key, dir: String(s.dir).toLowerCase() })))
   }
 
   // Функция для получения значения из URL с учетом mapper
@@ -48,15 +48,7 @@ export function useUrlFilters(config) {
       return mapper.fromUrl(urlValue)
     }
 
-    // Автоматическое преобразование типов
-    if (typeof defaultValue === 'number') {
-      return Number(urlValue) || defaultValue
-    }
-    if (typeof defaultValue === 'boolean') {
-      return urlValue === 'true' || urlValue === '1'
-    }
-
-    return urlValue
+    return coerceUrlValue(urlValue, defaultValue)
   }
 
   // Функция для преобразования значения в URL с учетом mapper

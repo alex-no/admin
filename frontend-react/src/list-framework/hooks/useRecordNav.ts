@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
+import { computeRecordPosition, findIndexById, hasNextRecord, hasPrevRecord } from '@core/recordNav'
 
 interface RecordNavOptions {
   items: any[]
@@ -25,6 +26,7 @@ interface RecordNavReturn {
  * Навігація «попередній / наступний запис» у модалці (react-admin:
  * PrevNextButtons). Ходить по items поточної сторінки, а на межі — підгружає
  * сусідню сторінку через load() і відкриває крайній запис із неї.
+ * Позиційна математика — в ядрі (@core/recordNav), спільна з Vue.
  */
 export function useRecordNav({
   items,
@@ -38,18 +40,11 @@ export function useRecordNav({
 }: RecordNavOptions): RecordNavReturn {
   const [busy, setBusy] = useState(false)
 
-  const indexOnPage = useMemo(
-    () => items.findIndex((r) => r.id === currentId),
-    [items, currentId]
-  )
+  const indexOnPage = useMemo(() => findIndexById(items, currentId), [items, currentId])
+  const position = useMemo(() => computeRecordPosition(indexOnPage, page, perPage), [indexOnPage, page, perPage])
 
-  const position = useMemo(
-    () => (indexOnPage === -1 ? null : (page - 1) * perPage + indexOnPage + 1),
-    [indexOnPage, page, perPage]
-  )
-
-  const hasPrev = position !== null && position > 1
-  const hasNext = position !== null && position < total
+  const hasPrev = hasPrevRecord(position)
+  const hasNext = hasNextRecord(position, total)
 
   const step = useCallback(
     async (delta: number) => {

@@ -1,4 +1,5 @@
 import { computed, ref } from 'vue'
+import { computeRecordPosition, findIndexById, hasNextRecord, hasPrevRecord } from '@core/recordNav'
 
 /**
  * Навігація «попередній / наступний запис» у модалці (react-admin:
@@ -16,15 +17,13 @@ import { computed, ref } from 'vue'
  * @param {Function} [opts.canLeave] - () => boolean|Promise<boolean>, guard незбережених змін
  */
 export function useRecordNav({ items, page, perPage, total, currentId, load, openRecord, canLeave }) {
-  const busy = ref(false)   // блокує паралельні load() при швидкому клацанні
+  const busy = ref(false) // блокує паралельні load() при швидкому клацанні
 
-  const indexOnPage = computed(() => items.value.findIndex((r) => r.id === currentId.value))
-  const position    = computed(() =>
-    indexOnPage.value === -1 ? null : (page.value - 1) * perPage.value + indexOnPage.value + 1
-  )
+  const indexOnPage = computed(() => findIndexById(items.value, currentId.value))
+  const position = computed(() => computeRecordPosition(indexOnPage.value, page.value, perPage.value))
 
-  const hasPrev = computed(() => position.value !== null && position.value > 1)
-  const hasNext = computed(() => position.value !== null && position.value < total.value)
+  const hasPrev = computed(() => hasPrevRecord(position.value))
+  const hasNext = computed(() => hasNextRecord(position.value, total.value))
 
   async function step(delta) {
     if (busy.value) return
