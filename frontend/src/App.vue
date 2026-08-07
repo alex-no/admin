@@ -20,7 +20,6 @@ const localeKey = computed(() => locale.value)
 
 // Update document.lang when locale changes
 watch(locale, (newLocale) => {
-  console.log('[App.vue] Locale changed to:', newLocale)
   document.documentElement.lang = newLocale
 })
 

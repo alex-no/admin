@@ -2989,7 +2989,6 @@ async function changeReviewStatus(review, newStatus) {
 
     // Показываем новый рейтинг СТО если он был пересчитан
     if (json.data.sto_rating !== null && json.data.sto_rating !== undefined) {
-      console.log(`Рейтинг СТО оновлено: ${json.data.sto_rating}`)
       // Обновляем рейтинг в модальном окне если он там есть
       if (modalData.value?.rating !== undefined) {
         modalData.value.rating = json.data.sto_rating

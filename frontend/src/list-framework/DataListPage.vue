@@ -321,7 +321,7 @@
       v-if="canCreate"
       v-model:visible="createOpen"
       storage-key="list-framework-create"
-      :default-mode="'docked-right'"
+      mode="docked-right"
       :default-width="520"
       :min-width="380"
       :max-width="760"

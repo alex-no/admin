@@ -23,34 +23,24 @@ export function useAuth() {
       user.value = { username, name: username, permissions: ['*'] }
       return user.value
     }
-    try {
-      const res = await fetch('/api/admin/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      })
-      const json = await res.json()
+    const res = await fetch('/api/admin/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    })
+    const json = await res.json()
 
-      console.log('Auth response:', json) // DEBUG
-      console.log('Response status:', json.status) // DEBUG
-
-      // Handle password setup required (first login)
-      if (json.status === 'password_setup_required') {
-        console.log('Password setup needed! Returning object with needsPasswordSetup=true') // DEBUG
-        return { needsPasswordSetup: true, userId: json.user_id, message: json.message }
-      }
-
-      if (!res.ok || json.status !== 'success') {
-        console.log('Login failed, throwing error') // DEBUG
-        throw new Error(json.message ?? 'Login failed')
-      }
-      localStorage.setItem(TOKEN_KEY, json.token)
-      user.value = json.user
-      return json.user
-    } catch (err) {
-      console.error('Login exception:', err) // DEBUG
-      throw err
+    // Handle password setup required (first login)
+    if (json.status === 'password_setup_required') {
+      return { needsPasswordSetup: true, userId: json.user_id, message: json.message }
     }
+
+    if (!res.ok || json.status !== 'success') {
+      throw new Error(json.message ?? 'Login failed')
+    }
+    localStorage.setItem(TOKEN_KEY, json.token)
+    user.value = json.user
+    return json.user
   }
 
   async function fetchMe() {

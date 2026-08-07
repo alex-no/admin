@@ -152,7 +152,6 @@ const debounceLoad = () => {
 }
 
 async function load(p = 1) {
-  console.log('Feedback: load() called, page:', p)
   loading.value = true
   error.value = null
   page.value = p
@@ -167,9 +166,7 @@ async function load(p = 1) {
   if (filterPriority.value) params.set('priority', filterPriority.value)
 
   try {
-    console.log('Feedback: calling API /admin/feedback?' + params)
     const res = await apiGet(`/admin/feedback?${params}`)
-    console.log('Feedback: API response:', res)
     if (res.success) {
       items.value = res.data
       total.value = res.pagination.total

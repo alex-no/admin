@@ -262,10 +262,6 @@ async function approve(id) {
     const response = await apiPost(`/admin/reviews/${id}/approve`)
 
     if (response.success) {
-      // Показываем новый рейтинг СТО если он был пересчитан
-      if (response.data?.sto_rating !== null && response.data?.sto_rating !== undefined) {
-        console.log(`Рейтинг СТО обновлен: ${response.data.sto_rating}`)
-      }
       await load(page.value)
       await loadStats()
     } else {
@@ -284,10 +280,6 @@ async function reject(id) {
     const response = await apiPost(`/admin/reviews/${id}/reject`)
 
     if (response.success) {
-      // Показываем новый рейтинг СТО если он был пересчитан
-      if (response.data?.sto_rating !== null && response.data?.sto_rating !== undefined) {
-        console.log(`Рейтинг СТО обновлен: ${response.data.sto_rating}`)
-      }
       await load(page.value)
       await loadStats()
     } else {

@@ -34,9 +34,6 @@ const i18n = createI18n({
 // Set initial document language
 document.documentElement.lang = i18n.global.locale.value
 
-console.log('[i18n] Initialized with locale:', i18n.global.locale.value)
-console.log('[i18n] Available messages:', Object.keys(messages))
-
 const app = createApp(App)
 app.use(router)
 app.use(i18n)
