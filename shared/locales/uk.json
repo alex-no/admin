@@ -252,5 +252,29 @@
     "light": "Світла тема",
     "dark": "Темна тема",
     "auto": "Авто (за системою)"
+  },
+  "dashboard": {
+    "title": "Панель управління"
+  },
+  "systemHealth": {
+    "title": "Моніторинг системи",
+    "server": "Сервер",
+    "disk": "Диск",
+    "loadAvg": "Load avg",
+    "memory": "Пам'ять",
+    "database": "База даних",
+    "connections": "З'єднання",
+    "slowQueries": "Повільні запити",
+    "size": "Розмір",
+    "storage": "Сховище (MinIO)",
+    "reachable": "Доступне",
+    "unreachable": "Недоступне",
+    "files": "Файлів",
+    "volume": "Обсяг",
+    "apiErrors": "Помилки API",
+    "lastHour": "За годину",
+    "lastDay": "За добу",
+    "megabytes": "{value} МБ",
+    "loadError": "Помилка завантаження метрик"
   }
 }

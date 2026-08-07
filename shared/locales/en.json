@@ -252,5 +252,29 @@
     "light": "Light theme",
     "dark": "Dark theme",
     "auto": "Auto (system)"
+  },
+  "dashboard": {
+    "title": "Dashboard"
+  },
+  "systemHealth": {
+    "title": "System Monitoring",
+    "server": "Server",
+    "disk": "Disk",
+    "loadAvg": "Load avg",
+    "memory": "Memory",
+    "database": "Database",
+    "connections": "Connections",
+    "slowQueries": "Slow queries",
+    "size": "Size",
+    "storage": "Storage (MinIO)",
+    "reachable": "Available",
+    "unreachable": "Unavailable",
+    "files": "Files",
+    "volume": "Volume",
+    "apiErrors": "API Errors",
+    "lastHour": "Last hour",
+    "lastDay": "Last 24h",
+    "megabytes": "{value} MB",
+    "loadError": "Failed to load metrics"
   }
 }

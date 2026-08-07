@@ -29,6 +29,11 @@ i18n
     fallbackLng: 'uk',
     interpolation: {
       escapeValue: false, // React already escapes
+      // Ключі спільні з vue-i18n (../shared/locales) — там синтаксис {var},
+      // не i18next-дефолтний {{var}}. Міняємо префікс/суфікс тут, а не
+      // переписуємо самі рядки на подвійні дужки.
+      prefix: '{',
+      suffix: '}',
     },
   })
 

@@ -3,7 +3,7 @@
     <div class="d-flex align-items-center justify-content-between mb-2">
       <h6 class="mb-0">
         <i class="bi bi-hdd-network me-1"></i>
-        Моніторинг системи
+        {{ t('systemHealth.title') }}
       </h6>
       <button class="btn btn-sm btn-outline-secondary" :disabled="loading" @click="load">
         <span v-if="loading" class="spinner-border spinner-border-sm"></span>
@@ -18,20 +18,20 @@
       <div class="col-sm-6 col-lg-3">
         <div class="card h-100 shadow-sm">
           <div class="card-body">
-            <div class="text-muted small mb-2"><i class="bi bi-cpu me-1"></i>Сервер</div>
+            <div class="text-muted small mb-2"><i class="bi bi-cpu me-1"></i>{{ t('systemHealth.server') }}</div>
             <div class="small">
               <div class="d-flex justify-content-between">
-                <span>Диск</span>
+                <span>{{ t('systemHealth.disk') }}</span>
                 <span :class="pctClass(data?.server?.disk_usage_percent)">
                   {{ fmtPercent(data?.server?.disk_usage_percent) }}
                 </span>
               </div>
               <div class="d-flex justify-content-between">
-                <span>Load avg</span>
+                <span>{{ t('systemHealth.loadAvg') }}</span>
                 <span>{{ data?.server?.load_average ? data.server.load_average.join(' / ') : '—' }}</span>
               </div>
               <div class="d-flex justify-content-between">
-                <span>Пам'ять</span>
+                <span>{{ t('systemHealth.memory') }}</span>
                 <span :class="pctClass(data?.server?.memory?.usage_percent)">
                   {{ fmtPercent(data?.server?.memory?.usage_percent) }}
                 </span>
@@ -45,19 +45,19 @@
       <div class="col-sm-6 col-lg-3">
         <div class="card h-100 shadow-sm">
           <div class="card-body">
-            <div class="text-muted small mb-2"><i class="bi bi-database me-1"></i>База даних</div>
+            <div class="text-muted small mb-2"><i class="bi bi-database me-1"></i>{{ t('systemHealth.database') }}</div>
             <div class="small">
               <div class="d-flex justify-content-between">
-                <span>З'єднання</span>
+                <span>{{ t('systemHealth.connections') }}</span>
                 <span>{{ data?.database?.connections ?? '—' }}</span>
               </div>
               <div class="d-flex justify-content-between">
-                <span>Повільні запити</span>
+                <span>{{ t('systemHealth.slowQueries') }}</span>
                 <span>{{ data?.database?.slow_queries ?? '—' }}</span>
               </div>
               <div class="d-flex justify-content-between">
-                <span>Розмір</span>
-                <span>{{ data?.database?.size_mb != null ? data.database.size_mb + ' МБ' : '—' }}</span>
+                <span>{{ t('systemHealth.size') }}</span>
+                <span>{{ data?.database?.size_mb != null ? t('systemHealth.megabytes', { value: data.database.size_mb }) : '—' }}</span>
               </div>
             </div>
           </div>
@@ -68,21 +68,21 @@
       <div class="col-sm-6 col-lg-3">
         <div class="card h-100 shadow-sm">
           <div class="card-body">
-            <div class="text-muted small mb-2"><i class="bi bi-hdd-rack me-1"></i>Сховище (MinIO)</div>
+            <div class="text-muted small mb-2"><i class="bi bi-hdd-rack me-1"></i>{{ t('systemHealth.storage') }}</div>
             <div class="small">
               <div class="d-flex justify-content-between">
-                <span>Статус</span>
+                <span>{{ t('table.status') }}</span>
                 <span :class="data?.storage?.reachable ? 'text-success' : 'text-danger'">
-                  {{ data?.storage?.reachable ? 'Доступне' : 'Недоступне' }}
+                  {{ data?.storage?.reachable ? t('systemHealth.reachable') : t('systemHealth.unreachable') }}
                 </span>
               </div>
               <div class="d-flex justify-content-between">
-                <span>Файлів</span>
+                <span>{{ t('systemHealth.files') }}</span>
                 <span>{{ data?.storage?.file_count ?? '—' }}</span>
               </div>
               <div class="d-flex justify-content-between">
-                <span>Обсяг</span>
-                <span>{{ data?.storage?.total_mb != null ? data.storage.total_mb + ' МБ' : '—' }}</span>
+                <span>{{ t('systemHealth.volume') }}</span>
+                <span>{{ data?.storage?.total_mb != null ? t('systemHealth.megabytes', { value: data.storage.total_mb }) : '—' }}</span>
               </div>
             </div>
           </div>
@@ -93,14 +93,14 @@
       <div class="col-sm-6 col-lg-3">
         <div class="card h-100 shadow-sm">
           <div class="card-body">
-            <div class="text-muted small mb-2"><i class="bi bi-exclamation-triangle me-1"></i>Помилки API</div>
+            <div class="text-muted small mb-2"><i class="bi bi-exclamation-triangle me-1"></i>{{ t('systemHealth.apiErrors') }}</div>
             <div class="small">
               <div class="d-flex justify-content-between">
-                <span>За годину</span>
+                <span>{{ t('systemHealth.lastHour') }}</span>
                 <span :class="countClass(data?.errors?.last_hour)">{{ data?.errors?.last_hour ?? '—' }}</span>
               </div>
               <div class="d-flex justify-content-between">
-                <span>За добу</span>
+                <span>{{ t('systemHealth.lastDay') }}</span>
                 <span :class="countClass(data?.errors?.last_24h)">{{ data?.errors?.last_24h ?? '—' }}</span>
               </div>
             </div>
@@ -113,7 +113,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { apiGet } from '../utils/api'
+
+const { t } = useI18n({ useScope: 'global' })
 
 const loading = ref(false)
 const error = ref(null)
@@ -127,7 +130,7 @@ async function load() {
     if (res.status === 'success') {
       data.value = res.data
     } else {
-      error.value = res.message || 'Помилка завантаження метрик'
+      error.value = res.message || t('systemHealth.loadError')
     }
   } catch (err) {
     error.value = err.message

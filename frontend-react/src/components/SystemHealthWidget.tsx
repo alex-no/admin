@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { apiGet } from '@/utils/api'
 
 interface Metrics {
@@ -50,6 +51,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 export default function SystemHealthWidget() {
+  const { t } = useTranslation()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [data, setData] = useState<Metrics | null>(null)
@@ -61,11 +63,11 @@ export default function SystemHealthWidget() {
       const res = await apiGet('/admin/system/metrics')
       setData(res.data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Помилка завантаження метрик')
+      setError(err instanceof Error ? err.message : t('systemHealth.loadError'))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => { load() }, [load])
 
@@ -74,7 +76,7 @@ export default function SystemHealthWidget() {
       <div className="d-flex align-items-center justify-content-between mb-2">
         <h6 className="mb-0">
           <i className="bi bi-hdd-network me-1" />
-          Моніторинг системи
+          {t('systemHealth.title')}
         </h6>
         <button className="btn btn-sm btn-outline-secondary" disabled={loading} onClick={load}>
           {loading
@@ -91,17 +93,17 @@ export default function SystemHealthWidget() {
           <div className="col-sm-6 col-lg-3">
             <div className="card h-100 shadow-sm">
               <div className="card-body">
-                <div className="text-muted small mb-2"><i className="bi bi-cpu me-1" />Сервер</div>
+                <div className="text-muted small mb-2"><i className="bi bi-cpu me-1" />{t('systemHealth.server')}</div>
                 <div className="small">
-                  <Row label="Диск">
+                  <Row label={t('systemHealth.disk')}>
                     <span className={pctClass(data?.server?.disk_usage_percent)}>
                       {fmtPercent(data?.server?.disk_usage_percent)}
                     </span>
                   </Row>
-                  <Row label="Load avg">
+                  <Row label={t('systemHealth.loadAvg')}>
                     <span>{data?.server?.load_average?.join(' / ') ?? '—'}</span>
                   </Row>
-                  <Row label="Пам'ять">
+                  <Row label={t('systemHealth.memory')}>
                     <span className={pctClass(data?.server?.memory?.usage_percent)}>
                       {fmtPercent(data?.server?.memory?.usage_percent)}
                     </span>
@@ -115,16 +117,16 @@ export default function SystemHealthWidget() {
           <div className="col-sm-6 col-lg-3">
             <div className="card h-100 shadow-sm">
               <div className="card-body">
-                <div className="text-muted small mb-2"><i className="bi bi-database me-1" />База даних</div>
+                <div className="text-muted small mb-2"><i className="bi bi-database me-1" />{t('systemHealth.database')}</div>
                 <div className="small">
-                  <Row label="З'єднання">
+                  <Row label={t('systemHealth.connections')}>
                     <span>{data?.database?.connections ?? '—'}</span>
                   </Row>
-                  <Row label="Повільні запити">
+                  <Row label={t('systemHealth.slowQueries')}>
                     <span>{data?.database?.slow_queries ?? '—'}</span>
                   </Row>
-                  <Row label="Розмір">
-                    <span>{data?.database?.size_mb != null ? `${data.database.size_mb} МБ` : '—'}</span>
+                  <Row label={t('systemHealth.size')}>
+                    <span>{data?.database?.size_mb != null ? t('systemHealth.megabytes', { value: data.database.size_mb }) : '—'}</span>
                   </Row>
                 </div>
               </div>
@@ -135,18 +137,18 @@ export default function SystemHealthWidget() {
           <div className="col-sm-6 col-lg-3">
             <div className="card h-100 shadow-sm">
               <div className="card-body">
-                <div className="text-muted small mb-2"><i className="bi bi-hdd-rack me-1" />Сховище (MinIO)</div>
+                <div className="text-muted small mb-2"><i className="bi bi-hdd-rack me-1" />{t('systemHealth.storage')}</div>
                 <div className="small">
-                  <Row label="Статус">
+                  <Row label={t('table.status')}>
                     <span className={data?.storage?.reachable ? 'text-success' : 'text-danger'}>
-                      {data?.storage?.reachable ? 'Доступне' : 'Недоступне'}
+                      {data?.storage?.reachable ? t('systemHealth.reachable') : t('systemHealth.unreachable')}
                     </span>
                   </Row>
-                  <Row label="Файлів">
+                  <Row label={t('systemHealth.files')}>
                     <span>{data?.storage?.file_count ?? '—'}</span>
                   </Row>
-                  <Row label="Обсяг">
-                    <span>{data?.storage?.total_mb != null ? `${data.storage.total_mb} МБ` : '—'}</span>
+                  <Row label={t('systemHealth.volume')}>
+                    <span>{data?.storage?.total_mb != null ? t('systemHealth.megabytes', { value: data.storage.total_mb }) : '—'}</span>
                   </Row>
                 </div>
               </div>
@@ -158,15 +160,15 @@ export default function SystemHealthWidget() {
             <div className="card h-100 shadow-sm">
               <div className="card-body">
                 <div className="text-muted small mb-2">
-                  <i className="bi bi-exclamation-triangle me-1" />Помилки API
+                  <i className="bi bi-exclamation-triangle me-1" />{t('systemHealth.apiErrors')}
                 </div>
                 <div className="small">
-                  <Row label="За годину">
+                  <Row label={t('systemHealth.lastHour')}>
                     <span className={countClass(data?.errors?.last_hour)}>
                       {data?.errors?.last_hour ?? '—'}
                     </span>
                   </Row>
-                  <Row label="За добу">
+                  <Row label={t('systemHealth.lastDay')}>
                     <span className={countClass(data?.errors?.last_24h)}>
                       {data?.errors?.last_24h ?? '—'}
                     </span>

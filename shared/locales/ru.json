@@ -252,5 +252,29 @@
     "light": "Светлая тема",
     "dark": "Тёмная тема",
     "auto": "Авто (системная)"
+  },
+  "dashboard": {
+    "title": "Панель управления"
+  },
+  "systemHealth": {
+    "title": "Мониторинг системы",
+    "server": "Сервер",
+    "disk": "Диск",
+    "loadAvg": "Load avg",
+    "memory": "Память",
+    "database": "База данных",
+    "connections": "Соединения",
+    "slowQueries": "Медленные запросы",
+    "size": "Размер",
+    "storage": "Хранилище (MinIO)",
+    "reachable": "Доступно",
+    "unreachable": "Недоступно",
+    "files": "Файлов",
+    "volume": "Объём",
+    "apiErrors": "Ошибки API",
+    "lastHour": "За час",
+    "lastDay": "За сутки",
+    "megabytes": "{value} МБ",
+    "loadError": "Ошибка загрузки метрик"
   }
 }

@@ -1,6 +1,6 @@
 <template>
   <BaseLayout>
-    <h5 class="mb-4">Панель управління</h5>
+    <h5 class="mb-4">{{ t('dashboard.title') }}</h5>
     <SystemHealthWidget v-if="auth.can(P.system.monitoringView)" />
     <div class="row g-3">
       <div v-for="section in visibleMenu" :key="section.id" class="col-sm-6 col-lg-3">
