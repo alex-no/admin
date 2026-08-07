@@ -105,7 +105,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { availableLocales } from '@/locales'
+import { availableLocales } from '@locales'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 
 const { t, locale } = useI18n()

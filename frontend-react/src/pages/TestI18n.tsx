@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { availableLocales } from '@/locales'
+import { availableLocales } from '@locales'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 
 export default function TestI18n() {

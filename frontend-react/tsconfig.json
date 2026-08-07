@@ -28,10 +28,13 @@
       "@configs/*": ["../shared/page-configs/*"],
       /* Чиста логіка, спільна з Vue-версією — див. ../shared/core/README.md */
       "@core/*": ["../shared/core/*"],
-      "@core": ["../shared/core/index.ts"]
+      "@core": ["../shared/core/index.ts"],
+      /* Locale-файли, спільні з Vue-версією — див. ../shared/locales/README.md */
+      "@locales/*": ["../shared/locales/*"],
+      "@locales": ["../shared/locales/index.ts"]
     }
   },
-  "include": ["src", "../shared/page-configs"],
+  "include": ["src", "../shared/page-configs", "../shared/locales"],
   /* shared/core has its own package.json + vitest — не тягнути *.test.ts і
      vitest.config.ts у білд React (vitest тут не встановлений). Модулі ядра
      все одно потрапляють у програму транзитивно, через імпорт з @core. */

@@ -9,6 +9,8 @@ import path from 'path'
 const sharedConfigs = path.resolve(__dirname, '../shared/page-configs')
 // Чиста логіка (без Vue/React), спільна з frontend/ — див. ../shared/core/README.md
 const sharedCore = path.resolve(__dirname, '../shared/core')
+// Locale-файли, спільні з frontend/ — див. ../shared/locales/README.md
+const sharedLocales = path.resolve(__dirname, '../shared/locales')
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -18,6 +20,7 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
       '@configs': sharedConfigs,
       '@core': sharedCore,
+      '@locales': sharedLocales,
     },
   },
   build: {
@@ -32,7 +35,7 @@ export default defineConfig({
     port: 5174,
     // Без цього dev-сервер не віддає файли поза своїм root — а @configs саме там
     fs: {
-      allow: [path.resolve(__dirname), sharedConfigs, sharedCore],
+      allow: [path.resolve(__dirname), sharedConfigs, sharedCore, sharedLocales],
     },
     watch: {
       usePolling: true,

@@ -28,7 +28,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { availableLocales } from '@/locales'
+import { availableLocales } from '@locales'
 
 const { locale, t } = useI18n({ useScope: 'global' })
 

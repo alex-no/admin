@@ -6,7 +6,7 @@ import './styles/theme.css'
 import App from './App.vue'
 import router from './router'
 import { installAuthRedirect } from './utils/authInterceptor'
-import { messages } from './locales'
+import { messages } from '@locales'
 
 installAuthRedirect(router)
 

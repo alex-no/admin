@@ -132,12 +132,12 @@ reverse-proxy (у проді — хостовий Apache з Let's Encrypt).
 | Меню, кероване JSON | `frontend/src/config/menu.json` | Пункти меню + права доступу + (задел) ролі — без правки Vue-компонентів |
 | Breadcrumbs | `frontend/src/components/Breadcrumbs.vue` | Ланцюжок «Головна / Розділ / Сторінка» будується з того самого `menu.json`, що й меню, — крихти й підсвічування активного пункту не можуть розійтися |
 | Авторизація з dev-заглушкою | `frontend/src/composables/useAuth.js` | `VITE_MOCK_AUTH=true` — пускає з будь-якими даними, поки немає справжнього бекенда; `=false` — ходить у реальний `/api/admin/auth/*` |
-| Багатомовність (i18n): українська/англійська/російська | `frontend/src/locales/*.json` + `vue-i18n` (`main.js`) | Перемикач мови — `components/LanguageSwitcher.vue` у `TopNav.vue`; локаль зберігається в localStorage (`admin.locale`), зміна без перезавантаження. Підпис у JSON-конфігах (колонки, фільтри, `menu.json`) — або звичайний текст, або ключ перекладу (`"table.name"`): рендерер сам розрізняє за наявністю крапки в рядку, окремого прапорця не потрібно |
+| Багатомовність (i18n): українська/англійська/російська | `shared/locales/*.json` (спільні з React, alias `@locales`) + `vue-i18n` (`main.js`) | Перемикач мови — `components/LanguageSwitcher.vue` у `TopNav.vue`; локаль зберігається в localStorage (`admin.locale`), зміна без перезавантаження. Підпис у JSON-конфігах (колонки, фільтри, `menu.json`) — або звичайний текст, або ключ перекладу (`"table.name"`): рендерер сам розрізняє за наявністю крапки в рядку, окремого прапорця не потрібно |
 
 Якщо цільовий проект на React — усе перелічене вище є і там, з тими самими іменами
 й тим самим контрактом (див. розділ 6): `frontend-react/src/list-framework/`,
 `components/BaseModal.tsx`, `hooks/useModalWindow.ts`, `usePageLayout.ts`,
-`useUrlFilters.ts`, `contexts/AuthContext.tsx`, `src/locales/*.json` + `i18n.ts`
+`useUrlFilters.ts`, `contexts/AuthContext.tsx`, `shared/locales/*.json` + `i18n.ts`
 (`react-i18next`). Кроки інтеграції нижче однакові для обох — відрізняються лише
 розширення файлів (і, звісно, обирається лише одна з двох реалізацій, не обидві —
 див. крок 0 нижче). Два місця, де контракт розходиться на практиці (область
