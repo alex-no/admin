@@ -4,7 +4,7 @@
     <div :style="contentMargin" class="page-content-wrapper">
       <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
         <div class="d-flex align-items-center gap-2">
-          <h5 class="mb-0">Марки авто</h5>
+          <h5 class="mb-0">{{ t('carBrands.title') }}</h5>
           <button v-if="canCreate" class="btn btn-sm btn-success" @click="openCreateModal">
             <i class="bi bi-plus-lg"></i>
           </button>
@@ -15,11 +15,11 @@
             type="text"
             class="form-control form-control-sm"
             style="width:200px"
-            placeholder="Пошук за назвою..."
+            :placeholder="t('filter.searchPlaceholder')"
             @input="debounceLoad"
           />
           <select v-model="filterCountry" class="form-select form-select-sm" style="width:auto" @change="load(1)">
-            <option :value="null">Всі країни</option>
+            <option :value="null">{{ t('catalog.allCountries') }}</option>
             <option v-for="c in countriesList" :key="c.id" :value="c.id">{{ c.name_uk }}</option>
           </select>
         </div>
@@ -36,21 +36,21 @@
           <table class="table table-hover align-middle mb-0 small">
             <thead>
               <tr>
-                <th style="width:50px" class="text-end">ID</th>
+                <th style="width:50px" class="text-end">{{ t('table.id') }}</th>
                 <th class="th-sortable" @click="toggleSort('name')">
-                  Назва
+                  {{ t('table.name') }}
                   <i v-if="sortKey === 'name' && sortDir === 'asc'"       class="bi bi-chevron-up ms-1"></i>
                   <i v-else-if="sortKey === 'name' && sortDir === 'desc'" class="bi bi-chevron-down ms-1"></i>
                   <i v-else class="bi bi-chevron-expand ms-1 opacity-25"></i>
                 </th>
-                <th>Країна</th>
+                <th>{{ t('stoList.countryLabel') }}</th>
                 <th class="th-sortable" style="width:120px" @click="toggleSort('founded_year')">
-                  Рік заснув.
+                  {{ t('catalog.foundedYearShortCol') }}
                   <i v-if="sortKey === 'founded_year' && sortDir === 'asc'"       class="bi bi-chevron-up ms-1"></i>
                   <i v-else-if="sortKey === 'founded_year' && sortDir === 'desc'" class="bi bi-chevron-down ms-1"></i>
                   <i v-else class="bi bi-chevron-expand ms-1 opacity-25"></i>
                 </th>
-                <th>Сайт</th>
+                <th>{{ t('stoList.websiteLabel') }}</th>
                 <th style="width:60px"></th>
               </tr>
             </thead>
@@ -70,13 +70,13 @@
                   <button v-if="canEdit || justCreatedIds.has(row.id)" class="btn btn-sm btn-outline-secondary me-1" @click="openModal(row)">
                     <i class="bi bi-pencil"></i>
                   </button>
-                  <button v-if="canDelete" class="btn btn-sm btn-outline-danger" title="Видалити" @click="deleteRow(row)">
+                  <button v-if="canDelete" class="btn btn-sm btn-outline-danger" :title="t('common.delete')" @click="deleteRow(row)">
                     <i class="bi bi-trash"></i>
                   </button>
                 </td>
               </tr>
               <tr v-if="!items.length">
-                <td colspan="6" class="text-center text-muted py-4">Немає даних</td>
+                <td colspan="6" class="text-center text-muted py-4">{{ t('common.noData') }}</td>
               </tr>
             </tbody>
           </table>
@@ -84,7 +84,7 @@
         </div>
 
         <div class="d-flex justify-content-between align-items-center mt-3">
-          <span class="text-muted small">Всього: {{ total }}</span>
+          <span class="text-muted small">{{ t('analytics.totalCount', { value: total }) }}</span>
           <nav v-if="totalPages > 1">
             <ul class="pagination pagination-sm mb-0">
               <li class="page-item" :class="{ disabled: page === 1 }">
@@ -106,6 +106,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import BaseLayout from '@/layouts/BaseLayout.vue'
 import CarBrandModal from '@/components/CarBrandModal.vue'
 import { useAuth } from '@/composables/useAuth'
@@ -113,6 +114,7 @@ import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import { usePageLayout } from '@/composables/usePageLayout'
 import cfg from './car-brands.config.json'
 
+const { t } = useI18n({ useScope: 'global' })
 const { can, authHeaders } = useAuth()
 const { deleteWithUndo } = useUndoableDelete()
 const { contentMargin } = usePageLayout()
@@ -159,7 +161,7 @@ async function load(p = 1) {
     const cid  = filterCountry.value !== null ? `&country_id=${filterCountry.value}` : ''
     const res  = await fetch(`${cfg.apiList}?per_page=200&page=${p}${sort}${q}${cid}`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     items.value      = json.data ?? []
     total.value      = json.pagination?.total ?? 0
     totalPages.value = json.pagination?.total_pages ?? 1
@@ -176,7 +178,7 @@ function deleteRow(row) {
   if (index === -1) return
 
   deleteWithUndo({
-    message: `Марку «${row.name}» видалено`,
+    message: t('carBrands.deletedMessage', { name: row.name }),
     remove: () => {
       items.value.splice(index, 1)
       justCreatedIds.value.delete(row.id)
@@ -189,7 +191,7 @@ function deleteRow(row) {
     commit: async () => {
       const res  = await fetch(`${cfg.apiDelete}/${row.id}`, { method: 'DELETE', headers: authHeaders() })
       const json = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(json.message ?? 'Помилка видалення')
+      if (!res.ok) throw new Error(json.message ?? t('list.deleteError'))
     },
     onCommitError: () => load(page.value),
   })

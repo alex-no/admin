@@ -12,7 +12,7 @@
     :max-height="800"
   >
     <template #title>
-      <h5 class="mb-0">{{ modalMode === 'create' ? 'Нова країна' : 'Редагування країни' }}</h5>
+      <h5 class="mb-0">{{ modalMode === 'create' ? t('countries.newTitle') : t('countries.editTitle') }}</h5>
     </template>
 
     <div v-if="saveError" class="alert alert-danger small mb-3">{{ saveError }}</div>
@@ -22,7 +22,7 @@
           <template v-if="mf.key.startsWith('_')"></template>
           <label v-else class="form-label small mb-1"
                  :class="{ 'text-muted': cfg.fields[mf.key].type === 'integer' || cfg.fields[mf.key].type === 'datetime' }">
-            {{ cfg.fields[mf.key].label }}
+            {{ fieldLabel(mf.key) }}
           </label>
 
           <template v-if="mf.key.startsWith('_')"><!-- spacer --></template>
@@ -34,11 +34,11 @@
           <template v-else-if="mf.key === 'is_active'">
             <div v-if="canEditInModal('is_active')" class="form-check form-switch mt-1 mb-0">
               <input v-model="modalForm.is_active" type="checkbox" class="form-check-input" id="modal-active" role="switch" />
-              <label class="form-check-label" for="modal-active">{{ modalForm.is_active ? 'Активна' : 'Неактивна' }}</label>
+              <label class="form-check-label" for="modal-active">{{ modalForm.is_active ? t('geography.activeFeminine') : t('geography.inactiveFeminine') }}</label>
             </div>
             <div v-else>
               <span class="badge" :class="modalData.is_active ? 'bg-success' : 'bg-danger'">
-                {{ modalData.is_active ? 'Активна' : 'Неактивна' }}
+                {{ modalData.is_active ? t('geography.activeFeminine') : t('geography.inactiveFeminine') }}
               </span>
             </div>
           </template>
@@ -64,10 +64,10 @@
     <template #footer>
       <div></div>
       <div class="d-flex gap-2">
-        <button class="btn btn-secondary btn-sm" @click="close">Скасувати</button>
+        <button class="btn btn-secondary btn-sm" @click="close">{{ t('common.cancel') }}</button>
         <button class="btn btn-primary btn-sm" :disabled="saving" @click="save">
           <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-          Зберегти
+          {{ t('common.save') }}
         </button>
       </div>
     </template>
@@ -76,11 +76,29 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import BaseModal from './BaseModal.vue'
 import cfg from '@/pages/geography/countries.config.json'
 
+const { t } = useI18n({ useScope: 'global' })
 const { can, authHeaders } = useAuth()
+
+const FIELD_LABEL_KEYS = {
+  id: 'table.id',
+  order_num: 'geography.orderNumLabel',
+  name_uk: 'cityTmpReview.nameUaLabel',
+  name_en: 'cityTmpReview.nameEnBracketLabel',
+  name_ru: 'cityTmpReview.nameRuBracketLabel',
+  currency_code: 'geography.currencyLabel',
+  is_active: 'filter.status',
+  created_at: 'stoList.createdLabel',
+  updated_at: 'stoList.updatedLabel',
+}
+function fieldLabel(key) {
+  const k = FIELD_LABEL_KEYS[key]
+  return k ? t(k) : cfg.fields[key]?.label ?? key
+}
 
 // Component state
 const visible = ref(false)
@@ -106,7 +124,7 @@ async function patch(id, fields) {
     body: JSON.stringify(fields),
   })
   const json = await res.json()
-  if (!res.ok) throw new Error(json.message ?? 'Помилка збереження')
+  if (!res.ok) throw new Error(json.message ?? t('list.saveError'))
   return json.data
 }
 
@@ -155,7 +173,7 @@ async function save() {
         body: JSON.stringify(fields),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.message ?? 'Помилка')
+      if (!res.ok) throw new Error(json.message ?? t('common.error'))
 
       // Dispatch event to notify parent
       window.dispatchEvent(new CustomEvent('country-created', { detail: json.data }))

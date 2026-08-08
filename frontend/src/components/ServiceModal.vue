@@ -11,21 +11,21 @@
     :max-height="800"
   >
     <template #title>
-      <h6 class="mb-0">{{ modalMode === 'create' ? 'Нова послуга' : 'Редагування послуги' }}</h6>
+      <h6 class="mb-0">{{ modalMode === 'create' ? t('services.newTitle') : t('services.editTitle') }}</h6>
     </template>
 
     <div class="row g-3">
 
       <div v-if="modalMode === 'edit'" class="col-sm-2">
-        <label class="form-label small mb-1">ID</label>
+        <label class="form-label small mb-1">{{ t('table.id') }}</label>
         <div class="readonly-field">{{ modalData.id }}</div>
       </div>
 
       <!-- Group -->
       <div :class="modalMode === 'edit' ? 'col-sm-5' : 'col-sm-6'">
-        <label class="form-label small mb-1">Група <span class="text-danger">*</span></label>
+        <label class="form-label small mb-1">{{ t('services.colGroup') }} <span class="text-danger">*</span></label>
         <select v-if="canEdit" v-model="modalForm.service_group_id" class="form-select form-select-sm">
-          <option :value="null" disabled>— оберіть групу —</option>
+          <option :value="null" disabled>{{ t('services.selectGroupPlaceholder') }}</option>
           <option v-for="g in groups" :key="g.id" :value="g.id">{{ g.name_uk }}</option>
         </select>
         <div v-else class="readonly-field">{{ modalData.group_name ?? '—' }}</div>
@@ -40,28 +40,28 @@
 
       <!-- Names -->
       <div class="col-sm-12">
-        <label class="form-label small mb-1">Назва [UA] <span class="text-danger">*</span></label>
+        <label class="form-label small mb-1">{{ t('cityTmpReview.nameUaLabel') }} <span class="text-danger">*</span></label>
         <input v-if="canEdit" v-model="modalForm.name_uk" type="text" class="form-control form-control-sm" />
         <div v-else class="readonly-field">{{ modalData.name_uk }}</div>
       </div>
       <div class="col-sm-6">
-        <label class="form-label small mb-1">Назва [EN] <span class="text-danger">*</span></label>
+        <label class="form-label small mb-1">{{ t('cityTmpReview.nameEnBracketLabel') }} <span class="text-danger">*</span></label>
         <input v-if="canEdit" v-model="modalForm.name_en" type="text" class="form-control form-control-sm" />
         <div v-else class="readonly-field">{{ modalData.name_en }}</div>
       </div>
       <div class="col-sm-6">
-        <label class="form-label small mb-1">Назва [RU]</label>
+        <label class="form-label small mb-1">{{ t('cityTmpReview.nameRuBracketLabel') }}</label>
         <input v-if="canEdit" v-model="modalForm.name_ru" type="text" class="form-control form-control-sm" />
         <div v-else class="readonly-field">{{ modalData.name_ru ?? '—' }}</div>
       </div>
 
       <template v-if="modalMode === 'edit'">
         <div class="col-sm-6">
-          <label class="form-label small mb-1">Створено</label>
+          <label class="form-label small mb-1">{{ t('stoList.createdLabel') }}</label>
           <div class="readonly-field text-muted small">{{ modalData.created_at }}</div>
         </div>
         <div class="col-sm-6">
-          <label class="form-label small mb-1">Оновлено</label>
+          <label class="form-label small mb-1">{{ t('stoList.updatedLabel') }}</label>
           <div class="readonly-field text-muted small">{{ modalData.updated_at }}</div>
         </div>
       </template>
@@ -73,10 +73,10 @@
     <template #footer>
       <div></div>
       <div class="d-flex gap-2">
-        <button class="btn btn-sm btn-secondary" @click="close">Скасувати</button>
+        <button class="btn btn-sm btn-secondary" @click="close">{{ t('common.cancel') }}</button>
         <button v-if="canEdit" class="btn btn-sm btn-primary" :disabled="saving" @click="save">
           <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-          Зберегти
+          {{ t('common.save') }}
         </button>
       </div>
     </template>
@@ -85,9 +85,11 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import BaseModal from './BaseModal.vue'
 
+const { t } = useI18n({ useScope: 'global' })
 const { can, authHeaders } = useAuth()
 
 // Props
@@ -150,10 +152,10 @@ async function save() {
   saving.value = true
   saveError.value = null
   try {
-    if (!modalForm.value.service_group_id) { saveError.value = 'Оберіть групу послуг'; return }
-    if (!modalForm.value.slug?.trim())     { saveError.value = 'Вкажіть slug'; return }
-    if (!modalForm.value.name_uk?.trim())  { saveError.value = 'Вкажіть назву [UA]'; return }
-    if (!modalForm.value.name_en?.trim())  { saveError.value = 'Вкажіть назву [EN]'; return }
+    if (!modalForm.value.service_group_id) { saveError.value = t('services.selectGroupError'); return }
+    if (!modalForm.value.slug?.trim())     { saveError.value = t('services.slugRequiredError'); return }
+    if (!modalForm.value.name_uk?.trim())  { saveError.value = t('services.nameUkRequiredError'); return }
+    if (!modalForm.value.name_en?.trim())  { saveError.value = t('services.nameEnRequiredError'); return }
 
     const payload = {
       service_group_id: modalForm.value.service_group_id,
@@ -170,7 +172,7 @@ async function save() {
         body: JSON.stringify(payload),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.message ?? 'Помилка')
+      if (!res.ok) throw new Error(json.message ?? t('common.error'))
       window.dispatchEvent(new CustomEvent('service-created', { detail: json.data }))
     } else {
       const res = await fetch(`${API}/${modalData.value.id}`, {
@@ -179,7 +181,7 @@ async function save() {
         body: JSON.stringify(payload),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.message ?? 'Помилка збереження')
+      if (!res.ok) throw new Error(json.message ?? t('list.saveError'))
       window.dispatchEvent(new CustomEvent('service-updated', { detail: { id: modalData.value.id, data: json.data } }))
     }
     close()

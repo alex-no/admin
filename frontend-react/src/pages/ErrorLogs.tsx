@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Pagination from '@/list-framework/components/Pagination'
 import ErrorLogDetailModal from './ErrorLogDetailModal'
 import ErrorLogCleanupModal from './ErrorLogCleanupModal'
@@ -28,6 +29,7 @@ const PER_PAGE = 50
 const LEVELS = ['error', 'critical', 'warning', 'alert', 'emergency']
 
 export default function ErrorLogs() {
+  const { t } = useTranslation()
   // Початковий стан — з URL, щоб посилання на відфільтрований список працювало
   const urlFilters = readFiltersFromUrl({ search: '', level: '', date_from: '', date_to: '', page: 1 })
   const urlSort = readSortFromUrl({ sortKey: 'created_at', sortDir: 'DESC' })
@@ -91,11 +93,11 @@ export default function ErrorLogs() {
       setItems(res.data ?? [])
       setTotal(res.pagination?.total ?? 0)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Помилка завантаження')
+      setError(err instanceof Error ? err.message : t('errorLogs.loadError'))
     } finally {
       setLoading(false)
     }
-  }, [page, sortKey, sortDir, searchDebounced, level, dateFrom, dateTo])
+  }, [page, sortKey, sortDir, searchDebounced, level, dateFrom, dateTo, t])
 
   useEffect(() => { load() }, [load])
 
@@ -120,9 +122,9 @@ export default function ErrorLogs() {
     <div>
       <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
         <div className="d-flex align-items-center gap-2">
-          <h5 className="mb-0">Логи помилок</h5>
+          <h5 className="mb-0">{t('errorLogs.title')}</h5>
           <Link to="/error-logs/stats" className="btn btn-sm btn-outline-primary">
-            <i className="bi bi-bar-chart" /> Статистика
+            <i className="bi bi-bar-chart" /> {t('menu.stats')}
           </Link>
         </div>
         <div className="d-flex gap-2 flex-wrap">
@@ -132,7 +134,7 @@ export default function ErrorLogs() {
             type="text"
             className="form-control form-control-sm"
             style={{ width: '220px' }}
-            placeholder="Пошук..."
+            placeholder={t('errorLogs.searchPlaceholder')}
           />
           <select
             value={level}
@@ -140,7 +142,7 @@ export default function ErrorLogs() {
             className="form-select form-select-sm"
             style={{ width: 'auto' }}
           >
-            <option value="">Всі рівні</option>
+            <option value="">{t('errorLogs.allLevels')}</option>
             {LEVELS.map(l => (
               <option key={l} value={l}>{l.charAt(0).toUpperCase() + l.slice(1)}</option>
             ))}
@@ -160,7 +162,7 @@ export default function ErrorLogs() {
             style={{ width: 'auto' }}
           />
           <button className="btn btn-sm btn-outline-danger" onClick={() => setCleanupOpen(true)}>
-            <i className="bi bi-trash" /> Очистити
+            <i className="bi bi-trash" /> {t('errorLogs.cleanupButton')}
           </button>
         </div>
       </div>
@@ -180,16 +182,16 @@ export default function ErrorLogs() {
               <table className="table table-hover align-middle mb-0 small">
                 <thead className="table-light">
                   <tr>
-                    <th style={{ width: '60px' }} className="text-end">ID</th>
+                    <th style={{ width: '60px' }} className="text-end">{t('roles.colId')}</th>
                     <th style={{ width: '90px' }} className="th-sortable" onClick={() => toggleSort('level')}>
-                      Рівень {sortIcon('level')}
+                      {t('errorLogs.level')} {sortIcon('level')}
                     </th>
-                    <th>Категорія</th>
-                    <th>Повідомлення</th>
-                    <th>Exception</th>
-                    <th>Файл</th>
+                    <th>{t('errorLogs.category')}</th>
+                    <th>{t('errorLogs.message')}</th>
+                    <th>{t('errorLogs.exception')}</th>
+                    <th>{t('errorLogs.file')}</th>
                     <th style={{ width: '140px' }} className="th-sortable" onClick={() => toggleSort('created_at')}>
-                      Дата {sortIcon('created_at')}
+                      {t('analytics.colDate')} {sortIcon('created_at')}
                     </th>
                     <th style={{ width: '50px' }} />
                   </tr>
@@ -221,7 +223,7 @@ export default function ErrorLogs() {
                       <td>
                         <button
                           className="btn btn-sm btn-outline-secondary"
-                          title="Детальна інформація"
+                          title={t('errorLogs.detailTooltip')}
                           onClick={() => setDetailId(row.id)}
                         >
                           <i className="bi bi-eye" />
@@ -230,7 +232,7 @@ export default function ErrorLogs() {
                     </tr>
                   ))}
                   {items.length === 0 && (
-                    <tr><td colSpan={8} className="text-center text-muted py-4">Немає даних</td></tr>
+                    <tr><td colSpan={8} className="text-center text-muted py-4">{t('common.noData')}</td></tr>
                   )}
                 </tbody>
               </table>
@@ -238,7 +240,7 @@ export default function ErrorLogs() {
           </div>
 
           <div className="d-flex justify-content-between align-items-center mt-3">
-            <span className="text-muted small">Всього: {total}</span>
+            <span className="text-muted small">{t('analytics.totalCount', { value: total })}</span>
             {totalPages > 1 && (
               <Pagination currentPage={page} totalPages={totalPages} onChange={setPage} />
             )}

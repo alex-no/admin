@@ -155,13 +155,13 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
     setSelectedPreset(name)
     setNewPresetName('')
     setShowSaveInput(false)
-    notify(`Фільтр «${name}» збережено`, { type: 'success' })
+    notify(t('list.filterSaved', { name }), { type: 'success' })
   }
 
   const deleteSelectedPreset = () => {
     if (!selectedPreset) return
     removePreset(selectedPreset)
-    notify(`Фільтр «${selectedPreset}» видалено`, { type: 'info' })
+    notify(t('list.filterDeleted', { name: selectedPreset }), { type: 'info' })
     setSelectedPreset('')
   }
 
@@ -273,7 +273,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
       const v = row[col.key]
       if (v === undefined || v === null) continue
       if (col.unique) {
-        if (col.type === 'text' || col.type === undefined) form[col.key] = `${v} (копія)`
+        if (col.type === 'text' || col.type === undefined) form[col.key] = t('list.cloneSuffix', { value: v })
         continue
       }
       form[col.key] = v
@@ -290,14 +290,14 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
     try {
       await apiPost(apiCreate!, createForm)
       setCreateOpen(false)
-      notify(t('messages.created'), { type: 'success' })
+      notify(t('list.recordCreated'), { type: 'success' })
       reload()
     } catch (err) {
       // Бекенд може повернути errors: { поле: "текст" } — показуємо біля поля,
       // а не одним тостом "перевірте заповнення".
       const apiErr = err as ApiError
       if (apiErr?.errors) setCreateErrors(apiErr.errors)
-      notify(err instanceof Error ? err.message : t('messages.error'), { type: 'error' })
+      notify(err instanceof Error ? err.message : t('list.createError'), { type: 'error' })
     } finally {
       setCreating(false)
     }

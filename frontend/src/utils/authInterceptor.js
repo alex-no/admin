@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Oleksandr Nosov. MIT License.
 import { useAuth } from '@/composables/useAuth'
+import { i18n } from '@/i18n'
 
 /**
  * Перехоплює 401 з будь-якого fetch-запиту — чистить токен і перекидає на
@@ -30,7 +31,7 @@ export function installAuthRedirect(router) {
 
       if (!isLoginRequest && !router.currentRoute.value.meta?.public) {
         auth.logout()
-        router.push({ name: 'Login', query: { message: 'Сесія завершилась. Увійдіть знову.' } })
+        router.push({ name: 'Login', query: { message: i18n.global.t('auth.sessionExpiredMessage') } })
       }
     }
 

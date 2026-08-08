@@ -4,25 +4,25 @@
     <div>
       <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
         <div class="d-flex align-items-center gap-2">
-          <h5 class="mb-0">Модерація відгуків</h5>
+          <h5 class="mb-0">{{ t('reviews.title') }}</h5>
           <span class="badge bg-secondary">{{ total }}</span>
-          <span v-if="stats.pending > 0" class="badge bg-warning text-dark">{{ stats.pending }} на модерації</span>
+          <span v-if="stats.pending > 0" class="badge bg-warning text-dark">{{ t('reviews.pendingModerationBadge', { count: stats.pending }) }}</span>
         </div>
         <div class="d-flex gap-2 flex-wrap">
           <select v-model="filterStatus" class="form-select form-select-sm" style="width:auto" @change="load(1)">
-            <option value="">Всі статуси</option>
-            <option value="pending">На модерації</option>
-            <option value="published">Опубліковані</option>
-            <option value="rejected">Відхилені</option>
-            <option value="hidden">Приховані</option>
-            <option value="spam">Спам</option>
+            <option value="">{{ t('filter.allStatuses') }}</option>
+            <option value="pending">{{ t('reviews.statusPending') }}</option>
+            <option value="published">{{ t('news.statusPublished') }}</option>
+            <option value="rejected">{{ t('reviews.statusRejectedOption') }}</option>
+            <option value="hidden">{{ t('reviews.statusHiddenOption') }}</option>
+            <option value="spam">{{ t('stoList.reviewSpam') }}</option>
           </select>
           <select v-model="filterIsGuest" class="form-select form-select-sm" style="width:auto" @change="load(1)">
-            <option value="">Всі користувачі</option>
-            <option value="1">Гості</option>
-            <option value="0">Зареєстровані</option>
+            <option value="">{{ t('reviews.allUsers') }}</option>
+            <option value="1">{{ t('reviews.guestsOption') }}</option>
+            <option value="0">{{ t('reviews.registeredOption') }}</option>
           </select>
-          <button class="btn btn-sm btn-outline-primary" @click="loadStats" title="Оновити статистику">
+          <button class="btn btn-sm btn-outline-primary" @click="loadStats" :title="t('reviews.refreshStatsTooltip')">
             <i class="bi bi-arrow-clockwise"></i>
           </button>
         </div>
@@ -33,7 +33,7 @@
         <div class="col-auto">
           <div class="card shadow-sm">
             <div class="card-body py-2 px-3">
-              <div class="small text-muted">Всього</div>
+              <div class="small text-muted">{{ t('common.total') }}</div>
               <div class="h6 mb-0">{{ stats.total }}</div>
             </div>
           </div>
@@ -41,7 +41,7 @@
         <div class="col-auto">
           <div class="card shadow-sm">
             <div class="card-body py-2 px-3">
-              <div class="small text-muted">На модерації</div>
+              <div class="small text-muted">{{ t('reviews.statusPending') }}</div>
               <div class="h6 mb-0 text-warning">{{ stats.pending }}</div>
             </div>
           </div>
@@ -49,7 +49,7 @@
         <div class="col-auto">
           <div class="card shadow-sm">
             <div class="card-body py-2 px-3">
-              <div class="small text-muted">Опубліковано</div>
+              <div class="small text-muted">{{ t('stoList.reviewPublished') }}</div>
               <div class="h6 mb-0 text-success">{{ stats.published }}</div>
             </div>
           </div>
@@ -57,7 +57,7 @@
         <div class="col-auto">
           <div class="card shadow-sm">
             <div class="card-body py-2 px-3">
-              <div class="small text-muted">Гостьові</div>
+              <div class="small text-muted">{{ t('reviews.guestReviewsStatLabel') }}</div>
               <div class="h6 mb-0">{{ stats.guest_reviews }}</div>
             </div>
           </div>
@@ -75,13 +75,13 @@
             <table class="table table-hover align-middle mb-0 small">
               <thead>
                 <tr>
-                  <th style="width:60px" class="text-end">ID</th>
-                  <th style="width:100px">Статус</th>
-                  <th>СТО</th>
-                  <th>Автор</th>
-                  <th style="width:100px" class="text-center">Оцінка</th>
-                  <th>Відгук</th>
-                  <th style="width:140px">Дата</th>
+                  <th style="width:60px" class="text-end">{{ t('table.id') }}</th>
+                  <th style="width:100px">{{ t('filter.status') }}</th>
+                  <th>{{ t('users.stoCol') }}</th>
+                  <th>{{ t('reviews.colAuthor') }}</th>
+                  <th style="width:100px" class="text-center">{{ t('reviews.colRating') }}</th>
+                  <th>{{ t('reviews.colReview') }}</th>
+                  <th style="width:140px">{{ t('analytics.colDate') }}</th>
                   <th style="width:150px"></th>
                 </tr>
               </thead>
@@ -98,10 +98,10 @@
                   <td>
                     <div class="d-flex align-items-center gap-1">
                       <span>{{ row.author_name }}</span>
-                      <span v-if="row.is_guest" class="badge badge-sm bg-info text-dark" title="Гостьовий відгук">
+                      <span v-if="row.is_guest" class="badge badge-sm bg-info text-dark" :title="t('reviews.guestReviewTooltip')">
                         <i class="bi bi-person"></i>
                       </span>
-                      <span v-if="row.is_verified_purchase" class="badge badge-sm bg-success" title="Підтверджена покупка">
+                      <span v-if="row.is_verified_purchase" class="badge badge-sm bg-success" :title="t('reviews.verifiedPurchaseTooltip')">
                         <i class="bi bi-check-circle"></i>
                       </span>
                     </div>
@@ -114,7 +114,7 @@
                          :class="n <= Math.round(row.rating_overall) ? 'bi-star-fill text-warning' : 'bi-star text-muted'"
                          class="bi"></i>
                     </div>
-                    <span v-if="!row.rating_moderated" class="badge badge-sm bg-warning text-dark">Не модер.</span>
+                    <span v-if="!row.rating_moderated" class="badge badge-sm bg-warning text-dark">{{ t('reviews.notModeratedBadge') }}</span>
                   </td>
                   <td>
                     <div v-if="row.title" class="fw-semibold text-truncate" style="max-width: 300px" :title="row.title">
@@ -129,28 +129,28 @@
                   </td>
                   <td>
                     <div class="btn-group btn-group-sm">
-                      <button class="btn btn-outline-primary" @click="openDetail(row.id)" title="Переглянути">
+                      <button class="btn btn-outline-primary" @click="openDetail(row.id)" :title="t('reviews.viewTooltip')">
                         <i class="bi bi-eye"></i>
                       </button>
                       <button
                         v-if="row.status === 'pending'"
                         class="btn btn-outline-success"
                         @click="approve(row.id)"
-                        title="Схвалити">
+                        :title="t('reviews.approveTooltip')">
                         <i class="bi bi-check-lg"></i>
                       </button>
                       <button
                         v-if="row.status === 'pending'"
                         class="btn btn-outline-danger"
                         @click="reject(row.id)"
-                        title="Відхилити">
+                        :title="t('stoImport.rejectButton')">
                         <i class="bi bi-x-lg"></i>
                       </button>
                     </div>
                   </td>
                 </tr>
                 <tr v-if="!items.length">
-                  <td colspan="8" class="text-center text-muted py-4">Немає даних</td>
+                  <td colspan="8" class="text-center text-muted py-4">{{ t('common.noData') }}</td>
                 </tr>
               </tbody>
             </table>
@@ -158,7 +158,7 @@
         </div>
 
         <div class="d-flex justify-content-between align-items-center mt-3">
-          <span class="text-muted small">Всього: {{ total }}</span>
+          <span class="text-muted small">{{ t('analytics.totalCount', { value: total }) }}</span>
           <Pagination :current-page="page" :total-pages="totalPages" @change="load" />
         </div>
       </div>
@@ -168,6 +168,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ListPageWrapper from '../components/ListPageWrapper.vue'
 import Pagination from '../components/Pagination.vue'
 import ReviewDetailModal from '../components/ReviewDetailModal.vue'
@@ -175,6 +176,7 @@ import { apiGet, apiPost } from '../utils/api'
 import { useNotify } from '../composables/useNotify'
 import { useUrlFilters } from '../composables/useUrlFilters'
 
+const { t } = useI18n({ useScope: 'global' })
 const { notify } = useNotify()
 
 const loading = ref(false)
@@ -234,11 +236,11 @@ async function load(newPage = 1) {
       items.value = response.data.reviews
       total.value = response.data.total
     } else {
-      error.value = response.message || 'Помилка завантаження даних'
+      error.value = response.message || t('reviews.loadDataError')
     }
   } catch (err) {
     console.error('Error loading reviews:', err)
-    error.value = 'Помилка завантаження даних'
+    error.value = t('reviews.loadDataError')
   } finally {
     loading.value = false
   }
@@ -256,7 +258,7 @@ async function loadStats() {
 }
 
 async function approve(id) {
-  if (!confirm('Схвалити та опублікувати цей відгук?')) return
+  if (!confirm(t('reviews.confirmApprove'))) return
 
   try {
     const response = await apiPost(`/admin/reviews/${id}/approve`)
@@ -265,16 +267,16 @@ async function approve(id) {
       await load(page.value)
       await loadStats()
     } else {
-      notify(response.message || 'Помилка схвалення відгуку', { type: 'error' })
+      notify(response.message || t('reviews.approveError'), { type: 'error' })
     }
   } catch (err) {
     console.error('Error approving review:', err)
-    notify('Помилка схвалення відгуку', { type: 'error' })
+    notify(t('reviews.approveError'), { type: 'error' })
   }
 }
 
 async function reject(id) {
-  if (!confirm('Відхилити цей відгук?')) return
+  if (!confirm(t('reviews.confirmReject'))) return
 
   try {
     const response = await apiPost(`/admin/reviews/${id}/reject`)
@@ -283,11 +285,11 @@ async function reject(id) {
       await load(page.value)
       await loadStats()
     } else {
-      notify(response.message || 'Помилка відхилення відгуку', { type: 'error' })
+      notify(response.message || t('reviews.rejectError'), { type: 'error' })
     }
   } catch (err) {
     console.error('Error rejecting review:', err)
-    notify('Помилка відхилення відгуку', { type: 'error' })
+    notify(t('reviews.rejectError'), { type: 'error' })
   }
 }
 
@@ -321,11 +323,11 @@ function statusBadge(status) {
 
 function statusLabel(status) {
   const labels = {
-    pending: 'На модерації',
-    published: 'Опубліковано',
-    rejected: 'Відхилено',
-    hidden: 'Приховано',
-    spam: 'Спам'
+    pending: t('reviews.statusPending'),
+    published: t('stoList.reviewPublished'),
+    rejected: t('stoList.reviewRejected'),
+    hidden: t('stoList.reviewHidden'),
+    spam: t('stoList.reviewSpam')
   }
   return labels[status] || status
 }

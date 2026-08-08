@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 
 /**
  * Попередження про незбережені зміни.
@@ -11,6 +12,7 @@ import { useEffect, useRef } from 'react'
  * значення і при цьому не перевішувався на кожен рендер.
  */
 export function useUnsavedChanges(hasChanges: boolean) {
+  const { t } = useTranslation()
   const hasChangesRef = useRef(hasChanges)
   hasChangesRef.current = hasChanges
 
@@ -28,7 +30,7 @@ export function useUnsavedChanges(hasChanges: boolean) {
 
   /** true — можна закривати (змін немає або користувач підтвердив) */
   const confirmClose = (
-    message = 'Є незбережені зміни. Закрити без збереження?'
+    message = t('stoRegistry.unsavedChanges')
   ): boolean => !hasChangesRef.current || confirm(message)
 
   return { confirmClose }

@@ -4,7 +4,7 @@
     <div>
       <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
         <div class="d-flex align-items-center gap-2">
-          <h5 class="mb-0">Типи населених пунктів</h5>
+          <h5 class="mb-0">{{ t('cityTypes.title') }}</h5>
           <button v-if="canCreate && filterCountry" class="btn btn-sm btn-success" @click="openCreateModal">
             <i class="bi bi-plus-lg"></i>
           </button>
@@ -31,7 +31,7 @@
                     :class="[col.align === 'end' ? 'text-end' : '', col.sortable ? 'th-sortable' : '']"
                     @click="col.sortable ? toggleSort(col.key) : null"
                   >
-                    {{ cfg.fields[col.key].label }}
+                    {{ fieldLabel(col.key) }}
                     <template v-if="col.sortable">
                       <i v-if="sortKey === col.key && sortDir === 'asc'"       class="bi bi-chevron-up ms-1"></i>
                       <i v-else-if="sortKey === col.key && sortDir === 'desc'" class="bi bi-chevron-down ms-1"></i>
@@ -67,13 +67,13 @@
                     <button v-if="canOpenModal || justCreatedIds.has(row.id)" class="btn btn-sm btn-outline-secondary me-1" @click="openModal(row)">
                       <i class="bi bi-pencil"></i>
                     </button>
-                    <button v-if="canDelete" class="btn btn-sm btn-outline-danger" title="Видалити" @click="deleteRow(row)">
+                    <button v-if="canDelete" class="btn btn-sm btn-outline-danger" :title="t('common.delete')" @click="deleteRow(row)">
                       <i class="bi bi-trash"></i>
                     </button>
                   </td>
                 </tr>
                 <tr v-if="!items.length">
-                  <td :colspan="cfg.table.length + 1" class="text-center text-muted py-4">Немає даних</td>
+                  <td :colspan="cfg.table.length + 1" class="text-center text-muted py-4">{{ t('common.noData') }}</td>
                 </tr>
               </tbody>
             </table>
@@ -81,7 +81,7 @@
         </div>
 
         <div class="d-flex justify-content-between align-items-center mt-3">
-          <span class="text-muted small">Всього: {{ total }}</span>
+          <span class="text-muted small">{{ t('analytics.totalCount', { value: total }) }}</span>
           <nav v-if="totalPages > 1">
             <ul class="pagination pagination-sm mb-0">
               <li class="page-item" :class="{ disabled: page === 1 }">
@@ -103,6 +103,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ListPageWrapper from '@/components/ListPageWrapper.vue'
 import CityTypeModal from '@/components/CityTypeModal.vue'
 import { useAuth } from '@/composables/useAuth'
@@ -110,9 +111,26 @@ import { useNotify } from '@/composables/useNotify'
 import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import cfg from './city-types.config.json'
 
+const { t } = useI18n({ useScope: 'global' })
 const { can, authHeaders } = useAuth()
 const { notify } = useNotify()
 const { deleteWithUndo } = useUndoableDelete()
+
+const FIELD_LABEL_KEYS = {
+  id: 'table.id',
+  short_name_uk: 'cityTypes.shortNameUk',
+  short_name_en: 'cityTypes.shortNameEn',
+  short_name_ru: 'cityTypes.shortNameRu',
+  long_name_uk: 'cityTypes.longNameUk',
+  long_name_en: 'cityTypes.longNameEn',
+  long_name_ru: 'cityTypes.longNameRu',
+  created_at: 'stoList.createdLabel',
+  updated_at: 'stoList.updatedLabel',
+}
+function fieldLabel(key) {
+  const k = FIELD_LABEL_KEYS[key]
+  return k ? t(k) : cfg.fields[key]?.label ?? key
+}
 
 function canEditField(key) {
   const field = cfg.fields[key]
@@ -167,7 +185,7 @@ async function load(p = 1) {
     const cid  = filterCountry.value ? `&country_id=${filterCountry.value}` : ''
     const res  = await fetch(`${cfg.apiList}?per_page=200&page=${p}${sort}${cid}`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     items.value      = json.data ?? []
     total.value      = json.pagination?.total ?? 0
     totalPages.value = json.pagination?.total_pages ?? 1
@@ -186,7 +204,7 @@ async function patch(id, fields) {
     body: JSON.stringify(fields),
   })
   const json = await res.json()
-  if (!res.ok) throw new Error(json.message ?? 'Помилка збереження')
+  if (!res.ok) throw new Error(json.message ?? t('list.saveError'))
   return json.data
 }
 
@@ -217,7 +235,7 @@ function deleteRow(row) {
   if (index === -1) return
 
   deleteWithUndo({
-    message: `«${row.short_name_uk}» видалено`,
+    message: t('cityTypes.deletedMessage', { name: row.short_name_uk }),
     remove: () => {
       items.value.splice(index, 1)
       justCreatedIds.value.delete(row.id)
@@ -230,7 +248,7 @@ function deleteRow(row) {
     commit: async () => {
       const res  = await fetch(`${cfg.apiDelete}/${row.id}`, { method: 'DELETE', headers: authHeaders() })
       const json = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(json.message ?? 'Помилка видалення')
+      if (!res.ok) throw new Error(json.message ?? t('list.deleteError'))
     },
     onCommitError: () => load(page.value),
   })

@@ -10,7 +10,7 @@
     :min-height="500"
   >
     <template #title>
-      <h6 class="mb-0">Відгук #{{ reviewId }}</h6>
+      <h6 class="mb-0">{{ t('reviewDetailModal.title', { id: reviewId }) }}</h6>
     </template>
 
     <div v-if="loading" class="text-center py-4">
@@ -21,24 +21,24 @@
       <div class="row g-3">
         <!-- СТО -->
         <div class="col-md-6">
-          <label class="form-label small fw-semibold text-muted">СТО</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('users.stoCol') }}</label>
           <div class="fw-semibold">{{ item.sto_name }}</div>
           <div class="text-muted small">#{{ item.sto_id }}</div>
         </div>
 
         <!-- Статус -->
         <div class="col-md-6">
-          <label class="form-label small fw-semibold text-muted">Статус</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('filter.status') }}</label>
           <div><span :class="statusBadge(item.status)">{{ statusLabel(item.status) }}</span></div>
         </div>
 
         <!-- Автор -->
         <div class="col-md-6">
-          <label class="form-label small fw-semibold text-muted">Автор</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('reviews.colAuthor') }}</label>
           <div class="d-flex align-items-center gap-2">
             <span class="fw-semibold">{{ item.author_name }}</span>
-            <span v-if="item.is_guest" class="badge bg-info text-dark">Гість</span>
-            <span v-if="item.is_verified_purchase" class="badge bg-success">Підтверджена покупка</span>
+            <span v-if="item.is_guest" class="badge bg-info text-dark">{{ t('reviewDetailModal.guestBadge') }}</span>
+            <span v-if="item.is_verified_purchase" class="badge bg-success">{{ t('reviews.verifiedPurchaseTooltip') }}</span>
           </div>
           <div v-if="item.guest_email" class="text-muted small">{{ item.guest_email }}</div>
           <div v-if="item.user_id" class="text-muted small">User ID: {{ item.user_id }}</div>
@@ -46,7 +46,7 @@
 
         <!-- Рейтинг -->
         <div class="col-md-6">
-          <label class="form-label small fw-semibold text-muted">Загальний рейтинг</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('reviewDetailModal.ratingModeratedLabel') }}</label>
           <div class="d-flex align-items-center gap-2">
             <span class="h4 mb-0 fw-bold text-warning">{{ item.rating_overall.toFixed(1) }}</span>
             <div class="text-warning">
@@ -55,35 +55,35 @@
                  class="bi"></i>
             </div>
           </div>
-          <div v-if="!item.rating_moderated" class="badge bg-warning text-dark mt-2">Оцінка не модерована</div>
-          <div v-else class="badge bg-success mt-2">Оцінка модерована</div>
+          <div v-if="!item.rating_moderated" class="badge bg-warning text-dark mt-2">{{ t('reviewDetailModal.ratingNotModeratedBadge') }}</div>
+          <div v-else class="badge bg-success mt-2">{{ t('reviewDetailModal.ratingModeratedBadge') }}</div>
         </div>
 
         <!-- Детальные оценки -->
         <div class="col-12">
-          <label class="form-label small fw-semibold text-muted">Детальні оцінки</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('reviewDetailModal.detailedRatingsLabel') }}</label>
           <div class="row g-2">
             <div class="col-6 col-md-3">
               <div class="border rounded p-2 text-center">
-                <div class="small text-muted">Якість</div>
+                <div class="small text-muted">{{ t('stoList.qualityLabel') }}</div>
                 <div class="fw-bold">{{ item.rating_quality }} / 5</div>
               </div>
             </div>
             <div class="col-6 col-md-3">
               <div class="border rounded p-2 text-center">
-                <div class="small text-muted">Швидкість</div>
+                <div class="small text-muted">{{ t('stoList.speedLabel') }}</div>
                 <div class="fw-bold">{{ item.rating_speed }} / 5</div>
               </div>
             </div>
             <div class="col-6 col-md-3">
               <div class="border rounded p-2 text-center">
-                <div class="small text-muted">Ціна</div>
+                <div class="small text-muted">{{ t('stoList.priceLabel') }}</div>
                 <div class="fw-bold">{{ item.rating_price }} / 5</div>
               </div>
             </div>
             <div class="col-6 col-md-3">
               <div class="border rounded p-2 text-center">
-                <div class="small text-muted">Сервіс</div>
+                <div class="small text-muted">{{ t('stoList.serviceLabel') }}</div>
                 <div class="fw-bold">{{ item.rating_service }} / 5</div>
               </div>
             </div>
@@ -92,13 +92,13 @@
 
         <!-- Заголовок -->
         <div v-if="item.title" class="col-12">
-          <label class="form-label small fw-semibold text-muted">Заголовок</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('reviewDetailModal.titleLabel') }}</label>
           <div class="fw-semibold">{{ item.title }}</div>
         </div>
 
         <!-- Текст отзыва -->
         <div class="col-12">
-          <label class="form-label small fw-semibold text-muted">Текст відгуку</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('reviewDetailModal.textLabel') }}</label>
           <div class="border rounded p-3 bg-light" style="white-space: pre-wrap">{{ item.text }}</div>
         </div>
 
@@ -106,28 +106,28 @@
 
         <!-- Даты -->
         <div class="col-md-4">
-          <label class="form-label small fw-semibold text-muted">Дата створення</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('reviewDetailModal.createdAtLabel') }}</label>
           <div class="text-muted small">{{ formatDate(item.created_at) }}</div>
         </div>
         <div class="col-md-4">
-          <label class="form-label small fw-semibold text-muted">Дата оновлення</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('reviewDetailModal.updatedAtLabel') }}</label>
           <div class="text-muted small">{{ formatDate(item.updated_at) }}</div>
         </div>
         <div class="col-md-4">
-          <label class="form-label small fw-semibold text-muted">Дата публікації</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('reviewDetailModal.publishedAtLabel') }}</label>
           <div class="text-muted small">{{ formatDate(item.published_at) }}</div>
         </div>
 
         <!-- Booking ID -->
         <div v-if="item.booking_id" class="col-md-6">
-          <label class="form-label small fw-semibold text-muted">Бронювання</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('reviewDetailModal.bookingLabel') }}</label>
           <div class="text-muted small">Booking ID: {{ item.booking_id }}</div>
         </div>
 
         <!-- Helpful count -->
         <div class="col-md-6">
-          <label class="form-label small fw-semibold text-muted">Корисність</label>
-          <div class="text-muted small">{{ item.helpful_count }} користувачів вважають корисним</div>
+          <label class="form-label small fw-semibold text-muted">{{ t('reviewDetailModal.helpfulnessLabel') }}</label>
+          <div class="text-muted small">{{ t('reviewDetailModal.helpfulCountText', { count: item.helpful_count }) }}</div>
         </div>
 
         <div v-if="actionError" class="alert alert-danger small mb-0 mt-3">{{ actionError }}</div>
@@ -143,11 +143,11 @@
           @click="markAsSpam"
           :disabled="acting"
         >
-          Позначити як спам
+          {{ t('reviewDetailModal.markAsSpamButton') }}
         </button>
       </div>
       <div class="d-flex gap-2">
-        <button class="btn btn-sm btn-secondary" @click="close">Закрити</button>
+        <button class="btn btn-sm btn-secondary" @click="close">{{ t('common.close') }}</button>
         <button
           v-if="item && item.status === 'pending'"
           class="btn btn-sm btn-danger"
@@ -155,7 +155,7 @@
           :disabled="acting"
         >
           <span v-if="acting === 'reject'" class="spinner-border spinner-border-sm me-1"></span>
-          Відхилити
+          {{ t('stoImport.rejectButton') }}
         </button>
         <button
           v-if="item && item.status === 'pending'"
@@ -164,7 +164,7 @@
           :disabled="acting"
         >
           <span v-if="acting === 'approve'" class="spinner-border spinner-border-sm me-1"></span>
-          Схвалити та опублікувати
+          {{ t('reviewDetailModal.approveAndPublishButton') }}
         </button>
       </div>
     </template>
@@ -173,9 +173,11 @@
 
 <script setup>
 import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import BaseModal from './BaseModal.vue'
 import { apiGet, apiPost } from '../utils/api'
 
+const { t } = useI18n({ useScope: 'global' })
 const visible = ref(false)
 const reviewId = ref(null)
 const loading = ref(false)
@@ -213,18 +215,18 @@ async function load() {
     if (response.success) {
       item.value = response.data
     } else {
-      error.value = response.message || 'Помилка завантаження даних'
+      error.value = response.message || t('reviews.loadDataError')
     }
   } catch (err) {
     console.error('Error loading review:', err)
-    error.value = 'Помилка завантаження даних'
+    error.value = t('reviews.loadDataError')
   } finally {
     loading.value = false
   }
 }
 
 async function approve() {
-  if (!confirm('Схвалити та опублікувати цей відгук?')) return
+  if (!confirm(t('reviews.confirmApprove'))) return
 
   acting.value = 'approve'
   actionError.value = null
@@ -234,22 +236,22 @@ async function approve() {
     const response = await apiPost(`/admin/reviews/${reviewId.value}/approve`)
 
     if (response.success) {
-      actionSuccess.value = 'Відгук схвалено та опубліковано'
+      actionSuccess.value = t('reviewDetailModal.reviewApprovedMessage')
       await load()
       window.dispatchEvent(new CustomEvent('review-updated'))
     } else {
-      actionError.value = response.message || 'Помилка схвалення відгуку'
+      actionError.value = response.message || t('reviews.approveError')
     }
   } catch (err) {
     console.error('Error approving review:', err)
-    actionError.value = 'Помилка схвалення відгуку'
+    actionError.value = t('reviews.approveError')
   } finally {
     acting.value = false
   }
 }
 
 async function reject() {
-  if (!confirm('Відхилити цей відгук?')) return
+  if (!confirm(t('reviews.confirmReject'))) return
 
   acting.value = 'reject'
   actionError.value = null
@@ -259,22 +261,22 @@ async function reject() {
     const response = await apiPost(`/admin/reviews/${reviewId.value}/reject`)
 
     if (response.success) {
-      actionSuccess.value = 'Відгук відхилено'
+      actionSuccess.value = t('reviewDetailModal.reviewRejectedMessage')
       await load()
       window.dispatchEvent(new CustomEvent('review-updated'))
     } else {
-      actionError.value = response.message || 'Помилка відхилення відгуку'
+      actionError.value = response.message || t('reviews.rejectError')
     }
   } catch (err) {
     console.error('Error rejecting review:', err)
-    actionError.value = 'Помилка відхилення відгуку'
+    actionError.value = t('reviews.rejectError')
   } finally {
     acting.value = false
   }
 }
 
 async function markAsSpam() {
-  if (!confirm('Позначити цей відгук як спам? Оцінка буде виключена з розрахунків.')) return
+  if (!confirm(t('reviewDetailModal.confirmMarkSpam'))) return
 
   acting.value = 'spam'
   actionError.value = null
@@ -284,15 +286,15 @@ async function markAsSpam() {
     const response = await apiPost(`/admin/reviews/${reviewId.value}/mark-spam`)
 
     if (response.success) {
-      actionSuccess.value = 'Відгук позначено як спам'
+      actionSuccess.value = t('reviewDetailModal.reviewMarkedSpamMessage')
       await load()
       window.dispatchEvent(new CustomEvent('review-updated'))
     } else {
-      actionError.value = response.message || 'Помилка позначення як спам'
+      actionError.value = response.message || t('reviewDetailModal.markSpamError')
     }
   } catch (err) {
     console.error('Error marking as spam:', err)
-    actionError.value = 'Помилка позначення як спам'
+    actionError.value = t('reviewDetailModal.markSpamError')
   } finally {
     acting.value = false
   }
@@ -327,11 +329,11 @@ function statusBadge(status) {
 
 function statusLabel(status) {
   const labels = {
-    pending: 'На модерації',
-    published: 'Опубліковано',
-    rejected: 'Відхилено',
-    hidden: 'Приховано',
-    spam: 'Спам'
+    pending: t('reviews.statusPending'),
+    published: t('stoList.reviewPublished'),
+    rejected: t('stoList.reviewRejected'),
+    hidden: t('stoList.reviewHidden'),
+    spam: t('stoList.reviewSpam')
   }
   return labels[status] || status
 }

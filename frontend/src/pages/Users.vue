@@ -2,21 +2,21 @@
   <ListPageWrapper>
     <div>
     <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
-      <h5 class="mb-0">Користувачі</h5>
+      <h5 class="mb-0">{{ t('users.title') }}</h5>
       <div class="d-flex gap-2">
         <input
           v-model="search"
           type="text"
           class="form-control form-control-sm"
           style="width:220px"
-          placeholder="Пошук за ім'ям, email..."
+          :placeholder="t('users.searchPlaceholder')"
           @input="debounceLoad"
         />
         <select v-model="filterStatus" class="form-select form-select-sm" style="width:auto" @change="load(1)">
-          <option value="">Всі статуси</option>
-          <option value="active">Активні</option>
-          <option value="pending">Очікують</option>
-          <option value="incomplete">Незавершені</option>
+          <option value="">{{ t('filter.allStatuses') }}</option>
+          <option value="active">{{ t('filter.active') }}</option>
+          <option value="pending">{{ t('users.pending') }}</option>
+          <option value="incomplete">{{ t('users.incomplete') }}</option>
         </select>
       </div>
     </div>
@@ -32,20 +32,20 @@
           <table class="table table-hover align-middle mb-0 small">
             <thead>
               <tr>
-                <th style="width:50px" class="text-end">ID</th>
+                <th style="width:50px" class="text-end">{{ t('table.id') }}</th>
                 <th class="th-sortable" @click="toggleSort('username')">
-                  Username <SortIcon col="username" :sortKey :sortDir />
+                  {{ t('users.usernameLabel') }} <SortIcon col="username" :sortKey :sortDir />
                 </th>
                 <th class="th-sortable" @click="toggleSort('email')">
                   Email <SortIcon col="email" :sortKey :sortDir />
                 </th>
-                <th>Ім'я</th>
-                <th>Телефон</th>
+                <th>{{ t('users.colName') }}</th>
+                <th>{{ t('stoList.colPhone') }}</th>
                 <th class="th-sortable" @click="toggleSort('created_at')">
-                  Зареєстровано <SortIcon col="created_at" :sortKey :sortDir />
+                  {{ t('users.colRegistered') }} <SortIcon col="created_at" :sortKey :sortDir />
                 </th>
                 <th class="th-sortable" @click="toggleSort('status')">
-                  Статус <SortIcon col="status" :sortKey :sortDir />
+                  {{ t('filter.status') }} <SortIcon col="status" :sortKey :sortDir />
                 </th>
                 <th style="width:50px"></th>
               </tr>
@@ -56,7 +56,7 @@
                 <td>{{ row.username }}</td>
                 <td>
                   {{ row.email }}
-                  <i v-if="row.email_verified_at" class="bi bi-check-circle-fill text-success ms-1" title="Email підтверджено"></i>
+                  <i v-if="row.email_verified_at" class="bi bi-check-circle-fill text-success ms-1" :title="t('users.emailVerifiedTooltip')"></i>
                 </td>
                 <td class="text-muted">{{ fullName(row) || '—' }}</td>
                 <td class="text-muted">{{ row.phone ?? '—' }}</td>
@@ -69,7 +69,7 @@
                 </td>
               </tr>
               <tr v-if="!items.length">
-                <td colspan="8" class="text-center text-muted py-4">Немає даних</td>
+                <td colspan="8" class="text-center text-muted py-4">{{ t('common.noData') }}</td>
               </tr>
             </tbody>
           </table>
@@ -77,7 +77,7 @@
       </div>
 
       <div class="d-flex justify-content-between align-items-center mt-3">
-        <span class="text-muted small">Всього: {{ total }}</span>
+        <span class="text-muted small">{{ t('analytics.totalCount', { value: total }) }}</span>
         <Pagination :current-page="page" :total-pages="totalPages" @change="load" />
       </div>
     </div>
@@ -92,7 +92,7 @@
     >
       <template #title>
         <h5 class="mb-0">
-          Користувач
+          {{ t('users.userModalTitle') }}
           <span class="text-muted fw-normal fs-6">#{{ modalData.id }} — {{ modalData.username }}</span>
         </h5>
       </template>
@@ -104,35 +104,35 @@
                 <button class="nav-link py-2 small text-nowrap"
                         :class="{ active: activeTab === 'general' }"
                         @click="activeTab = 'general'">
-                  <i class="bi bi-person me-1"></i>Загальна інформація
+                  <i class="bi bi-person me-1"></i>{{ t('users.tabGeneral') }}
                 </button>
               </li>
               <li class="nav-item">
                 <button class="nav-link py-2 small text-nowrap"
                         :class="{ active: activeTab === 'cars' }"
                         @click="switchTab('cars')">
-                  <i class="bi bi-car-front me-1"></i>Авто
+                  <i class="bi bi-car-front me-1"></i>{{ t('users.tabCars') }}
                 </button>
               </li>
               <li class="nav-item">
                 <button class="nav-link py-2 small text-nowrap"
                         :class="{ active: activeTab === 'managed-stos' }"
                         @click="switchTab('managed-stos')">
-                  <i class="bi bi-shield-lock me-1"></i>Доступ до СТО
+                  <i class="bi bi-shield-lock me-1"></i>{{ t('users.tabManagedStos') }}
                 </button>
               </li>
               <li class="nav-item">
                 <button class="nav-link py-2 small text-nowrap"
                         :class="{ active: activeTab === 'employments' }"
                         @click="switchTab('employments')">
-                  <i class="bi bi-briefcase me-1"></i>Робота в СТО
+                  <i class="bi bi-briefcase me-1"></i>{{ t('users.tabEmployments') }}
                 </button>
               </li>
               <li class="nav-item">
                 <button class="nav-link py-2 small text-nowrap"
                         :class="{ active: activeTab === 'admin' }"
                         @click="switchTab('admin')">
-                  <i class="bi bi-shield-check me-1"></i>Адміністрування
+                  <i class="bi bi-shield-check me-1"></i>{{ t('users.tabAdmin') }}
                 </button>
               </li>
             </ul>
@@ -145,15 +145,15 @@
             <template v-if="activeTab === 'general'">
               <div class="row g-3 mb-3">
                 <div class="col-sm-2">
-                  <label class="form-label small mb-1">ID</label>
+                  <label class="form-label small mb-1">{{ t('table.id') }}</label>
                   <div class="readonly-field">{{ modalData.id }}</div>
                 </div>
                 <div class="col-sm-4">
-                  <label class="form-label small mb-1">Username</label>
+                  <label class="form-label small mb-1">{{ t('users.usernameLabel') }}</label>
                   <div class="readonly-field">{{ modalData.username }}</div>
                 </div>
                 <div class="col-sm-3">
-                  <label class="form-label small mb-1">Мова інтерфейсу</label>
+                  <label class="form-label small mb-1">{{ t('users.interfaceLangLabel') }}</label>
                   <div class="readonly-field text-muted">{{ langLabel(modalData.language_code) }}</div>
                 </div>
               </div>
@@ -163,25 +163,25 @@
                 <div class="readonly-field">
                   {{ modalData.email }}
                   <span v-if="modalData.email_verified_at" class="text-success ms-1 small">
-                    <i class="bi bi-check-circle-fill"></i> підтверджено {{ modalData.email_verified_at?.slice(0, 10) }}
+                    <i class="bi bi-check-circle-fill"></i> {{ t('users.verifiedOnLabel', { date: modalData.email_verified_at?.slice(0, 10) }) }}
                   </span>
                   <span v-else class="text-warning ms-1 small">
-                    <i class="bi bi-exclamation-circle"></i> не підтверджено
+                    <i class="bi bi-exclamation-circle"></i> {{ t('users.notVerifiedLabel') }}
                   </span>
                 </div>
               </div>
 
               <div class="row g-3 mb-3">
                 <div class="col-sm-4">
-                  <label class="form-label small mb-1">Ім'я</label>
+                  <label class="form-label small mb-1">{{ t('users.nameLabel') }}</label>
                   <input v-model="modalForm.firstname" type="text" class="form-control form-control-sm" />
                 </div>
                 <div class="col-sm-4">
-                  <label class="form-label small mb-1">По батькові</label>
+                  <label class="form-label small mb-1">{{ t('users.middleNameLabel') }}</label>
                   <input v-model="modalForm.secondname" type="text" class="form-control form-control-sm" />
                 </div>
                 <div class="col-sm-4">
-                  <label class="form-label small mb-1">Прізвище</label>
+                  <label class="form-label small mb-1">{{ t('users.lastNameLabel') }}</label>
                   <input v-model="modalForm.lastname" type="text" class="form-control form-control-sm" />
                 </div>
               </div>
@@ -189,16 +189,16 @@
               <!-- Two columns: Status | Phones -->
               <div class="row g-3 mb-3">
                 <div class="col-md-4">
-                  <label class="form-label small mb-1">Статус</label>
+                  <label class="form-label small mb-1">{{ t('filter.status') }}</label>
                   <select v-model="modalForm.status" class="form-select form-select-sm">
-                    <option value="pending">pending — очікує</option>
-                    <option value="incomplete">incomplete — незавершений</option>
-                    <option value="active">active — активний</option>
+                    <option value="pending">{{ t('users.statusPendingOption') }}</option>
+                    <option value="incomplete">{{ t('users.statusIncompleteOption') }}</option>
+                    <option value="active">{{ t('users.statusActiveOption') }}</option>
                   </select>
                 </div>
                 <div class="col-md-8">
                   <label class="form-label small mb-1 fw-semibold">
-                    <i class="bi bi-telephone me-1"></i>Телефонні номери
+                    <i class="bi bi-telephone me-1"></i>{{ t('stoList.phonesLabel') }}
                   </label>
                   <div class="border rounded p-2">
                     <div v-if="phonesLoading" class="text-center py-2">
@@ -212,27 +212,27 @@
                           class="badge"
                           :class="ph.is_main ? 'bg-success' : 'bg-secondary'"
                           style="cursor:pointer;font-size:.7rem"
-                          :title="ph.is_main ? 'Основний' : 'Зробити основним'"
+                          :title="ph.is_main ? t('stoList.phoneMainTooltip') : t('stoList.phoneMakeMainTooltip')"
                           @click="setMainPhone(idx)"
                         >{{ ph.is_main ? '★' : '☆' }}</span>
                         <span class="small flex-grow-1">{{ ph.formatted }}</span>
                         <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1"
-                                title="Видалити" @click="removePhone(idx)">✕</button>
+                                :title="t('common.delete')" @click="removePhone(idx)">✕</button>
                       </div>
-                      <div v-if="!phonesList.length" class="text-muted small mb-1">Телефони не додано</div>
+                      <div v-if="!phonesList.length" class="text-muted small mb-1">{{ t('stoList.noPhones') }}</div>
                       <div class="d-flex gap-2 mt-1">
                         <input
                           v-model="newPhoneRaw"
                           type="tel"
                           class="form-control form-control-sm"
-                          placeholder="+380XXXXXXXXX"
+                          :placeholder="t('stoList.phoneAddPlaceholder')"
                           @keydown.enter.prevent="addPhone"
                         />
                         <button type="button" class="btn btn-sm btn-outline-primary text-nowrap"
-                                @click="addPhone">+ Додати</button>
+                                @click="addPhone">+ {{ t('stoList.addPhoneButton') }}</button>
                       </div>
                       <div class="text-muted mt-1" style="font-size:0.72rem">
-                        ★ — основний номер. Зберігається разом із загальними даними.
+                        {{ t('stoList.phoneMainHint') }}
                       </div>
                     </template>
                   </div>
@@ -242,11 +242,11 @@
               <!-- Created / Updated -->
               <div class="row g-3">
                 <div class="col-sm-6">
-                  <label class="form-label small mb-1">Зареєстровано</label>
+                  <label class="form-label small mb-1">{{ t('users.colRegistered') }}</label>
                   <div class="readonly-field text-muted small">{{ modalData.created_at }}</div>
                 </div>
                 <div class="col-sm-6">
-                  <label class="form-label small mb-1">Оновлено</label>
+                  <label class="form-label small mb-1">{{ t('stoList.updatedLabel') }}</label>
                   <div class="readonly-field text-muted small">{{ modalData.updated_at }}</div>
                 </div>
               </div>
@@ -259,23 +259,23 @@
               </div>
               <div v-else-if="carsError" class="alert alert-danger py-2 small">{{ carsError }}</div>
               <template v-else>
-                <div v-if="!carsList.length" class="text-muted text-center py-4">Авто не знайдено</div>
+                <div v-if="!carsList.length" class="text-muted text-center py-4">{{ t('users.carsNotFound') }}</div>
                 <table v-else class="table table-sm align-middle small mb-0">
                   <thead>
                     <tr>
                       <th style="width:30px"></th>
-                      <th>Авто</th>
-                      <th style="width:80px">Рік</th>
+                      <th>{{ t('stoList.carCol') }}</th>
+                      <th style="width:80px">{{ t('users.yearCol') }}</th>
                       <th>VIN</th>
-                      <th>Держ. номер</th>
-                      <th style="width:100px">Власн. з</th>
-                      <th style="width:100px">по</th>
+                      <th>{{ t('users.licensePlateCol') }}</th>
+                      <th style="width:100px">{{ t('users.ownedFromCol') }}</th>
+                      <th style="width:100px">{{ t('users.ownedToCol') }}</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-for="car in carsList" :key="car.id">
                       <td>
-                        <i v-if="car.is_main" class="bi bi-star-fill text-warning" title="Основне авто"></i>
+                        <i v-if="car.is_main" class="bi bi-star-fill text-warning" :title="t('users.mainCarTooltip')"></i>
                       </td>
                       <td>
                         <strong>{{ car.brand_name }}</strong> {{ car.model_name }}
@@ -299,15 +299,15 @@
               <div v-else-if="msError" class="alert alert-danger py-2 small">{{ msError }}</div>
               <template v-else>
                 <p class="text-muted small mb-2">
-                  СТО, до управління якими користувач має доступ на платформі.
+                  {{ t('users.managedStosHint') }}
                 </p>
 
                 <table v-if="msList.length" class="table table-sm align-middle small mb-3">
                   <thead>
                     <tr>
-                      <th>СТО</th>
-                      <th style="width:110px">Тип</th>
-                      <th style="width:100px">Додано</th>
+                      <th>{{ t('users.stoCol') }}</th>
+                      <th style="width:110px">{{ t('filter.type') }}</th>
+                      <th style="width:100px">{{ t('stoList.addedCol') }}</th>
                       <th style="width:40px"></th>
                     </tr>
                   </thead>
@@ -315,7 +315,7 @@
                     <tr v-for="ms in msList" :key="ms.sto_id">
                       <td>
                         {{ ms.sto_name }}
-                        <span v-if="!ms.sto_is_active" class="badge bg-danger ms-1" style="font-size:.65rem">неакт.</span>
+                        <span v-if="!ms.sto_is_active" class="badge bg-danger ms-1" style="font-size:.65rem">{{ t('users.inactiveAbbr') }}</span>
                       </td>
                       <td><span class="badge" :class="stoBadge(ms.sto_type)">{{ stoTypeLabel(ms.sto_type) }}</span></td>
                       <td class="text-muted">{{ ms.created_at?.slice(0,10) }}</td>
@@ -329,18 +329,18 @@
                     </tr>
                   </tbody>
                 </table>
-                <div v-else class="text-muted small mb-3">Доступ до СТО не надано</div>
+                <div v-else class="text-muted small mb-3">{{ t('users.noStoAccess') }}</div>
 
                 <!-- Add -->
                 <div v-if="canEdit" class="border-top pt-3">
-                  <div class="fw-semibold small mb-2">Надати доступ до СТО</div>
+                  <div class="fw-semibold small mb-2">{{ t('users.grantStoAccessTitle') }}</div>
                   <div class="d-flex gap-2 align-items-start">
                     <div class="flex-grow-1 position-relative">
                       <input
                         v-model="msSearchTerm"
                         type="text"
                         class="form-control form-control-sm"
-                        placeholder="Введіть назву СТО..."
+                        :placeholder="t('users.stoSearchPlaceholder')"
                         @input="debounceStoSearch('ms')"
                         @focus="msStoDropdown = true"
                       />
@@ -363,7 +363,7 @@
                             :disabled="!msSelectedSto || msAdding"
                             @click="addManagedSto">
                       <span v-if="msAdding" class="spinner-border spinner-border-sm"></span>
-                      <span v-else>Додати</span>
+                      <span v-else>{{ t('common.add') }}</span>
                     </button>
                   </div>
                   <div v-if="msAddError" class="text-danger small mt-1">{{ msAddError }}</div>
@@ -378,14 +378,14 @@
               </div>
               <div v-else-if="empError" class="alert alert-danger py-2 small">{{ empError }}</div>
               <template v-else>
-                <p class="text-muted small mb-2">СТО, в яких зареєстрований користувач як співробітник.</p>
+                <p class="text-muted small mb-2">{{ t('users.employmentsHint') }}</p>
 
                 <table v-if="empList.length" class="table table-sm align-middle small mb-3">
                   <thead>
                     <tr>
-                      <th>СТО</th>
-                      <th style="width:200px">Посада</th>
-                      <th style="width:110px">Статус</th>
+                      <th>{{ t('users.stoCol') }}</th>
+                      <th style="width:200px">{{ t('stoList.positionCol') }}</th>
+                      <th style="width:110px">{{ t('filter.status') }}</th>
                       <th style="width:40px"></th>
                     </tr>
                   </thead>
@@ -398,7 +398,7 @@
                                 :value="emp.position_id ?? ''"
                                 :disabled="empUpdatingId === emp.id"
                                 @change="changeEmpPosition(emp, $event.target.value)">
-                          <option value="">— Без посади —</option>
+                          <option value="">{{ t('stoList.noPositionOption') }}</option>
                           <optgroup v-for="grp in positionsGrouped" :key="grp.group_id" :label="grp.group_name">
                             <option v-for="pos in grp.positions" :key="pos.id" :value="pos.id">{{ pos.name }}</option>
                           </optgroup>
@@ -415,10 +415,10 @@
                                 :disabled="empTogglingId === emp.id"
                                 @click="toggleEmpActive(emp)">
                           <span v-if="empTogglingId === emp.id" class="spinner-border spinner-border-sm"></span>
-                          <span v-else>{{ emp.is_active ? 'Активний' : 'Неактивний' }}</span>
+                          <span v-else>{{ emp.is_active ? t('common.active') : t('common.inactive') }}</span>
                         </button>
                         <span v-else class="badge" :class="emp.is_active ? 'bg-success' : 'bg-danger'">
-                          {{ emp.is_active ? 'Активний' : 'Неактивний' }}
+                          {{ emp.is_active ? t('common.active') : t('common.inactive') }}
                         </span>
                       </td>
                       <td>
@@ -431,20 +431,20 @@
                     </tr>
                   </tbody>
                 </table>
-                <div v-else class="text-muted small mb-3">Посад не знайдено</div>
+                <div v-else class="text-muted small mb-3">{{ t('users.noPositionsFound') }}</div>
 
                 <!-- Add employment -->
                 <div v-if="canEdit" class="border-top pt-3">
-                  <div class="fw-semibold small mb-2">Додати посаду в СТО</div>
+                  <div class="fw-semibold small mb-2">{{ t('users.addPositionTitle') }}</div>
                   <div class="row g-2 align-items-end">
                     <div class="col-sm-5">
-                      <label class="form-label small mb-1">СТО</label>
+                      <label class="form-label small mb-1">{{ t('users.stoCol') }}</label>
                       <div class="position-relative">
                         <input
                           v-model="empSearchTerm"
                           type="text"
                           class="form-control form-control-sm"
-                          placeholder="Введіть назву СТО..."
+                          :placeholder="t('users.stoSearchPlaceholder')"
                           @input="debounceStoSearch('emp')"
                           @focus="empStoDropdown = true"
                         />
@@ -465,9 +465,9 @@
                       </div>
                     </div>
                     <div class="col-sm-5">
-                      <label class="form-label small mb-1">Посада</label>
+                      <label class="form-label small mb-1">{{ t('stoList.positionCol') }}</label>
                       <select v-model="empAddPositionId" class="form-select form-select-sm">
-                        <option :value="null">— Без посади —</option>
+                        <option :value="null">{{ t('stoList.noPositionOption') }}</option>
                         <optgroup v-for="grp in positionsGrouped" :key="grp.group_id" :label="grp.group_name">
                           <option v-for="pos in grp.positions" :key="pos.id" :value="pos.id">{{ pos.name }}</option>
                         </optgroup>
@@ -478,7 +478,7 @@
                               :disabled="!empSelectedSto || empAdding"
                               @click="addEmployment">
                         <span v-if="empAdding" class="spinner-border spinner-border-sm"></span>
-                        <span v-else>Додати</span>
+                        <span v-else>{{ t('common.add') }}</span>
                       </button>
                     </div>
                   </div>
@@ -495,42 +495,42 @@
               <template v-else>
                 <div class="alert alert-info small">
                   <i class="bi bi-info-circle me-1"></i>
-                  Керування доступом до адмін-панелі. Повне управління доступне в
-                  <router-link to="/admin-management">Адміністратори</router-link>
+                  {{ t('users.adminAccessInfoPrefix') }}
+                  <router-link to="/admin-management">{{ t('users.adminManagementLink') }}</router-link>
                 </div>
 
                 <!-- Admin credential status -->
                 <div class="card mb-3">
                   <div class="card-body">
-                    <h6 class="card-title mb-3">Доступ до адмін-панелі</h6>
+                    <h6 class="card-title mb-3">{{ t('users.adminAccessTitle') }}</h6>
 
                     <div v-if="adminData.access_granted">
                       <div class="d-flex align-items-center gap-2 mb-2">
                         <i class="bi bi-check-circle-fill text-success"></i>
-                        <span class="fw-bold">Доступ надано</span>
+                        <span class="fw-bold">{{ t('users.accessGrantedLabel') }}</span>
                       </div>
 
                       <table class="table table-sm table-borderless mb-0">
                         <tr>
-                          <td class="text-muted" style="width: 180px">Статус:</td>
+                          <td class="text-muted" style="width: 180px">{{ t('users.statusColonLabel') }}</td>
                           <td>
-                            <span v-if="adminData.is_enabled" class="badge bg-success">Активний</span>
-                            <span v-else class="badge bg-warning">Відключено</span>
+                            <span v-if="adminData.is_enabled" class="badge bg-success">{{ t('common.active') }}</span>
+                            <span v-else class="badge bg-warning">{{ t('users.disabledBadge') }}</span>
                           </td>
                         </tr>
                         <tr>
-                          <td class="text-muted">Пароль встановлено:</td>
+                          <td class="text-muted">{{ t('users.passwordSetLabel') }}</td>
                           <td>
-                            <span v-if="adminData.has_password" class="text-success">✓ Так</span>
-                            <span v-else class="text-warning">✗ Ні</span>
+                            <span v-if="adminData.has_password" class="text-success">✓ {{ t('common.yes') }}</span>
+                            <span v-else class="text-warning">✗ {{ t('common.no') }}</span>
                           </td>
                         </tr>
                         <tr v-if="adminData.last_login_at">
-                          <td class="text-muted">Останній вхід:</td>
+                          <td class="text-muted">{{ t('users.lastLoginLabel') }}</td>
                           <td>{{ formatDate(adminData.last_login_at) }}</td>
                         </tr>
                         <tr v-if="adminData.roles && adminData.roles.length > 0">
-                          <td class="text-muted">Ролі:</td>
+                          <td class="text-muted">{{ t('users.rolesLabel') }}</td>
                           <td>
                             <span v-for="role in adminData.roles" :key="role.id" class="badge bg-primary me-1">
                               {{ role.name }}
@@ -545,7 +545,7 @@
                           class="btn btn-sm btn-outline-primary me-2"
                           @click="copyFirstLoginLink"
                         >
-                          <i class="bi bi-link me-1"></i>Скопіювати посилання для першого входу
+                          <i class="bi bi-link me-1"></i>{{ t('users.copyFirstLoginLinkButton') }}
                         </button>
                         <button
                           v-if="!adminData.is_enabled"
@@ -554,7 +554,7 @@
                           :disabled="adminActionLoading"
                         >
                           <span v-if="adminActionLoading" class="spinner-border spinner-border-sm me-1"></span>
-                          Активувати
+                          {{ t('bulk.activate') }}
                         </button>
                         <button
                           v-else
@@ -563,7 +563,7 @@
                           :disabled="adminActionLoading"
                         >
                           <span v-if="adminActionLoading" class="spinner-border spinner-border-sm me-1"></span>
-                          Відкликати доступ
+                          {{ t('users.revokeAccessButton') }}
                         </button>
                       </div>
                     </div>
@@ -571,7 +571,7 @@
                     <div v-else>
                       <div class="text-muted mb-3">
                         <i class="bi bi-x-circle me-1"></i>
-                        Доступ до адмін-панелі не надано
+                        {{ t('users.accessNotGrantedLabel') }}
                       </div>
                       <button
                         class="btn btn-sm btn-success"
@@ -579,7 +579,7 @@
                         :disabled="adminActionLoading"
                       >
                         <span v-if="adminActionLoading" class="spinner-border spinner-border-sm me-1"></span>
-                        <i class="bi bi-shield-check me-1"></i>Надати доступ
+                        <i class="bi bi-shield-check me-1"></i>{{ t('users.grantAccessButton') }}
                       </button>
                     </div>
 
@@ -593,8 +593,8 @@
                 </div>
 
                 <div class="text-muted small">
-                  Для детального керування ролями та правами користуйтесь сторінкою
-                  <router-link to="/admin-management">Адміністратори</router-link>
+                  {{ t('users.forDetailedManagementHint') }}
+                  <router-link to="/admin-management">{{ t('users.adminManagementLink') }}</router-link>
                 </div>
               </template>
             </template>
@@ -605,13 +605,13 @@
       <template #footer>
         <div></div>
         <div class="d-flex gap-2">
-          <button class="btn btn-secondary btn-sm" @click="modalOpen = false">Закрити</button>
+          <button class="btn btn-secondary btn-sm" @click="modalOpen = false">{{ t('common.close') }}</button>
           <button v-if="activeTab === 'general' && canEdit"
                   class="btn btn-primary btn-sm"
                   :disabled="saving"
                   @click="saveModal">
             <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-            Зберегти
+            {{ t('common.save') }}
           </button>
         </div>
       </template>
@@ -622,6 +622,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ListPageWrapper from '@/components/ListPageWrapper.vue'
 import BaseModal from '@/components/BaseModal.vue'
 import Pagination from '@/components/Pagination.vue'
@@ -631,6 +632,7 @@ import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import { useUrlFilters } from '@/composables/useUrlFilters'
 import cfg from './users.config.json'
 
+const { t } = useI18n({ useScope: 'global' })
 const { can, authHeaders } = useAuth()
 const { notify } = useNotify()
 const { deleteWithUndo } = useUndoableDelete()
@@ -707,16 +709,18 @@ function fullName(row) {
   return [row.lastname, row.firstname, row.secondname].filter(Boolean).join(' ')
 }
 function statusLabel(s) {
-  return { active: 'Активний', pending: 'Очікує', incomplete: 'Незавершений' }[s] ?? s
+  return { active: t('common.active'), pending: t('stoList.bookingPending'), incomplete: t('users.incompleteStatus') }[s] ?? s
 }
 function statusBadge(s) {
   return { active: 'badge bg-success', pending: 'badge bg-warning text-dark', incomplete: 'badge bg-secondary' }[s] ?? 'badge bg-light text-dark'
 }
 function langLabel(code) {
-  return { uk: 'Українська', en: 'English', ru: 'Русский' }[code] ?? (code ? code : '—')
+  return { uk: t('language.uk'), en: t('language.en'), ru: t('language.ru') }[code] ?? (code ? code : '—')
 }
-const STO_TYPES = { individual: 'Індивід.', company: 'Компанія', network: 'Мережа', specialized: 'Спец.', mobile: 'Мобільне' }
-function stoTypeLabel(v) { return STO_TYPES[v] ?? v ?? '—' }
+function stoTypeLabel(v) {
+  const map = { individual: t('users.typeIndividualAbbr'), company: t('stoList.typeCompany'), network: t('stoList.typeNetwork'), specialized: t('users.typeSpecializedAbbr'), mobile: t('stoList.typeMobile') }
+  return map[v] ?? v ?? '—'
+}
 function stoBadge(v) {
   return { individual: 'bg-info text-dark', company: 'bg-primary', network: 'bg-warning text-dark', specialized: 'bg-danger', mobile: 'bg-success' }[v] ?? 'bg-secondary'
 }
@@ -739,7 +743,7 @@ async function load(p = 1) {
     if (filterStatus.value)   params.set('status', filterStatus.value)
     const res  = await fetch(`${cfg.apiList}?${params}`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     items.value      = json.data ?? []
     total.value      = json.pagination?.total ?? 0
     totalPages.value = json.pagination?.total_pages ?? 1
@@ -807,7 +811,7 @@ async function loadPhones() {
   try {
     const res  = await fetch(`/api/admin/users/${modalData.value.id}/phones`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     phonesList.value = (json.data ?? []).map(p => ({ ...p, raw: p.e164 }))
   } catch (e) {
     phonesError.value = e.message
@@ -842,7 +846,7 @@ async function savePhones() {
     body:    JSON.stringify({ phones: payload }),
   })
   const json = await res.json()
-  if (!res.ok) throw new Error(json.message ?? 'Помилка збереження телефонів')
+  if (!res.ok) throw new Error(json.message ?? t('stoList.phonesSaveError'))
   phonesList.value = (json.data ?? []).map(p => ({ ...p, raw: p.e164 }))
   if (json.main_phone !== undefined) {
     const idx = items.value.findIndex(r => r.id === modalData.value.id)
@@ -866,7 +870,7 @@ async function saveModal() {
       body:    JSON.stringify(payload),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка збереження')
+    if (!res.ok) throw new Error(json.message ?? t('list.saveError'))
     const idx = items.value.findIndex(r => r.id === modalData.value.id)
     if (idx !== -1) Object.assign(items.value[idx], json.data)
     if (newPhoneRaw.value.trim()) addPhone()
@@ -890,7 +894,7 @@ async function loadCars() {
   try {
     const res  = await fetch(`/api/admin/users/${modalData.value.id}/cars`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     carsList.value  = json.data ?? []
     carsLoaded.value = true
   } catch (e) { carsError.value = e.message }
@@ -915,7 +919,7 @@ async function loadManagedStos() {
   try {
     const res  = await fetch(`/api/admin/users/${modalData.value.id}/managed-stos`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     msList.value  = json.data ?? []
     msLoaded.value = true
   } catch (e) { msError.value = e.message }
@@ -927,14 +931,14 @@ function removeManagedSto(ms) {
   if (index === -1) return
 
   deleteWithUndo({
-    message: `Доступ до «${ms.sto_name}» відкликано`,
+    message: t('users.accessRevokedUndoMessage', { name: ms.sto_name }),
     remove: () => { msList.value.splice(index, 1) },
     restore: () => { msList.value.splice(index, 0, ms) },
     commit: async () => {
       const res = await fetch(`/api/admin/users/${modalData.value.id}/managed-stos/${ms.sto_id}`, {
         method: 'DELETE', headers: authHeaders(),
       })
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message ?? 'Помилка')
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message ?? t('common.error'))
     },
   })
 }
@@ -949,7 +953,7 @@ async function addManagedSto() {
       body: JSON.stringify({ sto_id: msSelectedSto.value.id }),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     msList.value.push(json.data)
     msSearchTerm.value  = ''
     msSelectedSto.value = null
@@ -993,7 +997,7 @@ async function loadEmployments() {
   try {
     const res  = await fetch(`/api/admin/users/${modalData.value.id}/employments`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     empList.value  = json.data ?? []
     empLoaded.value = true
   } catch (e) { empError.value = e.message }
@@ -1010,7 +1014,7 @@ async function changeEmpPosition(emp, newPosId) {
       body: JSON.stringify({ employee_position_id: posId }),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     Object.assign(emp, json.data)
   } catch (e) { notify(e.message, { type: 'error' }) }
   finally { empUpdatingId.value = null }
@@ -1025,7 +1029,7 @@ async function toggleEmpActive(emp) {
       body: JSON.stringify({ is_active: emp.is_active ? 0 : 1 }),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     emp.is_active = json.data.is_active
   } catch (e) { notify(e.message, { type: 'error' }) }
   finally { empTogglingId.value = null }
@@ -1036,14 +1040,14 @@ function removeEmployment(emp) {
   if (index === -1) return
 
   deleteWithUndo({
-    message: 'Працевлаштування видалено',
+    message: t('users.employmentRemovedMessage'),
     remove: () => { empList.value.splice(index, 1) },
     restore: () => { empList.value.splice(index, 0, emp) },
     commit: async () => {
       const res = await fetch(`/api/admin/users/${modalData.value.id}/employments/${emp.id}`, {
         method: 'DELETE', headers: authHeaders(),
       })
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message ?? 'Помилка')
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message ?? t('common.error'))
     },
   })
 }
@@ -1058,7 +1062,7 @@ async function addEmployment() {
       body: JSON.stringify({ sto_id: empSelectedSto.value.id, employee_position_id: empAddPositionId.value }),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     empList.value.push(json.data)
     empSearchTerm.value  = ''
     empSelectedSto.value = null
@@ -1084,7 +1088,7 @@ async function loadAdminTab() {
     // Get admin credential info from management API
     const res = await fetch('/api/admin/management/users', { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
 
     // Find current user in the list
     const user = json.users.find(u => u.id === modalData.value.id)
@@ -1108,7 +1112,7 @@ async function loadAdminTab() {
 }
 
 async function grantAdminAccess() {
-  if (!confirm(`Надати доступ до адмін-панелі користувачу ${modalData.value.username}?`)) return
+  if (!confirm(t('users.confirmGrantAccess', { username: modalData.value.username }))) return
   adminActionLoading.value = true
   adminActionError.value = null
   adminActionSuccess.value = null
@@ -1119,9 +1123,9 @@ async function grantAdminAccess() {
       body: JSON.stringify({ user_id: modalData.value.id }),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
 
-    adminActionSuccess.value = 'Доступ надано! Користувач може встановити пароль через /admin/first-login'
+    adminActionSuccess.value = t('users.accessGrantedMessage')
     adminLoaded.value = false
     await loadAdminTab()
   } catch (e) {
@@ -1132,7 +1136,7 @@ async function grantAdminAccess() {
 }
 
 async function revokeAdminAccess() {
-  if (!confirm(`Відкликати доступ до адмін-панелі для ${modalData.value.username}?`)) return
+  if (!confirm(t('users.confirmRevokeAccess', { username: modalData.value.username }))) return
   adminActionLoading.value = true
   adminActionError.value = null
   adminActionSuccess.value = null
@@ -1142,9 +1146,9 @@ async function revokeAdminAccess() {
       headers: authHeaders(),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
 
-    adminActionSuccess.value = 'Доступ відкликано'
+    adminActionSuccess.value = t('users.accessRevokedMessage')
     adminLoaded.value = false
     await loadAdminTab()
   } catch (e) {
@@ -1161,7 +1165,7 @@ async function enableAdminAccess() {
   try {
     // TODO: add API endpoint to enable/disable admin access
     // For now, just reload
-    adminActionSuccess.value = 'Функція активації у розробці'
+    adminActionSuccess.value = t('users.activationInDevMessage')
   } catch (e) {
     adminActionError.value = e.message
   } finally {
@@ -1172,7 +1176,7 @@ async function enableAdminAccess() {
 function copyFirstLoginLink() {
   const link = `${window.location.origin}/admin/first-login`
   navigator.clipboard.writeText(link).then(() => {
-    adminActionSuccess.value = 'Посилання скопійовано в буфер обміну!'
+    adminActionSuccess.value = t('users.linkCopiedMessage')
     setTimeout(() => { adminActionSuccess.value = null }, 3000)
   })
 }

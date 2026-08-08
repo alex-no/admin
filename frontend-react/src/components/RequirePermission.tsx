@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import menuConfig from '@/config/menu.json'
 
@@ -16,15 +17,16 @@ for (const section of menuConfig as MenuSection[]) {
 }
 
 function AccessDenied({ permission }: { permission: string }) {
+  const { t } = useTranslation()
   return (
     <div className="text-center text-muted py-5">
       <i className="bi bi-shield-lock" style={{ fontSize: '2.5rem' }} />
-      <h5 className="mt-3 mb-1">Немає доступу</h5>
-      <p className="small mb-1">Для цього розділу потрібне право:</p>
+      <h5 className="mt-3 mb-1">{t('accessDenied.title')}</h5>
+      <p className="small mb-1">{t('accessDenied.permissionRequired')}</p>
       <p className="mb-4"><code>{permission}</code></p>
       <Link to="/dashboard" className="btn btn-sm btn-outline-secondary">
         <i className="bi bi-arrow-left me-1" />
-        До панелі управління
+        {t('notImplemented.backToDashboard')}
       </Link>
     </div>
   )

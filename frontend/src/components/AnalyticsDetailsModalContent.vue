@@ -83,9 +83,9 @@
             <tr>
               <th>{{ t('analytics.ipType') }}</th>
               <td>
-                <span v-if="ipInfo.hosting" class="badge bg-warning text-dark" title="Hosting/Datacenter IP"><i class="bi bi-server"></i> {{ t('analytics.hostingBadge') }}</span>
-                <span v-if="ipInfo.proxy" class="badge bg-danger" title="Proxy/VPN detected"><i class="bi bi-shield-exclamation"></i> {{ t('analytics.proxyBadge') }}</span>
-                <span v-if="ipInfo.mobile" class="badge bg-info" title="Mobile network"><i class="bi bi-phone"></i> {{ t('analytics.mobileBadge') }}</span>
+                <span v-if="ipInfo.hosting" class="badge bg-warning text-dark" :title="t('analytics.hostingTooltip')"><i class="bi bi-server"></i> {{ t('analytics.hostingBadge') }}</span>
+                <span v-if="ipInfo.proxy" class="badge bg-danger" :title="t('analytics.proxyTooltip')"><i class="bi bi-shield-exclamation"></i> {{ t('analytics.proxyBadge') }}</span>
+                <span v-if="ipInfo.mobile" class="badge bg-info" :title="t('analytics.mobileTooltip')"><i class="bi bi-phone"></i> {{ t('analytics.mobileBadge') }}</span>
                 <span v-if="!ipInfo.hosting && !ipInfo.proxy && !ipInfo.mobile" class="badge bg-success"><i class="bi bi-house"></i> {{ t('analytics.residentialBadge') }}</span>
               </td>
             </tr>

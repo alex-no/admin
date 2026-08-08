@@ -135,9 +135,9 @@ const themeIcon = computed(() => {
 })
 
 const themeTitle = computed(() => {
-  if (theme.mode.value === 'light') return 'Світла тема'
-  if (theme.mode.value === 'dark') return 'Темна тема'
-  return 'Авто (за системою)'
+  if (theme.mode.value === 'light') return t('theme.light')
+  if (theme.mode.value === 'dark') return t('theme.dark')
+  return t('theme.auto')
 })
 
 async function doLogout() {

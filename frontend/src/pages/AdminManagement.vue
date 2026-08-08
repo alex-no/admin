@@ -3,7 +3,7 @@
   <ListPageWrapper>
     <div class="container-fluid py-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="mb-0">Управління адміністраторами</h4>
+        <h4 class="mb-0">{{ t('adminManagement.title') }}</h4>
       </div>
 
       <div v-if="loading" class="text-center py-5">
@@ -18,13 +18,13 @@
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Користувач</th>
-                <th>Email</th>
-                <th>Доступ до адмінки</th>
-                <th>Пароль встановлено</th>
-                <th>Останній вхід</th>
-                <th>Ролі</th>
-                <th class="text-end">Дії</th>
+                <th>{{ t('analytics.user') }}</th>
+                <th>{{ t('auth.email') }}</th>
+                <th>{{ t('adminManagement.colAdminAccess') }}</th>
+                <th>{{ t('adminManagement.colPasswordSet') }}</th>
+                <th>{{ t('adminManagement.colLastLogin') }}</th>
+                <th>{{ t('adminManagement.colRoles') }}</th>
+                <th class="text-end">{{ t('common.actions') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -39,13 +39,13 @@
                 <td>{{ user.email }}</td>
                 <td>
                   <span v-if="user.admin_access.granted && user.admin_access.enabled" class="badge bg-success">
-                    Активний
+                    {{ t('common.active') }}
                   </span>
                   <span v-else-if="user.admin_access.granted" class="badge bg-warning">
-                    Відключено
+                    {{ t('adminManagement.statusDisabled') }}
                   </span>
                   <span v-else class="badge bg-secondary">
-                    Не надано
+                    {{ t('adminManagement.statusNotGranted') }}
                   </span>
                 </td>
                 <td>
@@ -56,7 +56,7 @@
                   <span v-if="user.admin_access.last_login_at" class="small">
                     {{ formatDate(user.admin_access.last_login_at) }}
                   </span>
-                  <span v-else class="text-muted small">Ніколи</span>
+                  <span v-else class="text-muted small">{{ t('adminManagement.never') }}</span>
                 </td>
                 <td>
                   <div v-if="user.roles.length > 0">
@@ -68,7 +68,7 @@
                       {{ role.name }}
                     </span>
                   </div>
-                  <span v-else class="text-muted small">Без ролей</span>
+                  <span v-else class="text-muted small">{{ t('adminManagement.noRoles') }}</span>
                 </td>
                 <td class="text-end">
                   <button
@@ -76,27 +76,27 @@
                     @click="grantAccess(user)"
                     class="btn btn-sm btn-success me-1"
                   >
-                    Надати доступ
+                    {{ t('adminManagement.grantAccessButton') }}
                   </button>
                   <button
                     v-else-if="!user.admin_access.enabled"
                     @click="enableAccess(user)"
                     class="btn btn-sm btn-warning me-1"
                   >
-                    Активувати
+                    {{ t('adminManagement.enableAccessButton') }}
                   </button>
                   <button
                     v-else
                     @click="revokeAccess(user)"
                     class="btn btn-sm btn-danger me-1"
                   >
-                    Відкликати
+                    {{ t('adminManagement.revokeAccessButton') }}
                   </button>
                   <button
                     @click="manageRoles(user)"
                     class="btn btn-sm btn-outline-primary"
                   >
-                    Ролі
+                    {{ t('adminManagement.colRoles') }}
                   </button>
                 </td>
               </tr>
@@ -110,11 +110,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useAuth } from '@/composables/useAuth';
 import { useNotify } from '@/composables/useNotify';
 import ListPageWrapper from '@/components/ListPageWrapper.vue';
 import RoleManagementModal from '@/components/RoleManagementModal.vue';
 
+const { t } = useI18n({ useScope: 'global' });
 const auth = useAuth();
 const { notify } = useNotify();
 
@@ -144,17 +146,17 @@ async function loadUsers() {
     if (json.status === 'success') {
       users.value = json.users;
     } else {
-      error.value = json.message || 'Помилка завантаження користувачів';
+      error.value = json.message || t('adminManagement.loadUsersError');
     }
   } catch (e) {
-    error.value = 'Помилка з\'єднання з сервером';
+    error.value = t('roles.connectionError');
   } finally {
     loading.value = false;
   }
 }
 
 async function grantAccess(user) {
-  if (!confirm(`Надати доступ до адмінки користувачу ${user.username}?`)) return;
+  if (!confirm(t('adminManagement.grantConfirm', { username: user.username }))) return;
 
   try {
     const response = await fetch('/api/admin/credential/grant', {
@@ -169,17 +171,17 @@ async function grantAccess(user) {
 
     if (json.status === 'success') {
       await loadUsers();
-      notify('Доступ надано. Користувач може встановити пароль через /admin/first-login', { type: 'success' });
+      notify(t('adminManagement.grantSuccess'), { type: 'success' });
     } else {
-      notify(json.message || 'Помилка', { type: 'error' });
+      notify(json.message || t('common.error'), { type: 'error' });
     }
   } catch (e) {
-    notify('Помилка з\'єднання', { type: 'error' });
+    notify(t('adminManagement.connectionErrorShort'), { type: 'error' });
   }
 }
 
 async function revokeAccess(user) {
-  if (!confirm(`Відкликати доступ до адмінки для ${user.username}?`)) return;
+  if (!confirm(t('adminManagement.revokeConfirm', { username: user.username }))) return;
 
   try {
     const response = await fetch(`/api/admin/credential/${user.id}`, {
@@ -190,12 +192,12 @@ async function revokeAccess(user) {
 
     if (json.status === 'success') {
       await loadUsers();
-      notify('Доступ відкликано', { type: 'success' });
+      notify(t('adminManagement.revokeSuccess'), { type: 'success' });
     } else {
-      notify(json.message || 'Помилка', { type: 'error' });
+      notify(json.message || t('common.error'), { type: 'error' });
     }
   } catch (e) {
-    notify('Помилка з\'єднання', { type: 'error' });
+    notify(t('adminManagement.connectionErrorShort'), { type: 'error' });
   }
 }
 

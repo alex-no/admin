@@ -1,18 +1,18 @@
 <template>
   <BaseLayout>
     <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
-      <h5 class="mb-0">Менеджери СТО та їх права</h5>
+      <h5 class="mb-0">{{ t('stoManagers.title') }}</h5>
       <div class="d-flex gap-2 flex-wrap">
         <input
           v-model="search"
           type="text"
           class="form-control form-control-sm"
           style="width:250px"
-          placeholder="Пошук за СТО або менеджером..."
+          :placeholder="t('stoManagers.searchPlaceholder')"
           @input="debounceLoad"
         />
         <select v-model="filterStoId" class="form-select form-select-sm" style="width:auto" @change="load(1)">
-          <option value="">Всі СТО</option>
+          <option value="">{{ t('stoManagers.allStosOption') }}</option>
           <option v-for="sto in stos" :key="sto.id" :value="sto.id">{{ sto.name_uk }}</option>
         </select>
       </div>
@@ -30,10 +30,10 @@
             <thead>
               <tr>
                 <th style="width:60px">STO ID</th>
-                <th>Назва СТО</th>
-                <th>Менеджер</th>
-                <th>Email</th>
-                <th style="width:350px">Права доступу</th>
+                <th>{{ t('stoManagers.colStoName') }}</th>
+                <th>{{ t('stoManagers.colManager') }}</th>
+                <th>{{ t('auth.email') }}</th>
+                <th style="width:350px">{{ t('roles.permissions') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -69,7 +69,7 @@
               </tr>
               <tr v-if="items.length === 0">
                 <td colspan="5" class="text-center text-muted py-4">
-                  Менеджерів не знайдено
+                  {{ t('stoManagers.notFound') }}
                 </td>
               </tr>
             </tbody>
@@ -80,12 +80,12 @@
       <!-- Pagination -->
       <div v-if="total > perPage" class="d-flex justify-content-between align-items-center mt-3">
         <div class="text-muted small">
-          Показано {{ (page - 1) * perPage + 1 }}–{{ Math.min(page * perPage, total) }} з {{ total }}
+          {{ t('stoManagers.showingRange', { from: (page - 1) * perPage + 1, to: Math.min(page * perPage, total), total }) }}
         </div>
         <nav>
           <ul class="pagination pagination-sm mb-0">
             <li class="page-item" :class="{ disabled: page === 1 }">
-              <a class="page-link" href="#" @click.prevent="load(page - 1)">Попередня</a>
+              <a class="page-link" href="#" @click.prevent="load(page - 1)">{{ t('stoManagers.prevPage') }}</a>
             </li>
             <li
               v-for="p in paginationPages"
@@ -96,7 +96,7 @@
               <a class="page-link" href="#" @click.prevent="load(p)">{{ p }}</a>
             </li>
             <li class="page-item" :class="{ disabled: page >= Math.ceil(total / perPage) }">
-              <a class="page-link" href="#" @click.prevent="load(page + 1)">Наступна</a>
+              <a class="page-link" href="#" @click.prevent="load(page + 1)">{{ t('stoManagers.nextPage') }}</a>
             </li>
           </ul>
         </nav>
@@ -107,9 +107,11 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import BaseLayout from '../layouts/BaseLayout.vue'
 
+const { t } = useI18n({ useScope: 'global' })
 const auth = useAuth()
 const authHeaders = () => auth.authHeaders()
 
@@ -166,7 +168,7 @@ async function load(p = 1) {
     page.value = data.page
     perPage.value = data.per_page
   } catch (err) {
-    error.value = err.message || 'Помилка завантаження даних'
+    error.value = err.message || t('reviews.loadDataError')
   } finally {
     loading.value = false
   }
@@ -237,7 +239,7 @@ async function togglePermission(manager, permKey) {
   } catch (err) {
     // Rollback on error
     manager.permissions = originalPerms
-    error.value = `Помилка: ${err.message || 'Не вдалося зберегти зміни'}`
+    error.value = t('stoManagers.errorPrefix', { message: err.message || t('stoManagers.saveFailedFallback') })
     setTimeout(() => error.value = '', 5000)
   } finally {
     delete savingMap.value[key]

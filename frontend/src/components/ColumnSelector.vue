@@ -4,7 +4,7 @@
     <button
       type="button"
       class="btn btn-sm btn-outline-secondary"
-      :title="hasHidden ? 'Колонки таблиці (частина прихована)' : 'Колонки таблиці'"
+      :title="hasHidden ? t('table.columnsTooltipHidden') : t('table.columnsTooltip')"
       @click="open = !open"
     >
       <i class="bi bi-layout-three-columns"></i>
@@ -33,7 +33,7 @@
       </div>
 
       <div v-if="!hideableColumns.length" class="text-muted small px-1">
-        Немає колонок, які можна приховати
+        {{ t('table.noHideableColumns') }}
       </div>
 
       <template v-if="hideableColumns.length">

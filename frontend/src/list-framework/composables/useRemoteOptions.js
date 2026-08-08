@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 import { formatOptionLabel, withDefaultPerPage } from '@core/remoteOptions'
+import { i18n } from '@/i18n'
 
 // Кеш по URL, спільний для всіх компонентів (filter + cell), щоб той самий
 // довідник (наприклад, країни) не запитувався з бекенду повторно.
@@ -47,7 +48,7 @@ export function useRemoteOptions(url, opts = {}) {
     fetch(withDefaultPerPage(url), { headers: authHeaders() })
       .then(async (res) => {
         const json = await res.json().catch(() => ({}))
-        if (!res.ok) throw new Error(json.message ?? `Помилка завантаження списку (HTTP ${res.status})`)
+        if (!res.ok) throw new Error(json.message ?? i18n.global.t('list.remoteOptionsLoadError', { status: res.status }))
         rows.value = json.data ?? []
         total.value = json.pagination?.total ?? rows.value.length
         truncated.value = total.value > rows.value.length
@@ -74,7 +75,7 @@ export function useRemoteOptions(url, opts = {}) {
     if (entry.truncated?.value && entry.total?.value) {
       mapped.push({
         value: '',
-        label: `▸ Показано ${mapped.length} з ${entry.total.value} — для пошуку потрібен автокомпліт`,
+        label: i18n.global.t('list.remoteOptionsTruncatedHint', { shown: mapped.length, total: entry.total.value }),
         disabled: true,
       })
     }

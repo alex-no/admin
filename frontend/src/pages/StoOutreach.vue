@@ -1,15 +1,15 @@
 <template>
   <BaseLayout>
     <div class="d-flex align-items-center justify-content-between mb-3 gap-2 flex-wrap">
-      <h5 class="mb-0">Розсилка СТО</h5>
+      <h5 class="mb-0">{{ t('stoOutreach.title') }}</h5>
       <div class="d-flex gap-2 flex-wrap align-items-center">
-        <span class="text-muted small">Без менеджерів: {{ total }}</span>
+        <span class="text-muted small">{{ t('stoOutreach.withoutManagersCount', { count: total }) }}</span>
         <input
           v-model="search"
           type="text"
           class="form-control form-control-sm"
           style="width:200px"
-          placeholder="Пошук за назвою / email..."
+          :placeholder="t('stoOutreach.searchPlaceholder')"
           @input="debounceLoad"
         />
       </div>
@@ -30,12 +30,12 @@
                 <th style="width:36px">
                   <input type="checkbox" class="form-check-input" :checked="allChecked" :indeterminate.prop="someChecked" @change="toggleAll" />
                 </th>
-                <th style="width:50px" class="text-muted text-end">ID</th>
-                <th>Назва СТО</th>
+                <th style="width:50px" class="text-muted text-end">{{ t('table.id') }}</th>
+                <th>{{ t('stoOutreach.colStoName') }}</th>
                 <th>Email</th>
-                <th>Телефон</th>
-                <th style="width:130px">Остання розсилка</th>
-                <th style="width:140px">Відповідь</th>
+                <th>{{ t('stoList.colPhone') }}</th>
+                <th style="width:130px">{{ t('stoOutreach.colLastOutreach') }}</th>
+                <th style="width:140px">{{ t('stoOutreach.colResponse') }}</th>
                 <th style="width:36px"></th>
               </tr>
             </thead>
@@ -48,7 +48,7 @@
                       class="form-check-input"
                       :checked="selected.has(row.id)"
                       :disabled="emailChannelDisabled(row)"
-                      :title="emailChannelDisabled(row) ? 'Email не вказано' : ''"
+                      :title="emailChannelDisabled(row) ? t('stoOutreach.emailNotSpecifiedTooltip') : ''"
                       @change="toggleRow(row.id)"
                     />
                   </td>
@@ -67,7 +67,7 @@
                       <div style="font-size:.75rem">{{ row.last_outreach_at.slice(0,10) }}</div>
                       <span class="badge bg-secondary" style="font-size:.65rem">{{ row.outreach_count }}×</span>
                     </template>
-                    <span v-else class="text-muted small">Не надсилалось</span>
+                    <span v-else class="text-muted small">{{ t('stoOutreach.notSentYet') }}</span>
                   </td>
                   <td>
                     <span v-if="row.last_response_status" class="badge" :class="responseBadge(row.last_response_status)" style="font-size:.7rem">
@@ -76,7 +76,7 @@
                     <span v-else class="text-muted small">—</span>
                   </td>
                   <td>
-                    <button class="btn btn-sm btn-outline-secondary py-0 px-1" title="Історія" @click="toggleHistory(row)">
+                    <button class="btn btn-sm btn-outline-secondary py-0 px-1" :title="t('stoOutreach.historyTooltip')" @click="toggleHistory(row)">
                       <i class="bi bi-clock-history"></i>
                     </button>
                   </td>
@@ -89,16 +89,16 @@
                       <div v-if="historyLoading" class="text-center py-2">
                         <div class="spinner-border spinner-border-sm text-secondary"></div>
                       </div>
-                      <div v-else-if="!historyItems.length" class="text-muted small">Розсилок не було</div>
+                      <div v-else-if="!historyItems.length" class="text-muted small">{{ t('stoOutreach.noHistoryYet') }}</div>
                       <table v-else class="table table-sm mb-0 small">
                         <thead>
                           <tr>
-                            <th style="width:110px">Дата</th>
-                            <th style="width:90px">Канал</th>
-                            <th style="width:100px">Контакт</th>
-                            <th style="width:90px">Статус</th>
-                            <th style="width:140px">Відповідь</th>
-                            <th>Примітка</th>
+                            <th style="width:110px">{{ t('analytics.colDate') }}</th>
+                            <th style="width:90px">{{ t('stoOutreach.colChannel') }}</th>
+                            <th style="width:100px">{{ t('stoOutreach.colContact') }}</th>
+                            <th style="width:90px">{{ t('filter.status') }}</th>
+                            <th style="width:140px">{{ t('stoOutreach.colResponse') }}</th>
+                            <th>{{ t('stoOutreach.colNote') }}</th>
                             <th style="width:36px"></th>
                           </tr>
                         </thead>
@@ -117,11 +117,11 @@
                                 <select v-model="editingResponseStatus" class="form-select form-select-sm mb-1">
                                   <option v-for="s in RESPONSE_STATUSES" :key="s.value" :value="s.value">{{ s.label }}</option>
                                 </select>
-                                <input v-model="editingResponseNote" type="text" class="form-control form-control-sm mb-1" placeholder="Примітка..." />
+                                <input v-model="editingResponseNote" type="text" class="form-control form-control-sm mb-1" :placeholder="t('stoOutreach.notePlaceholder')" />
                                 <div class="d-flex gap-1">
                                   <button class="btn btn-sm btn-primary py-0" :disabled="savingResponse" @click="saveResponse(h, row)">
                                     <span v-if="savingResponse" class="spinner-border spinner-border-sm"></span>
-                                    <span v-else>Зберегти</span>
+                                    <span v-else>{{ t('common.save') }}</span>
                                   </button>
                                   <button class="btn btn-sm btn-outline-secondary py-0" @click="editingResponseId = null">✕</button>
                                 </div>
@@ -134,7 +134,7 @@
                               {{ h.response_note ?? '' }}
                             </td>
                             <td>
-                              <button class="btn btn-sm btn-outline-secondary py-0 px-1" title="Зафіксувати відповідь" @click="startEditResponse(h)">
+                              <button class="btn btn-sm btn-outline-secondary py-0 px-1" :title="t('stoOutreach.fixResponseTooltip')" @click="startEditResponse(h)">
                                 <i class="bi bi-pencil"></i>
                               </button>
                             </td>
@@ -147,7 +147,7 @@
               </template>
 
               <tr v-if="!items.length">
-                <td colspan="8" class="text-center text-muted py-4">СТО не знайдено</td>
+                <td colspan="8" class="text-center text-muted py-4">{{ t('stoOutreach.noStosFound') }}</td>
               </tr>
             </tbody>
           </table>
@@ -156,7 +156,7 @@
 
       <!-- Pagination -->
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <span class="text-muted small">Всього: {{ total }}</span>
+        <span class="text-muted small">{{ t('analytics.totalCount', { value: total }) }}</span>
         <nav v-if="totalPages > 1">
           <ul class="pagination pagination-sm mb-0">
             <li class="page-item" :class="{ disabled: page === 1 }">
@@ -178,7 +178,7 @@
           <div class="d-flex align-items-center justify-content-between">
             <span class="fw-semibold small">
               <i class="bi bi-send me-1"></i>
-              Відправити обраним
+              {{ t('stoOutreach.sendToSelected') }}
               <span class="badge bg-primary ms-1">{{ selected.size }}</span>
             </span>
             <div class="d-flex gap-2">
@@ -191,14 +191,14 @@
         </div>
         <div class="card-body px-4 py-3">
           <div v-if="channel === 'email'" class="mb-2">
-            <label class="form-label small mb-1">Тема листа</label>
+            <label class="form-label small mb-1">{{ t('stoOutreach.emailSubjectLabel') }}</label>
             <input v-model="subject" type="text" class="form-control form-control-sm" />
           </div>
           <div class="mb-2">
             <label class="form-label small mb-1">
-              <template v-if="channel === 'email'">Текст листа (HTML)</template>
-              <template v-else-if="channel === 'sms'">Текст SMS</template>
-              <template v-else>Нотатки до дзвінка</template>
+              <template v-if="channel === 'email'">{{ t('stoOutreach.emailBodyLabel') }}</template>
+              <template v-else-if="channel === 'sms'">{{ t('stoOutreach.smsBodyLabel') }}</template>
+              <template v-else>{{ t('stoOutreach.callNotesLabel') }}</template>
             </label>
             <textarea v-model="message" class="form-control form-control-sm font-monospace"
                       :rows="channel === 'email' ? 6 : 3"></textarea>
@@ -207,12 +207,12 @@
           <div v-if="sendResult" class="alert py-2 small mb-2"
                :class="sendResult.failed > 0 ? 'alert-warning' : 'alert-success'">
             <span v-if="channel !== 'phone_call'">
-              Відправлено: <strong>{{ sendResult.sent }}</strong>
-              <template v-if="sendResult.failed"> / Помилок: <strong>{{ sendResult.failed }}</strong></template>
+              {{ t('stoOutreach.sentLabel') }} <strong>{{ sendResult.sent }}</strong>
+              <template v-if="sendResult.failed"> / {{ t('stoOutreach.errorsLabel') }} <strong>{{ sendResult.failed }}</strong></template>
             </span>
-            <span v-else>Зафіксовано дзвінків: <strong>{{ sendResult.sent }}</strong></span>
+            <span v-else>{{ t('stoOutreach.callsLoggedLabel') }} <strong>{{ sendResult.sent }}</strong></span>
             <ul v-if="failedResults.length" class="mb-0 mt-1">
-              <li v-for="r in failedResults" :key="r.sto_id">СТО #{{ r.sto_id }}: {{ r.message }}</li>
+              <li v-for="r in failedResults" :key="r.sto_id">{{ t('stoOutreach.stoErrorLine', { id: r.sto_id, message: r.message }) }}</li>
             </ul>
           </div>
           <div v-if="sendError" class="alert alert-danger py-2 small mb-2">{{ sendError }}</div>
@@ -224,8 +224,8 @@
           >
             <span v-if="sending" class="spinner-border spinner-border-sm me-1"></span>
             <i v-else class="bi bi-send me-1"></i>
-            <template v-if="channel === 'phone_call'">Зафіксувати дзвінок</template>
-            <template v-else>Відправити ({{ selected.size }})</template>
+            <template v-if="channel === 'phone_call'">{{ t('stoOutreach.logCallButton') }}</template>
+            <template v-else>{{ t('stoOutreach.sendButton', { count: selected.size }) }}</template>
           </button>
         </div>
       </div>
@@ -236,38 +236,36 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import BaseLayout from '@/layouts/BaseLayout.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useNotify } from '@/composables/useNotify'
 import { formatDate } from '@/utils/date'
 
+const { t } = useI18n({ useScope: 'global' })
 const { authHeaders } = useAuth()
 const { notify } = useNotify()
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const STO_TYPES = {
-  individual:  'Індивідуальне',
-  company:     'Компанія',
-  network:     'Мережа',
-  specialized: 'Спеціалізоване',
-  mobile:      'Мобільне',
+function typeLabel(v) {
+  const map = { individual: t('stoList.typeIndividual'), company: t('stoList.typeCompany'), network: t('stoList.typeNetwork'), specialized: t('stoList.typeSpecialized'), mobile: t('stoList.typeMobile') }
+  return map[v] ?? v ?? '—'
 }
-function typeLabel(v) { return STO_TYPES[v] ?? v ?? '—' }
 
-const CHANNELS = [
+const CHANNELS = computed(() => [
   { value: 'email',      label: 'Email' },
   { value: 'sms',        label: 'SMS' },
-  { value: 'phone_call', label: 'Дзвінок' },
-]
+  { value: 'phone_call', label: t('stoOutreach.callChannelLabel') },
+])
 
-const RESPONSE_STATUSES = [
-  { value: 'pending',            label: 'Очікує' },
-  { value: 'interested',         label: 'Зацікавлений' },
-  { value: 'not_interested',     label: 'Не зацікавлений' },
-  { value: 'registered',         label: 'Зареєструвався' },
-  { value: 'callback_requested', label: 'Передзвонити' },
-  { value: 'no_response',        label: 'Не відповів' },
-]
+const RESPONSE_STATUSES = computed(() => [
+  { value: 'pending',            label: t('stoList.bookingPending') },
+  { value: 'interested',         label: t('stoOutreach.interestedLabel') },
+  { value: 'not_interested',     label: t('stoOutreach.notInterestedLabel') },
+  { value: 'registered',         label: t('stoOutreach.registeredLabel') },
+  { value: 'callback_requested', label: t('stoOutreach.callbackRequestedLabel') },
+  { value: 'no_response',        label: t('stoOutreach.noResponseLabel') },
+])
 
 // ── List state ────────────────────────────────────────────────────────────────
 const items      = ref([])
@@ -333,7 +331,7 @@ async function load(p = 1) {
     if (search.value.trim()) params.set('search', search.value.trim())
     const res  = await fetch(`/api/admin/outreach/sto?${params}`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     items.value      = json.data ?? []
     total.value      = json.pagination?.total ?? 0
     totalPages.value = json.pagination?.total_pages ?? 1
@@ -365,7 +363,7 @@ async function toggleHistory(row) {
   try {
     const res  = await fetch(`/api/admin/outreach/sto/${row.id}/history`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     historyItems.value = json.data ?? []
   } catch (e) {
     historyItems.value = []
@@ -395,7 +393,7 @@ async function saveResponse(h, row) {
       body:    JSON.stringify({ response_status: editingResponseStatus.value, response_note: editingResponseNote.value }),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     h.response_status = json.data.response_status
     h.response_note   = json.data.response_note
     h.response_at     = json.data.response_at
@@ -403,7 +401,7 @@ async function saveResponse(h, row) {
     row.last_response_status = json.data.response_status
     editingResponseId.value  = null
   } catch (e) {
-    notify('Помилка: ' + e.message, { type: 'error' })
+    notify(t('common.error') + ': ' + e.message, { type: 'error' })
   } finally {
     savingResponse.value = false
   }
@@ -459,7 +457,7 @@ async function doSend() {
       }),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     sendResult.value = json
     // Refresh list to update last_outreach_at
     await load(page.value)
@@ -473,19 +471,19 @@ async function doSend() {
 
 // ── Badge helpers ─────────────────────────────────────────────────────────────
 function channelLabel(v) {
-  return { email: 'Email', sms: 'SMS', phone_call: 'Дзвінок' }[v] ?? v
+  return { email: 'Email', sms: 'SMS', phone_call: t('stoOutreach.callChannelLabel') }[v] ?? v
 }
 function channelBadge(v) {
   return { email: 'bg-info text-dark', sms: 'bg-warning text-dark', phone_call: 'bg-secondary' }[v] ?? 'bg-secondary'
 }
 function statusLabel(v) {
-  return { sent: 'Надіслано', failed: 'Помилка', no_answer: 'Не відповів' }[v] ?? v
+  return { sent: t('stoOutreach.sentStatusLabel'), failed: t('common.error'), no_answer: t('stoOutreach.noResponseLabel') }[v] ?? v
 }
 function statusBadge(v) {
   return { sent: 'bg-success', failed: 'bg-danger', no_answer: 'bg-secondary' }[v] ?? 'bg-secondary'
 }
 function responseLabel(v) {
-  return RESPONSE_STATUSES.find(s => s.value === v)?.label ?? v ?? '—'
+  return RESPONSE_STATUSES.value.find(s => s.value === v)?.label ?? v ?? '—'
 }
 function responseBadge(v) {
   const map = {

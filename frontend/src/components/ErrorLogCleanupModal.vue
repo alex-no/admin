@@ -14,25 +14,25 @@
     >
       <div class="card shadow">
         <div class="card-header d-flex justify-content-between align-items-center px-4 py-3">
-          <h6 class="mb-0">Очистити старі логи</h6>
+          <h6 class="mb-0">{{ t('errorLogs.cleanupTitle') }}</h6>
           <button class="btn btn-sm btn-outline-secondary" @click="close">✕</button>
         </div>
 
         <div class="card-body px-4 py-3">
-          <p class="mb-3">Видалити логи старіші ніж:</p>
+          <p class="mb-3">{{ t('errorLogs.deleteOlderThan') }}</p>
           <div class="input-group">
             <input v-model.number="cleanupDays" type="number" class="form-control" min="1" max="365" />
-            <span class="input-group-text">днів</span>
+            <span class="input-group-text">{{ t('errorLogs.daysUnit') }}</span>
           </div>
           <div v-if="cleanupError" class="alert alert-danger small mt-3 mb-0">{{ cleanupError }}</div>
           <div v-if="cleanupSuccess" class="alert alert-success small mt-3 mb-0">{{ cleanupSuccess }}</div>
         </div>
 
         <div class="card-footer px-4 py-3 text-end bg-light">
-          <button type="button" class="btn btn-sm btn-secondary me-2" @click="close">Скасувати</button>
+          <button type="button" class="btn btn-sm btn-secondary me-2" @click="close">{{ t('common.cancel') }}</button>
           <button type="button" class="btn btn-sm btn-danger" @click="doCleanup" :disabled="cleaningUp">
             <span v-if="cleaningUp" class="spinner-border spinner-border-sm me-1"></span>
-            Видалити
+            {{ t('common.delete') }}
           </button>
         </div>
       </div>
@@ -42,7 +42,10 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { authHeaders } from '@/utils/api'
+
+const { t } = useI18n({ useScope: 'global' })
 
 // Component state
 const visible = ref(false)
@@ -71,7 +74,7 @@ async function doCleanup() {
         close()
       }, 1500)
     } else {
-      cleanupError.value = json.message || 'Помилка очищення'
+      cleanupError.value = json.message || t('errorLogs.cleanupError')
     }
   } catch (e) {
     cleanupError.value = e.message

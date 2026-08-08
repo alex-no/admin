@@ -10,29 +10,29 @@
       <div class="col-md-6">
         <div class="card">
           <div class="card-header bg-light py-2">
-            <strong class="small">Основна інформація</strong>
+            <strong class="small">{{ t('errorLogs.basicInfo') }}</strong>
           </div>
           <div class="card-body p-2">
             <table class="table table-sm mb-0 small">
               <tbody>
                 <tr>
-                  <th style="width:140px">ID:</th>
+                  <th style="width:140px">{{ t('errorLogs.idLabel') }}</th>
                   <td>{{ data.id }}</td>
                 </tr>
                 <tr>
-                  <th>Рівень:</th>
+                  <th>{{ t('errorLogs.levelLabel') }}</th>
                   <td><span :class="levelBadge(data.level)">{{ data.level }}</span></td>
                 </tr>
                 <tr>
-                  <th>Категорія:</th>
+                  <th>{{ t('errorLogs.categoryLabel') }}</th>
                   <td>{{ data.category || '—' }}</td>
                 </tr>
                 <tr>
-                  <th>Дата:</th>
+                  <th>{{ t('errorLogs.dateLabel') }}</th>
                   <td>{{ data.created_at }}</td>
                 </tr>
                 <tr v-if="data.user_id">
-                  <th>Користувач:</th>
+                  <th>{{ t('errorLogs.userLabel') }}</th>
                   <td>
                     #{{ data.user_id }}
                     <span v-if="data.username" class="text-muted">— {{ data.username }}</span>
@@ -49,24 +49,24 @@
       <div class="col-md-6">
         <div class="card">
           <div class="card-header bg-light py-2">
-            <strong class="small">HTTP запит</strong>
+            <strong class="small">{{ t('errorLogs.httpRequest') }}</strong>
           </div>
           <div class="card-body p-2">
             <table class="table table-sm mb-0 small">
               <tbody>
                 <tr>
-                  <th style="width:140px">URL:</th>
+                  <th style="width:140px">{{ t('analytics.urlLabel') }}</th>
                   <td class="small">{{ data.url || '—' }}</td>
                 </tr>
                 <tr>
-                  <th>Метод:</th>
+                  <th>{{ t('errorLogs.methodLabel') }}</th>
                   <td>
                     <span v-if="data.method" class="badge bg-info">{{ data.method }}</span>
                     <span v-else>—</span>
                   </td>
                 </tr>
                 <tr>
-                  <th>IP:</th>
+                  <th>{{ t('analytics.ipLabel') }}</th>
                   <td>{{ data.ip || '—' }}</td>
                 </tr>
               </tbody>
@@ -79,7 +79,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header bg-light py-2">
-            <strong class="small">Повідомлення</strong>
+            <strong class="small">{{ t('errorLogs.message') }}</strong>
           </div>
           <div class="card-body p-2">
             <pre class="mb-0 small" style="white-space: pre-wrap; word-break: break-word;">{{ data.message }}</pre>
@@ -91,21 +91,21 @@
       <div v-if="data.exception_class" class="col-12">
         <div class="card">
           <div class="card-header bg-light py-2">
-            <strong class="small">Exception</strong>
+            <strong class="small">{{ t('errorLogs.exception') }}</strong>
           </div>
           <div class="card-body p-2">
             <table class="table table-sm mb-0 small">
               <tbody>
                 <tr>
-                  <th style="width:140px">Клас:</th>
+                  <th style="width:140px">{{ t('errorLogs.classLabel') }}</th>
                   <td><code>{{ data.exception_class }}</code></td>
                 </tr>
                 <tr v-if="data.file">
-                  <th>Файл:</th>
+                  <th>{{ t('errorLogs.fileLabel') }}</th>
                   <td><code>{{ data.file }}</code></td>
                 </tr>
                 <tr v-if="data.line">
-                  <th>Рядок:</th>
+                  <th>{{ t('errorLogs.lineLabel') }}</th>
                   <td><code>{{ data.line }}</code></td>
                 </tr>
               </tbody>
@@ -118,9 +118,9 @@
       <div v-if="data.stack_trace" class="col-12">
         <div class="card">
           <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
-            <strong class="small">Stack Trace</strong>
+            <strong class="small">{{ t('errorLogs.stackTrace') }}</strong>
             <button class="btn btn-sm btn-outline-secondary" @click="copyStackTrace">
-              <i class="bi bi-clipboard"></i> Копіювати
+              <i class="bi bi-clipboard"></i> {{ t('errorLogs.copyButton') }}
             </button>
           </div>
           <div class="card-body p-2">
@@ -133,9 +133,9 @@
       <div v-if="data.context" class="col-12">
         <div class="card">
           <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
-            <strong class="small">Контекст (додаткові дані)</strong>
+            <strong class="small">{{ t('errorLogs.contextLabel') }}</strong>
             <button class="btn btn-sm btn-outline-secondary" @click="$emit('toggle-context-format')">
-              <i class="bi bi-code"></i> {{ contextFormatted ? 'Raw JSON' : 'Formatted' }}
+              <i class="bi bi-code"></i> {{ contextFormatted ? t('errorLogs.rawJson') : t('errorLogs.formatted') }}
             </button>
           </div>
           <div class="card-body p-2">
@@ -149,8 +149,10 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { useNotify } from '@/composables/useNotify'
 
+const { t } = useI18n({ useScope: 'global' })
 const { notify } = useNotify()
 
 const props = defineProps({
@@ -178,13 +180,13 @@ function formatStackTrace(trace) {
   if (trace && typeof trace === 'object') {
     return trace.trace || JSON.stringify(trace, null, 2)
   }
-  return 'Немає даних'
+  return t('common.noData')
 }
 
 function copyStackTrace() {
   const text = formatStackTrace(props.data.stack_trace)
   navigator.clipboard.writeText(text).then(() => {
-    notify('Stack trace скопійовано в буфер обміну', { type: 'success' })
+    notify(t('errorLogs.copiedToClipboard'), { type: 'success' })
   })
 }
 </script>

@@ -3,7 +3,7 @@
     <div>
       <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
         <div class="d-flex align-items-center gap-2">
-          <h5 class="mb-0">Новини</h5>
+          <h5 class="mb-0">{{ t('news.title') }}</h5>
           <span class="badge bg-secondary">{{ total }}</span>
         </div>
         <div class="d-flex gap-2 flex-wrap">
@@ -12,18 +12,18 @@
             type="text"
             class="form-control form-control-sm"
             style="width:220px"
-            placeholder="Пошук за заголовком..."
+            :placeholder="t('news.searchPlaceholder')"
             @input="debounceLoad"
           />
           <select v-model="filterStatus" class="form-select form-select-sm" style="width:auto" @change="load(1)">
-            <option value="">Всі статуси</option>
-            <option value="draft">Чернетки</option>
-            <option value="scheduled">Заплановані</option>
-            <option value="published">Опубліковані</option>
-            <option value="archived">Архівні</option>
+            <option value="">{{ t('filter.allStatuses') }}</option>
+            <option value="draft">{{ t('news.statusDraft') }}</option>
+            <option value="scheduled">{{ t('news.statusScheduled') }}</option>
+            <option value="published">{{ t('news.statusPublished') }}</option>
+            <option value="archived">{{ t('news.statusArchived') }}</option>
           </select>
           <button v-if="can('news.create')" class="btn btn-sm btn-primary" @click="openCreate">
-            <i class="bi bi-plus-lg me-1"></i>Додати новину
+            <i class="bi bi-plus-lg me-1"></i>{{ t('news.addButton') }}
           </button>
         </div>
       </div>
@@ -39,12 +39,12 @@
             <table class="table table-hover align-middle mb-0 small">
               <thead>
                 <tr>
-                  <th style="width:60px" class="text-end">ID</th>
+                  <th style="width:60px" class="text-end">{{ t('table.id') }}</th>
                   <th style="width:56px"></th>
-                  <th>Заголовок (укр.)</th>
-                  <th style="width:110px">Статус</th>
-                  <th style="width:160px">Заплановано на</th>
-                  <th style="width:160px">Опубліковано</th>
+                  <th>{{ t('news.colTitleUk') }}</th>
+                  <th style="width:110px">{{ t('filter.status') }}</th>
+                  <th style="width:160px">{{ t('news.colScheduledFor') }}</th>
+                  <th style="width:160px">{{ t('news.statusOptionPublished') }}</th>
                   <th style="width:90px"></th>
                 </tr>
               </thead>
@@ -65,10 +65,10 @@
                       :value="row.status"
                       @change="changeStatus(row, $event.target.value)"
                     >
-                      <option value="draft">Чернетка</option>
-                      <option value="scheduled">Заплановано</option>
-                      <option value="published">Опубліковано</option>
-                      <option value="archived">Архів</option>
+                      <option value="draft">{{ t('news.statusOptionDraft') }}</option>
+                      <option value="scheduled">{{ t('news.statusOptionScheduled') }}</option>
+                      <option value="published">{{ t('news.statusOptionPublished') }}</option>
+                      <option value="archived">{{ t('news.statusOptionArchived') }}</option>
                     </select>
                     <span v-else class="badge" :class="statusBadge(row.status)">{{ statusLabel(row.status) }}</span>
                     <span v-if="changingStatusId === row.id" class="spinner-border spinner-border-sm ms-1" style="width:.7rem;height:.7rem"></span>
@@ -76,16 +76,16 @@
                   <td class="text-muted" style="white-space:nowrap">{{ formatDate(row.scheduled_at) }}</td>
                   <td class="text-muted" style="white-space:nowrap">{{ formatDate(row.published_at) }}</td>
                   <td class="text-nowrap">
-                    <button v-if="can('news.edit')" class="btn btn-sm btn-outline-secondary" title="Редагувати" @click="openEdit(row)">
+                    <button v-if="can('news.edit')" class="btn btn-sm btn-outline-secondary" :title="t('common.edit')" @click="openEdit(row)">
                       <i class="bi bi-pencil"></i>
                     </button>
-                    <button v-if="can('news.delete')" class="btn btn-sm btn-outline-danger" title="Видалити" @click="removeItem(row)">
+                    <button v-if="can('news.delete')" class="btn btn-sm btn-outline-danger" :title="t('common.delete')" @click="removeItem(row)">
                       <i class="bi bi-trash"></i>
                     </button>
                   </td>
                 </tr>
                 <tr v-if="!items.length">
-                  <td colspan="7" class="text-center text-muted py-4">Немає новин</td>
+                  <td colspan="7" class="text-center text-muted py-4">{{ t('news.noNewsFound') }}</td>
                 </tr>
               </tbody>
             </table>
@@ -93,7 +93,7 @@
         </div>
 
         <div class="d-flex justify-content-between align-items-center mt-3">
-          <span class="text-muted small">Всього: {{ total }}</span>
+          <span class="text-muted small">{{ t('analytics.totalCount', { value: total }) }}</span>
           <Pagination :current-page="page" :total-pages="totalPages" @change="load" />
         </div>
       </div>
@@ -102,49 +102,49 @@
       <BaseModal
         v-model:visible="modalOpen"
         storage-key="news-edit-modal"
-        :title="modalData.id ? 'Редагування новини' : 'Нова новина'"
+        :title="modalData.id ? t('news.editTitle') : t('news.createTitle')"
         :default-width="800"
         :min-width="600"
       >
         <div v-if="saveError" class="alert alert-danger py-2 small">{{ saveError }}</div>
 
         <div class="mb-3">
-          <label class="form-label fw-semibold">Заголовок (укр.) <span class="text-danger">*</span></label>
+          <label class="form-label fw-semibold">{{ t('news.colTitleUk') }} <span class="text-danger">*</span></label>
           <input v-model="form.title_uk" type="text" class="form-control" />
         </div>
         <div class="row g-2 mb-3">
           <div class="col-md-6">
-            <label class="form-label">Заголовок (англ.)</label>
+            <label class="form-label">{{ t('news.titleEnLabel') }}</label>
             <input v-model="form.title_en" type="text" class="form-control" />
           </div>
           <div class="col-md-6">
-            <label class="form-label">Заголовок (рос.)</label>
+            <label class="form-label">{{ t('news.titleRuLabel') }}</label>
             <input v-model="form.title_ru" type="text" class="form-control" />
           </div>
         </div>
 
         <div class="mb-3">
-          <label class="form-label">Короткий опис (укр.)</label>
+          <label class="form-label">{{ t('news.excerptUkLabel') }}</label>
           <textarea v-model="form.excerpt_uk" class="form-control" rows="2"></textarea>
         </div>
 
         <div class="mb-3">
-          <label class="form-label fw-semibold">Текст новини (укр.) <span class="text-danger">*</span></label>
+          <label class="form-label fw-semibold">{{ t('news.contentUkLabel') }} <span class="text-danger">*</span></label>
           <textarea v-model="form.content_uk" class="form-control" rows="6"></textarea>
         </div>
         <div class="row g-2 mb-3">
           <div class="col-md-6">
-            <label class="form-label">Текст новини (англ.)</label>
+            <label class="form-label">{{ t('news.contentEnLabel') }}</label>
             <textarea v-model="form.content_en" class="form-control" rows="4"></textarea>
           </div>
           <div class="col-md-6">
-            <label class="form-label">Текст новини (рос.)</label>
+            <label class="form-label">{{ t('news.contentRuLabel') }}</label>
             <textarea v-model="form.content_ru" class="form-control" rows="4"></textarea>
           </div>
         </div>
 
         <div class="mb-3">
-          <label class="form-label">Обкладинка</label>
+          <label class="form-label">{{ t('news.coverLabel') }}</label>
           <div class="d-flex align-items-center gap-3">
             <img
               v-if="coverPreviewUrl"
@@ -161,7 +161,7 @@
                 @change="uploadCover"
               />
               <div v-if="coverUploading" class="small text-muted mt-1">
-                <span class="spinner-border spinner-border-sm me-1"></span>Завантаження...
+                <span class="spinner-border spinner-border-sm me-1"></span>{{ t('stoList.uploading') }}
               </div>
               <div v-if="coverError" class="small text-danger mt-1">{{ coverError }}</div>
               <button
@@ -170,7 +170,7 @@
                 class="btn btn-sm btn-link text-danger p-0 mt-1"
                 @click="removeCover"
               >
-                Прибрати обкладинку
+                {{ t('news.removeCoverButton') }}
               </button>
             </div>
           </div>
@@ -178,25 +178,25 @@
 
         <div class="row g-2">
           <div class="col-md-6">
-            <label class="form-label fw-semibold">Статус</label>
+            <label class="form-label fw-semibold">{{ t('filter.status') }}</label>
             <select v-model="form.status" class="form-select">
-              <option value="draft">Чернетка</option>
-              <option value="scheduled">Запланована публікація</option>
-              <option value="published">Опубліковано</option>
-              <option value="archived">Архів</option>
+              <option value="draft">{{ t('news.statusOptionDraft') }}</option>
+              <option value="scheduled">{{ t('news.modalScheduledPublication') }}</option>
+              <option value="published">{{ t('news.statusOptionPublished') }}</option>
+              <option value="archived">{{ t('news.statusOptionArchived') }}</option>
             </select>
           </div>
           <div class="col-md-6" v-if="form.status === 'scheduled'">
-            <label class="form-label fw-semibold">Опублікувати о</label>
+            <label class="form-label fw-semibold">{{ t('news.publishAtLabel') }}</label>
             <input v-model="form.scheduled_at" type="datetime-local" class="form-control" />
           </div>
         </div>
 
         <template #footer>
-          <button class="btn btn-secondary" :disabled="saving" @click="modalOpen = false">Скасувати</button>
+          <button class="btn btn-secondary" :disabled="saving" @click="modalOpen = false">{{ t('common.cancel') }}</button>
           <button class="btn btn-primary" :disabled="saving" @click="save">
             <span v-if="saving" class="spinner-border spinner-border-sm me-2"></span>
-            Зберегти
+            {{ t('common.save') }}
           </button>
         </template>
       </BaseModal>
@@ -206,6 +206,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ListPageWrapper from '@/components/ListPageWrapper.vue'
 import Pagination from '@/components/Pagination.vue'
 import BaseModal from '@/components/BaseModal.vue'
@@ -214,6 +215,7 @@ import { useNotify } from '@/composables/useNotify'
 import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import { apiGet, apiPost, apiPatch, apiDelete } from '@/utils/api'
 
+const { t } = useI18n({ useScope: 'global' })
 const { can, authHeaders } = useAuth()
 const { notify } = useNotify()
 const { deleteWithUndo } = useUndoableDelete()
@@ -250,7 +252,7 @@ async function load(p = 1) {
       items.value = res.data
       total.value = res.pagination.total
     } else {
-      error.value = res.message || 'Помилка завантаження'
+      error.value = res.message || t('list.loadError')
     }
   } catch (err) {
     error.value = err.message
@@ -265,7 +267,7 @@ async function changeStatus(row, newStatus) {
   if (newStatus === row.status) return
 
   if (newStatus === 'scheduled' && !row.scheduled_at) {
-    notify('Для запланованої публікації потрібно вказати дату — відкрийте редагування новини (олівець).', { type: 'error' })
+    notify(t('news.scheduledDateRequiredError'), { type: 'error' })
     return
   }
 
@@ -273,7 +275,7 @@ async function changeStatus(row, newStatus) {
   try {
     const res = await apiPatch(`/admin/news/${row.id}`, { status: newStatus })
     if (!res.success) {
-      notify(res.message || 'Помилка зміни статусу', { type: 'error' })
+      notify(res.message || t('news.statusChangeError'), { type: 'error' })
       return
     }
     await load(page.value)
@@ -285,7 +287,7 @@ async function changeStatus(row, newStatus) {
 }
 
 function statusLabel(status) {
-  return { draft: 'Чернетка', scheduled: 'Заплановано', published: 'Опубліковано', archived: 'Архів' }[status] || status
+  return { draft: t('news.statusOptionDraft'), scheduled: t('news.statusOptionScheduled'), published: t('news.statusOptionPublished'), archived: t('news.statusOptionArchived') }[status] || status
 }
 
 function statusBadge(status) {
@@ -337,7 +339,7 @@ async function openEdit(row) {
   saveError.value = null
   try {
     const res = await apiGet(`/admin/news/${row.id}`)
-    if (!res.success) throw new Error(res.message || 'Помилка завантаження')
+    if (!res.success) throw new Error(res.message || t('list.loadError'))
     const item = res.data
     modalData.value = item
     form.value = {
@@ -376,7 +378,7 @@ async function uploadCover(event) {
       body: fd,
     })
     const json = await res.json()
-    if (!json.success) throw new Error(json.message || 'Помилка завантаження')
+    if (!json.success) throw new Error(json.message || t('list.loadError'))
     form.value.cover_image_id = json.data.media_id
     coverPreviewUrl.value = json.data.url
   } catch (err) {
@@ -407,7 +409,7 @@ async function save() {
       : await apiPost('/admin/news', payload)
 
     if (!res.success) {
-      saveError.value = res.message || 'Помилка збереження'
+      saveError.value = res.message || t('list.saveError')
       return
     }
     modalOpen.value = false
@@ -424,12 +426,12 @@ function removeItem(row) {
   if (index === -1) return
 
   deleteWithUndo({
-    message: `Новину "${row.title_uk}" видалено`,
+    message: t('news.newsDeletedMessage', { title: row.title_uk }),
     remove: () => { items.value.splice(index, 1) },
     restore: () => { items.value.splice(index, 0, row) },
     commit: async () => {
       const res = await apiDelete(`/admin/news/${row.id}`)
-      if (!res.success) throw new Error(res.message || 'Помилка видалення')
+      if (!res.success) throw new Error(res.message || t('list.deleteError'))
     },
     onCommitError: () => load(page.value),
   })

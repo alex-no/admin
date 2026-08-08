@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import TrendChart from '@/components/charts/TrendChart'
 import type { TrendDataset } from '@/components/charts/TrendChart'
 import { apiGet } from '@/utils/api'
@@ -38,6 +39,7 @@ function buildTrend(stats: Stats | null): { labels: string[]; datasets: TrendDat
 }
 
 export default function ErrorLogStats() {
+  const { t } = useTranslation()
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -50,11 +52,11 @@ export default function ErrorLogStats() {
       const res = await apiGet(`/admin/error-logs/stats?days=${days}`)
       setStats(res.data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Помилка завантаження')
+      setError(err instanceof Error ? err.message : t('errorLogs.loadError'))
     } finally {
       setLoading(false)
     }
-  }, [days])
+  }, [days, t])
 
   useEffect(() => { load() }, [load])
 
@@ -65,9 +67,9 @@ export default function ErrorLogStats() {
       <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
         <div className="d-flex align-items-center gap-2">
           <Link to="/error-logs" className="btn btn-sm btn-outline-secondary">
-            <i className="bi bi-arrow-left" /> Назад
+            <i className="bi bi-arrow-left" /> {t('analytics.back')}
           </Link>
-          <h5 className="mb-0">Статистика помилок</h5>
+          <h5 className="mb-0">{t('errorLogs.statsTitle')}</h5>
         </div>
         <div className="d-flex gap-2">
           <select
@@ -77,7 +79,7 @@ export default function ErrorLogStats() {
             style={{ width: 'auto' }}
           >
             {[7, 14, 30, 60, 90].map(d => (
-              <option key={d} value={d}>За {d} днів</option>
+              <option key={d} value={d}>{t('errorLogs.periodOption', { days: d })}</option>
             ))}
           </select>
         </div>
@@ -97,9 +99,9 @@ export default function ErrorLogStats() {
           <div className="col-md-3">
             <div className="card text-center shadow-sm">
               <div className="card-body">
-                <h6 className="text-muted mb-2">Всього помилок</h6>
+                <h6 className="text-muted mb-2">{t('errorLogs.totalErrors')}</h6>
                 <h2 className="mb-0">{stats.total}</h2>
-                <small className="text-muted">за {stats.period_days} днів</small>
+                <small className="text-muted">{t('analytics.periodDaysSuffix', { days: stats.period_days })}</small>
               </div>
             </div>
           </div>
@@ -107,7 +109,7 @@ export default function ErrorLogStats() {
           {/* По рівнях */}
           <div className="col-md-9">
             <div className="card shadow-sm">
-              <div className="card-header bg-light"><strong>По рівнях</strong></div>
+              <div className="card-header bg-light"><strong>{t('errorLogs.byLevel')}</strong></div>
               <div className="card-body">
                 <div className="row g-2">
                   {stats.by_level.map(item => (
@@ -119,7 +121,7 @@ export default function ErrorLogStats() {
                     </div>
                   ))}
                   {stats.by_level.length === 0 && (
-                    <div className="col-12 text-center text-muted py-3">Немає даних</div>
+                    <div className="col-12 text-center text-muted py-3">{t('common.noData')}</div>
                   )}
                 </div>
               </div>
@@ -129,13 +131,13 @@ export default function ErrorLogStats() {
           {/* Топ категорій */}
           <div className="col-md-6">
             <div className="card shadow-sm">
-              <div className="card-header bg-light"><strong>Топ-10 категорій</strong></div>
+              <div className="card-header bg-light"><strong>{t('errorLogs.topCategories')}</strong></div>
               <div className="card-body">
                 <table className="table table-sm table-hover mb-0">
                   <thead>
                     <tr>
-                      <th>Категорія</th>
-                      <th className="text-end">Кількість</th>
+                      <th>{t('errorLogs.category')}</th>
+                      <th className="text-end">{t('errorLogs.count')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -146,7 +148,7 @@ export default function ErrorLogStats() {
                       </tr>
                     ))}
                     {stats.by_category.length === 0 && (
-                      <tr><td colSpan={2} className="text-center text-muted py-3">Немає даних</td></tr>
+                      <tr><td colSpan={2} className="text-center text-muted py-3">{t('common.noData')}</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -157,13 +159,13 @@ export default function ErrorLogStats() {
           {/* Топ exceptions */}
           <div className="col-md-6">
             <div className="card shadow-sm">
-              <div className="card-header bg-light"><strong>Топ-10 exceptions</strong></div>
+              <div className="card-header bg-light"><strong>{t('errorLogs.topExceptions')}</strong></div>
               <div className="card-body">
                 <table className="table table-sm table-hover mb-0">
                   <thead>
                     <tr>
-                      <th>Exception</th>
-                      <th className="text-end">Кількість</th>
+                      <th>{t('errorLogs.exception')}</th>
+                      <th className="text-end">{t('errorLogs.count')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -178,7 +180,7 @@ export default function ErrorLogStats() {
                       </tr>
                     ))}
                     {stats.by_exception.length === 0 && (
-                      <tr><td colSpan={2} className="text-center text-muted py-3">Немає даних</td></tr>
+                      <tr><td colSpan={2} className="text-center text-muted py-3">{t('common.noData')}</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -189,14 +191,14 @@ export default function ErrorLogStats() {
           {/* Динаміка */}
           <div className="col-12">
             <div className="card shadow-sm">
-              <div className="card-header bg-light"><strong>Динаміка помилок по днях</strong></div>
+              <div className="card-header bg-light"><strong>{t('errorLogs.trendTitle')}</strong></div>
               <div className="card-body">
                 {trend.labels.length > 0 ? (
                   <div style={{ maxHeight: '400px', overflowX: 'auto' }}>
                     <TrendChart labels={trend.labels} datasets={trend.datasets} />
                   </div>
                 ) : (
-                  <div className="text-center text-muted py-5">Немає даних для графіка</div>
+                  <div className="text-center text-muted py-5">{t('errorLogs.noChartData')}</div>
                 )}
               </div>
             </div>

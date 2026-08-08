@@ -169,7 +169,7 @@
             v-if="canBulkDelete"
             class="btn btn-sm btn-outline-danger"
             :disabled="bulkApplying || selectAllMatching"
-            :title="selectAllMatching ? 'Масове видалення за фільтром недоступне — виділіть записи вручну' : ''"
+            :title="selectAllMatching ? t('bulk.deleteWarning') : ''"
             @click="applyBulkDelete"
           >
             <i class="bi bi-trash"></i> {{ t('common.delete') }}
@@ -751,7 +751,7 @@ function openClone(row) {
     const v = row[col.key]
     if (v === undefined || v === null) continue
     if (col.unique) {
-      form[col.key] = col.type === 'text' || col.type === undefined ? `${v} (копія)` : form[col.key]
+      form[col.key] = col.type === 'text' || col.type === undefined ? t('list.cloneSuffix', { value: v }) : form[col.key]
       continue
     }
     form[col.key] = v
@@ -776,10 +776,10 @@ async function submitCreate() {
       // Бекенд може повернути errors: { поле: "текст" } — показуємо біля поля,
       // а не одним тостом "перевірте заповнення".
       if (json.errors && typeof json.errors === 'object') createErrors.value = json.errors
-      throw new Error(json.message ?? `Помилка створення (HTTP ${res.status})`)
+      throw new Error(json.message ?? `${t('list.createError')} (HTTP ${res.status})`)
     }
     createOpen.value = false
-    notify('Запис створено', { type: 'success' })
+    notify(t('list.recordCreated'), { type: 'success' })
     await load(1)
   } catch (e) {
     notify(e.message, { type: 'error' })
@@ -824,7 +824,7 @@ function confirmSavePreset() {
   selectedPresetName.value = name
   newPresetName.value = ''
   showSaveFilterInput.value = false
-  notify(`Фільтр «${name}» збережено`, { type: 'success' })
+  notify(t('list.filterSaved', { name }), { type: 'success' })
 }
 
 function deleteSelectedPreset() {
@@ -832,7 +832,7 @@ function deleteSelectedPreset() {
   if (!name) return
   removePresetFromStorage(name)
   selectedPresetName.value = ''
-  notify(`Фільтр «${name}» видалено`, { type: 'info' })
+  notify(t('list.filterDeleted', { name }), { type: 'info' })
 }
 
 // ── CSV export ───────────────────────────────────────────────────────────
@@ -894,14 +894,14 @@ async function exportCsv() {
       params.set('page', String(fetchPage))
       const res = await fetch(`${props.apiList}?${params}`, { headers: auth.authHeaders() })
       const json = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(json.message ?? `Помилка експорту (HTTP ${res.status})`)
+      if (!res.ok) throw new Error(json.message ?? `${t('list.exportError')} (HTTP ${res.status})`)
       allRows = allRows.concat(json.data ?? [])
       fetchedTotalPages = json.pagination?.total_pages ?? 1
       fetchPage++
     } while (fetchPage <= fetchedTotalPages && allRows.length < EXPORT_MAX_ROWS)
 
     if (allRows.length >= EXPORT_MAX_ROWS) {
-      notify(`Експортовано перші ${EXPORT_MAX_ROWS} записів (забагато для одного файлу) — звузьте фільтр`, {
+      notify(t('list.exportTruncated', { max: EXPORT_MAX_ROWS }), {
         type: 'info',
         duration: 8000,
       })
@@ -910,7 +910,7 @@ async function exportCsv() {
     const headers = props.columnsConfig.map((c) => c.label)
     const csvRows = allRows.map((row) => props.columnsConfig.map((col) => formatValueForExport(col, row)))
     downloadCsv(`export-${new Date().toISOString().slice(0, 10)}.csv`, rowsToCsv(headers, csvRows))
-    notify(`Експортовано ${allRows.length} запис(ів)`, { type: 'success' })
+    notify(t('list.exportSuccess', { count: allRows.length }), { type: 'success' })
   } catch (e) {
     notify(e.message, { type: 'error' })
   } finally {
@@ -956,7 +956,7 @@ async function load(p = 1) {
   try {
     const res = await fetch(`${props.apiList}?${params}`, { headers: auth.authHeaders() })
     const json = await res.json().catch(() => ({}))
-    if (!res.ok) throw new Error(json.message ?? `Помилка завантаження (HTTP ${res.status})`)
+    if (!res.ok) throw new Error(json.message ?? `${t('list.loadError')} (HTTP ${res.status})`)
     items.value = json.data ?? []
     total.value = json.pagination?.total ?? items.value.length
     totalPages.value = json.pagination?.total_pages ?? 1
@@ -1034,7 +1034,7 @@ function handleCellUpdate(row, field, value) {
 
   updateWithUndo({
     key: `${id}:${field.key}`,
-    message: `«${label}»: ${prev} → ${normalized}`,
+    message: t('list.cellChanged', { label, prev, next: normalized }),
     apply: () => {
       row[field.key] = normalized
     },
@@ -1048,7 +1048,7 @@ function handleCellUpdate(row, field, value) {
         body: JSON.stringify({ [field.key]: normalized }),
       })
       const json = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(json.message ?? 'Помилка збереження')
+      if (!res.ok) throw new Error(json.message ?? t('list.saveError'))
     },
     commitSync: () => {
       fetch(`${props.apiUpdate}/${id}`, {
@@ -1071,7 +1071,7 @@ async function handleDelete(row) {
   if (index === -1) return
 
   deleteWithUndo({
-    message: `Запис #${id} видалено`,
+    message: t('list.recordDeleted', { id }),
     remove: () => {
       items.value.splice(index, 1)
       total.value--
@@ -1087,7 +1087,7 @@ async function handleDelete(row) {
       })
       if (!res.ok) {
         const json = await res.json().catch(() => ({}))
-        throw new Error(json.message ?? 'Помилка видалення')
+        throw new Error(json.message ?? t('list.deleteError'))
       }
     },
     onCommitError: () => load(page.value),
@@ -1131,10 +1131,10 @@ async function applyBulkUpdate() {
 
     const json = await res.json().catch(() => ({}))
     if (!res.ok) {
-      throw new Error(json.message ?? 'Помилка масового оновлення')
+      throw new Error(json.message ?? t('list.bulkUpdateError'))
     }
 
-    notify(`Оновлено: ${json.affected ?? 0} запис(ів)`, { type: 'success' })
+    notify(t('list.recordUpdated', { count: json.affected ?? 0 }), { type: 'success' })
     clearSelection()
     await load(page.value)
   } catch (e) {
@@ -1166,9 +1166,9 @@ async function applyNamedBulk(action) {
       body: JSON.stringify(body),
     })
     const json = await res.json().catch(() => ({}))
-    if (!res.ok) throw new Error(json.message ?? `Помилка виконання дії (HTTP ${res.status})`)
+    if (!res.ok) throw new Error(json.message ?? `${t('list.actionError')} (HTTP ${res.status})`)
 
-    notify(`${action.label}: ${json.affected ?? 0} запис(ів)`, { type: 'success' })
+    notify(t('list.actionSuccess', { label: action.label, count: json.affected ?? 0 }), { type: 'success' })
     clearSelection()
     await load(page.value)
   } catch (e) {
@@ -1189,7 +1189,7 @@ async function applyBulkDelete() {
 
   deleteManyWithUndo({
     items: removed,
-    message: `Видалено ${removed.length} запис(ів)`,
+    message: t('list.recordsDeleted', { count: removed.length }),
     remove: () => {
       removed
         .slice()
@@ -1211,7 +1211,7 @@ async function applyBulkDelete() {
         method: 'DELETE',
         headers: auth.authHeaders(),
       })
-      if (!res.ok) throw new Error('Помилка видалення')
+      if (!res.ok) throw new Error(t('list.deleteError'))
     },
     onAnyCommitError: () => load(page.value),
   })

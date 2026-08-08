@@ -318,9 +318,9 @@ export default function AnalyticsDetailsModal({ id, onClose, onFilterByIp }: Ana
                         <tr>
                           <th>{t('analytics.ipType')}</th>
                           <td>
-                            {ipInfo.hosting && <span className="badge bg-warning text-dark" title="Hosting/Datacenter IP"><i className="bi bi-server" /> {t('analytics.hostingBadge')}</span>}
-                            {ipInfo.proxy && <span className="badge bg-danger" title="Proxy/VPN detected"><i className="bi bi-shield-exclamation" /> {t('analytics.proxyBadge')}</span>}
-                            {ipInfo.mobile && <span className="badge bg-info" title="Mobile network"><i className="bi bi-phone" /> {t('analytics.mobileBadge')}</span>}
+                            {ipInfo.hosting && <span className="badge bg-warning text-dark" title={t('analytics.hostingTooltip')}><i className="bi bi-server" /> {t('analytics.hostingBadge')}</span>}
+                            {ipInfo.proxy && <span className="badge bg-danger" title={t('analytics.proxyTooltip')}><i className="bi bi-shield-exclamation" /> {t('analytics.proxyBadge')}</span>}
+                            {ipInfo.mobile && <span className="badge bg-info" title={t('analytics.mobileTooltip')}><i className="bi bi-phone" /> {t('analytics.mobileBadge')}</span>}
                             {!ipInfo.hosting && !ipInfo.proxy && !ipInfo.mobile && (
                               <span className="badge bg-success"><i className="bi bi-house" /> {t('analytics.residentialBadge')}</span>
                             )}

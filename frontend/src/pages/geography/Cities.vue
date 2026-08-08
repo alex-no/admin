@@ -12,36 +12,36 @@
       <!-- Header + filters -->
       <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
         <div class="d-flex align-items-center gap-2">
-          <h5 class="mb-0">Населені пункти</h5>
+          <h5 class="mb-0">{{ t('cities.title') }}</h5>
           <button v-if="canCreate" class="btn btn-sm btn-success" @click="openCreateModal">
             <i class="bi bi-plus-lg"></i>
           </button>
         </div>
         <div class="d-flex gap-2 flex-wrap">
           <select v-model="filterCountry" class="form-select form-select-sm" style="width:auto" @change="load(1)">
-            <option value="">Всі країни</option>
+            <option value="">{{ t('filter.allCountries') }}</option>
             <option v-for="c in countriesList" :key="c.id" :value="c.id">{{ c.name_uk }}</option>
           </select>
           <select v-model="filterOblast" class="form-select form-select-sm" style="width:auto" @change="onFilterOblastChange">
-            <option value="">Всі області</option>
+            <option value="">{{ t('cities.allOblasts') }}</option>
             <option v-for="a in areaRegionsList" :key="a.id" :value="a.id">{{ a.name_uk }}</option>
           </select>
           <select v-model="filterDistrict" class="form-select form-select-sm" style="width:auto" :disabled="!filterOblast || !filteredDistrictsForFilter.length" @change="load(1)">
-            <option value="">Всі райони</option>
+            <option value="">{{ t('cities.allDistricts') }}</option>
             <option v-for="d in filteredDistrictsForFilter" :key="d.id" :value="d.id">{{ d.name_uk }}</option>
           </select>
           <select v-model="filterCityType" class="form-select form-select-sm" style="width:auto" @change="load(1)">
-            <option value="">Всі типи</option>
-            <option v-for="t in cityTypesList" :key="t.id" :value="t.id">{{ t.short_name_uk }}</option>
+            <option value="">{{ t('filter.allTypes') }}</option>
+            <option v-for="t2 in cityTypesList" :key="t2.id" :value="t2.id">{{ t2.short_name_uk }}</option>
           </select>
           <select v-model="filterStatus" class="form-select form-select-sm" style="width:auto" @change="load(1)">
-            <option value="all">Всі</option>
-            <option value="active">Активні</option>
-            <option value="inactive">Неактивні</option>
+            <option value="all">{{ t('common.all') }}</option>
+            <option value="active">{{ t('filter.active') }}</option>
+            <option value="inactive">{{ t('filter.inactive') }}</option>
           </select>
           <div class="btn-group btn-group-sm">
-            <button class="btn" :class="!filterCentersOnly ? 'btn-secondary' : 'btn-outline-secondary'" @click="filterCentersOnly = false; load(1)">Всі</button>
-            <button class="btn" :class="filterCentersOnly  ? 'btn-primary'   : 'btn-outline-secondary'" @click="filterCentersOnly = true;  load(1)">Тільки центри</button>
+            <button class="btn" :class="!filterCentersOnly ? 'btn-secondary' : 'btn-outline-secondary'" @click="filterCentersOnly = false; load(1)">{{ t('common.all') }}</button>
+            <button class="btn" :class="filterCentersOnly  ? 'btn-primary'   : 'btn-outline-secondary'" @click="filterCentersOnly = true;  load(1)">{{ t('cities.centersOnlyButton') }}</button>
           </div>
         </div>
       </div>
@@ -63,7 +63,7 @@
                     :class="[col.align === 'end' ? 'text-end' : '', col.sortable ? 'th-sortable' : '']"
                     @click="col.sortable ? toggleSort(col.key) : null"
                   >
-                    {{ cfg.fields[col.key].label }}
+                    {{ fieldLabel(col.key) }}
                     <template v-if="col.sortable">
                       <i v-if="sortKey === col.key && sortDir === 'asc'"       class="bi bi-chevron-up ms-1"></i>
                       <i v-else-if="sortKey === col.key && sortDir === 'desc'" class="bi bi-chevron-down ms-1"></i>
@@ -96,13 +96,13 @@
                       />
                       <span v-else class="inline-editable d-inline-flex align-items-center gap-1" @click="startInline(row.id, col.key, row[col.key])">
                         {{ row[col.key] }}
-                        <span v-if="col.key === 'name_uk' && row.is_center" class="badge bg-primary" style="font-size:.65em;font-weight:500">центр</span>
+                        <span v-if="col.key === 'name_uk' && row.is_center" class="badge bg-primary" style="font-size:.65em;font-weight:500">{{ t('cities.centerBadge') }}</span>
                       </span>
                     </td>
 
                     <!-- is_capital badge -->
                     <td v-else-if="col.key === 'is_capital'" class="text-center">
-                      <span v-if="row.is_capital" class="badge bg-warning text-dark">Столиця</span>
+                      <span v-if="row.is_capital" class="badge bg-warning text-dark">{{ t('cityTmpReview.capitalLabel') }}</span>
                       <span v-else class="text-muted">—</span>
                     </td>
 
@@ -116,10 +116,10 @@
                         @click="toggleStatus(row)"
                       >
                         <span v-if="togglingId === row.id" class="spinner-border spinner-border-sm"></span>
-                        <span v-else>{{ row.is_active ? 'Активний' : 'Неактивний' }}</span>
+                        <span v-else>{{ row.is_active ? t('common.active') : t('common.inactive') }}</span>
                       </button>
                       <span v-else class="badge" :class="row.is_active ? 'bg-success' : 'bg-danger'">
-                        {{ row.is_active ? 'Активний' : 'Неактивний' }}
+                        {{ row.is_active ? t('common.active') : t('common.inactive') }}
                       </span>
                     </td>
 
@@ -130,13 +130,13 @@
                     <button v-if="canOpenModal || justCreatedIds.has(row.id)" class="btn btn-sm btn-outline-secondary me-1" @click="openModal(row)">
                       <i class="bi bi-pencil"></i>
                     </button>
-                    <button v-if="canDelete" class="btn btn-sm btn-outline-danger" title="Видалити" @click="deleteRow(row)">
+                    <button v-if="canDelete" class="btn btn-sm btn-outline-danger" :title="t('common.delete')" @click="deleteRow(row)">
                       <i class="bi bi-trash"></i>
                     </button>
                   </td>
                 </tr>
                 <tr v-if="!items.length">
-                  <td :colspan="cfg.table.length + 1" class="text-center text-muted py-4">Немає даних</td>
+                  <td :colspan="cfg.table.length + 1" class="text-center text-muted py-4">{{ t('common.noData') }}</td>
                 </tr>
               </tbody>
             </table>
@@ -144,7 +144,7 @@
         </div>
 
         <div class="d-flex justify-content-between align-items-center mt-3">
-          <span class="text-muted small">Всього: {{ total }}</span>
+          <span class="text-muted small">{{ t('analytics.totalCount', { value: total }) }}</span>
           <nav v-if="totalPages > 1">
             <ul class="pagination pagination-sm mb-0">
               <li class="page-item" :class="{ disabled: page === 1 }">
@@ -166,6 +166,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ListPageWrapper from '@/components/ListPageWrapper.vue'
 import CityModal from '@/components/CityModal.vue'
 import { useAuth } from '@/composables/useAuth'
@@ -173,9 +174,30 @@ import { useNotify } from '@/composables/useNotify'
 import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import cfg from './cities.config.json'
 
+const { t } = useI18n({ useScope: 'global' })
 const { can, authHeaders } = useAuth()
 const { notify } = useNotify()
 const { deleteWithUndo } = useUndoableDelete()
+
+const FIELD_LABEL_KEYS = {
+  id: 'table.id',
+  city_type_id: 'filter.type',
+  country_id: 'filter.country',
+  area_region_id: 'cities.areaLabel',
+  name_uk: 'cityTmpReview.nameUaLabel',
+  name_en: 'cityTmpReview.nameEnBracketLabel',
+  name_ru: 'cityTmpReview.nameRuBracketLabel',
+  latitude: 'stoImport.fieldLatitude',
+  longitude: 'stoImport.fieldLongitude',
+  is_capital: 'cityTmpReview.capitalLabel',
+  is_active: 'filter.status',
+  created_at: 'stoList.createdLabel',
+  updated_at: 'stoList.updatedLabel',
+}
+function fieldLabel(key) {
+  const k = FIELD_LABEL_KEYS[key]
+  return k ? t(k) : cfg.fields[key]?.label ?? key
+}
 
 function canEditField(key) {
   const field = cfg.fields[key]
@@ -253,7 +275,7 @@ async function load(p = 1) {
       { headers: authHeaders() }
     )
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     items.value      = json.data ?? []
     total.value      = json.pagination?.total ?? 0
     totalPages.value = json.pagination?.total_pages ?? 1
@@ -271,7 +293,7 @@ async function patch(id, fields) {
     body: JSON.stringify(fields),
   })
   const json = await res.json()
-  if (!res.ok) throw new Error(json.message ?? 'Помилка збереження')
+  if (!res.ok) throw new Error(json.message ?? t('list.saveError'))
   return json.data
 }
 
@@ -309,7 +331,7 @@ function deleteRow(row) {
   if (index === -1) return
 
   deleteWithUndo({
-    message: `«${row.name_uk}» видалено`,
+    message: t('cityTypes.deletedMessage', { name: row.name_uk }),
     remove: () => {
       items.value.splice(index, 1)
       justCreatedIds.value.delete(row.id)
@@ -322,7 +344,7 @@ function deleteRow(row) {
     commit: async () => {
       const res  = await fetch(`${cfg.apiDelete}/${row.id}`, { method: 'DELETE', headers: authHeaders() })
       const json = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(json.message ?? 'Помилка видалення')
+      if (!res.ok) throw new Error(json.message ?? t('list.deleteError'))
     },
     onCommitError: () => load(page.value),
   })

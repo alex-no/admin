@@ -1,9 +1,9 @@
 <template>
   <BaseLayout>
     <div class="d-flex align-items-center justify-content-between mb-3">
-      <h5 class="mb-0">Статистика зворотного зв'язку</h5>
+      <h5 class="mb-0">{{ t('feedbackStats.title') }}</h5>
       <router-link to="/feedback" class="btn btn-sm btn-outline-primary">
-        <i class="bi bi-list"></i> Список звернень
+        <i class="bi bi-list"></i> {{ t('feedbackStats.listLink') }}
       </router-link>
     </div>
 
@@ -20,7 +20,7 @@
             <div class="card-body">
               <div class="d-flex align-items-center justify-content-between">
                 <div>
-                  <div class="text-muted small mb-1">Всього звернень</div>
+                  <div class="text-muted small mb-1">{{ t('feedbackStats.totalCard') }}</div>
                   <h3 class="mb-0">{{ stats.total }}</h3>
                 </div>
                 <div class="display-4 text-primary opacity-25">
@@ -37,7 +37,7 @@
             <div class="card-body">
               <div class="d-flex align-items-center justify-content-between">
                 <div>
-                  <div class="text-muted small mb-1">Нові</div>
+                  <div class="text-muted small mb-1">{{ t('feedback.statusNew') }}</div>
                   <h3 class="mb-0 text-primary">{{ stats.by_status?.new || 0 }}</h3>
                 </div>
                 <div class="display-4 text-primary opacity-25">
@@ -54,7 +54,7 @@
             <div class="card-body">
               <div class="d-flex align-items-center justify-content-between">
                 <div>
-                  <div class="text-muted small mb-1">В роботі</div>
+                  <div class="text-muted small mb-1">{{ t('feedback.statusInProgress') }}</div>
                   <h3 class="mb-0 text-warning">{{ stats.by_status?.in_progress || 0 }}</h3>
                 </div>
                 <div class="display-4 text-warning opacity-25">
@@ -71,7 +71,7 @@
             <div class="card-body">
               <div class="d-flex align-items-center justify-content-between">
                 <div>
-                  <div class="text-muted small mb-1">Вирішено</div>
+                  <div class="text-muted small mb-1">{{ t('feedback.statusResolvedSingular') }}</div>
                   <h3 class="mb-0 text-success">{{ stats.by_status?.resolved || 0 }}</h3>
                 </div>
                 <div class="display-4 text-success opacity-25">
@@ -88,7 +88,7 @@
         <div class="col-md-6">
           <div class="card shadow-sm">
             <div class="card-header bg-white">
-              <h6 class="mb-0">За типом звернення</h6>
+              <h6 class="mb-0">{{ t('feedbackStats.byTypeTitle') }}</h6>
             </div>
             <div class="card-body">
               <div class="mb-3" v-for="(count, type) in stats.by_type" :key="type">
@@ -114,7 +114,7 @@
         <div class="col-md-6">
           <div class="card shadow-sm">
             <div class="card-header bg-white">
-              <h6 class="mb-0">За статусом</h6>
+              <h6 class="mb-0">{{ t('feedbackStats.byStatusTitle') }}</h6>
             </div>
             <div class="card-body">
               <div class="mb-3" v-for="(count, status) in stats.by_status" :key="status">
@@ -140,7 +140,7 @@
         <div class="col-md-6">
           <div class="card shadow-sm">
             <div class="card-header bg-white">
-              <h6 class="mb-0">За пріоритетом</h6>
+              <h6 class="mb-0">{{ t('feedbackStats.byPriorityTitle') }}</h6>
             </div>
             <div class="card-body">
               <div class="mb-3" v-for="(count, priority) in stats.by_priority" :key="priority">
@@ -166,24 +166,24 @@
         <div class="col-md-6">
           <div class="card shadow-sm">
             <div class="card-header bg-white">
-              <h6 class="mb-0">Швидкі фільтри</h6>
+              <h6 class="mb-0">{{ t('feedbackStats.quickFiltersTitle') }}</h6>
             </div>
             <div class="card-body">
               <div class="d-grid gap-2">
                 <router-link to="/feedback?status=new" class="btn btn-sm btn-outline-primary text-start">
-                  <i class="bi bi-bell me-2"></i>Нові звернення ({{ stats.by_status?.new || 0 }})
+                  <i class="bi bi-bell me-2"></i>{{ t('feedbackStats.newAppealsButton', { count: stats.by_status?.new || 0 }) }}
                 </router-link>
                 <router-link to="/feedback?priority=urgent" class="btn btn-sm btn-outline-danger text-start">
-                  <i class="bi bi-exclamation-triangle me-2"></i>Терміново ({{ stats.by_priority?.urgent || 0 }})
+                  <i class="bi bi-exclamation-triangle me-2"></i>{{ t('feedbackStats.urgentButton', { count: stats.by_priority?.urgent || 0 }) }}
                 </router-link>
                 <router-link to="/feedback?priority=high" class="btn btn-sm btn-outline-warning text-start">
-                  <i class="bi bi-arrow-up-circle me-2"></i>Високий пріоритет ({{ stats.by_priority?.high || 0 }})
+                  <i class="bi bi-arrow-up-circle me-2"></i>{{ t('feedbackStats.highPriorityButton', { count: stats.by_priority?.high || 0 }) }}
                 </router-link>
                 <router-link to="/feedback?type=complaint" class="btn btn-sm btn-outline-danger text-start">
-                  <i class="bi bi-exclamation-circle me-2"></i>Скарги ({{ stats.by_type?.complaint || 0 }})
+                  <i class="bi bi-exclamation-circle me-2"></i>{{ t('feedbackStats.complaintsButton', { count: stats.by_type?.complaint || 0 }) }}
                 </router-link>
                 <router-link to="/feedback?status=in_progress" class="btn btn-sm btn-outline-warning text-start">
-                  <i class="bi bi-hourglass-split me-2"></i>В роботі ({{ stats.by_status?.in_progress || 0 }})
+                  <i class="bi bi-hourglass-split me-2"></i>{{ t('feedbackStats.inProgressButton', { count: stats.by_status?.in_progress || 0 }) }}
                 </router-link>
               </div>
             </div>
@@ -196,9 +196,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import BaseLayout from '../layouts/BaseLayout.vue'
 import { apiGet } from '../utils/api'
 
+const { t } = useI18n({ useScope: 'global' })
 const loading = ref(false)
 const error = ref(null)
 const stats = ref({
@@ -217,7 +219,7 @@ async function load() {
     if (res.success) {
       stats.value = res.stats
     } else {
-      error.value = res.message || 'Помилка завантаження'
+      error.value = res.message || t('list.loadError')
     }
   } catch (err) {
     error.value = err.message
@@ -233,10 +235,10 @@ function percentage(value, total) {
 
 function typeLabel(type) {
   const labels = {
-    complaint: 'Скарги',
-    suggestion: 'Пропозиції',
-    question: 'Питання',
-    other: 'Інше',
+    complaint: t('feedback.typeComplaint'),
+    suggestion: t('feedback.typeSuggestion'),
+    question: t('feedback.typeQuestion'),
+    other: t('feedback.typeOther'),
   }
   return labels[type] || type
 }
@@ -263,10 +265,10 @@ function typeProgressBar(type) {
 
 function statusLabel(status) {
   const labels = {
-    new: 'Нові',
-    in_progress: 'В роботі',
-    resolved: 'Вирішені',
-    rejected: 'Відхилені',
+    new: t('feedback.statusNew'),
+    in_progress: t('feedback.statusInProgress'),
+    resolved: t('feedback.statusResolved'),
+    rejected: t('reviews.statusRejectedOption'),
   }
   return labels[status] || status
 }
@@ -293,10 +295,10 @@ function statusProgressBar(status) {
 
 function priorityLabel(priority) {
   const labels = {
-    urgent: 'Термін',
-    high: 'Високий',
-    normal: 'Норм',
-    low: 'Низький',
+    urgent: t('feedback.priorityUrgentAbbr'),
+    high: t('feedback.priorityHigh'),
+    normal: t('feedback.priorityNormalAbbr'),
+    low: t('feedback.priorityLow'),
   }
   return labels[priority] || priority
 }

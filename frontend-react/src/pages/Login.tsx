@@ -1,8 +1,10 @@
 import { useState, FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function Login() {
+  const { t } = useTranslation()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -20,7 +22,7 @@ export default function Login() {
       await login(username, password)
       navigate('/dashboard')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Помилка входу')
+      setError(err instanceof Error ? err.message : t('auth.loginError'))
     } finally {
       setLoading(false)
     }
@@ -45,7 +47,7 @@ export default function Login() {
               <form onSubmit={handleSubmit}>
                 <div className="mb-3">
                   <label htmlFor="username" className="form-label">
-                    Логін
+                    {t('auth.username')}
                   </label>
                   <input
                     type="text"
@@ -60,7 +62,7 @@ export default function Login() {
 
                 <div className="mb-3">
                   <label htmlFor="password" className="form-label">
-                    Пароль
+                    {t('auth.password')}
                   </label>
                   <input
                     type="password"
@@ -80,10 +82,10 @@ export default function Login() {
                   {loading ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2"></span>
-                      Вхід...
+                      {t('auth.signingIn')}
                     </>
                   ) : (
-                    'Увійти'
+                    t('auth.signIn')
                   )}
                 </button>
               </form>

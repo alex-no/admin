@@ -11,21 +11,21 @@
     :max-height="800"
   >
     <template #title>
-      <h6 class="mb-0">{{ modalMode === 'create' ? 'Нова модель авто' : 'Редагування моделі' }}</h6>
+      <h6 class="mb-0">{{ modalMode === 'create' ? t('carModels.newTitle') : t('carModels.editTitle') }}</h6>
     </template>
 
     <div class="row g-3">
 
       <div v-if="modalMode === 'edit'" class="col-sm-2">
-        <label class="form-label small mb-1">ID</label>
+        <label class="form-label small mb-1">{{ t('table.id') }}</label>
         <div class="readonly-field">{{ modalData.id }}</div>
       </div>
 
       <!-- Brand -->
       <div :class="modalMode === 'edit' ? 'col-sm-5' : 'col-sm-6'">
-        <label class="form-label small mb-1">Марка <span class="text-danger">*</span></label>
+        <label class="form-label small mb-1">{{ t('carModels.colBrand') }} <span class="text-danger">*</span></label>
         <select v-if="canEdit" v-model="modalForm.car_brand_id" class="form-select form-select-sm">
-          <option :value="null" disabled>— оберіть марку —</option>
+          <option :value="null" disabled>{{ t('carModels.selectBrandPlaceholder') }}</option>
           <option v-for="b in brands" :key="b.id" :value="b.id">{{ b.name }}</option>
         </select>
         <div v-else class="readonly-field">{{ modalData.brand_name ?? '—' }}</div>
@@ -33,9 +33,9 @@
 
       <!-- Vehicle Type -->
       <div :class="modalMode === 'edit' ? 'col-sm-5' : 'col-sm-6'">
-        <label class="form-label small mb-1">Тип ТЗ <span class="text-danger">*</span></label>
+        <label class="form-label small mb-1">{{ t('carModels.colVehicleType') }} <span class="text-danger">*</span></label>
         <select v-if="canEdit" v-model="modalForm.vehicle_type_id" class="form-select form-select-sm">
-          <option :value="null" disabled>— оберіть тип —</option>
+          <option :value="null" disabled>{{ t('carModels.selectTypePlaceholder') }}</option>
           <option v-for="vt in vehicleTypes" :key="vt.id" :value="vt.id">{{ vt.name_uk }}</option>
         </select>
         <div v-else class="readonly-field">{{ modalData.vehicle_type_name ?? '—' }}</div>
@@ -43,21 +43,21 @@
 
       <!-- Name -->
       <div class="col-sm-6">
-        <label class="form-label small mb-1">Назва моделі <span class="text-danger">*</span></label>
-        <input v-if="canEdit" v-model="modalForm.name" type="text" class="form-control form-control-sm" placeholder="напр. Camry" />
+        <label class="form-label small mb-1">{{ t('carModels.nameLabel') }} <span class="text-danger">*</span></label>
+        <input v-if="canEdit" v-model="modalForm.name" type="text" class="form-control form-control-sm" :placeholder="t('carModels.namePlaceholderExample')" />
         <div v-else class="readonly-field">{{ modalData.name }}</div>
       </div>
 
       <!-- Generation -->
       <div class="col-sm-3">
-        <label class="form-label small mb-1">Покоління</label>
-        <input v-if="canEdit" v-model="modalForm.generation" type="text" class="form-control form-control-sm" placeholder="напр. XV70" />
+        <label class="form-label small mb-1">{{ t('carModels.colGeneration') }}</label>
+        <input v-if="canEdit" v-model="modalForm.generation" type="text" class="form-control form-control-sm" :placeholder="t('carModels.generationPlaceholderExample')" />
         <div v-else class="readonly-field">{{ modalData.generation ?? '—' }}</div>
       </div>
 
       <!-- Body type -->
       <div class="col-sm-3">
-        <label class="form-label small mb-1">Тип кузова <span class="text-danger">*</span></label>
+        <label class="form-label small mb-1">{{ t('carModels.colBodyType') }} <span class="text-danger">*</span></label>
         <select v-if="canEdit" v-model="modalForm.body_type" class="form-select form-select-sm">
           <option v-for="(label, val) in BODY_TYPE_LABELS" :key="val" :value="val">{{ label }}</option>
         </select>
@@ -66,24 +66,24 @@
 
       <!-- Production years -->
       <div class="col-sm-3">
-        <label class="form-label small mb-1">Рік початку</label>
-        <input v-if="canEdit" v-model="modalForm.production_start" type="number" min="1900" :max="new Date().getFullYear()" class="form-control form-control-sm" placeholder="напр. 2017" />
+        <label class="form-label small mb-1">{{ t('carModels.yearStartLabel') }}</label>
+        <input v-if="canEdit" v-model="modalForm.production_start" type="number" min="1900" :max="new Date().getFullYear()" class="form-control form-control-sm" :placeholder="t('carModels.yearStartPlaceholder')" />
         <div v-else class="readonly-field">{{ modalData.production_start ?? '—' }}</div>
       </div>
       <div class="col-sm-3">
-        <label class="form-label small mb-1">Рік закінчення</label>
-        <input v-if="canEdit" v-model="modalForm.production_end" type="number" min="1900" :max="new Date().getFullYear() + 5" class="form-control form-control-sm" placeholder="порожньо = н.в." />
-        <div v-else class="readonly-field">{{ modalData.production_end ?? 'н.в.' }}</div>
+        <label class="form-label small mb-1">{{ t('carModels.yearEndLabel') }}</label>
+        <input v-if="canEdit" v-model="modalForm.production_end" type="number" min="1900" :max="new Date().getFullYear() + 5" class="form-control form-control-sm" :placeholder="t('carModels.yearEndPlaceholder')" />
+        <div v-else class="readonly-field">{{ modalData.production_end ?? t('catalog.presentDay') }}</div>
       </div>
 
       <!-- Timestamps (edit only) -->
       <template v-if="modalMode === 'edit'">
         <div class="col-sm-3">
-          <label class="form-label small mb-1">Створено</label>
+          <label class="form-label small mb-1">{{ t('stoList.createdLabel') }}</label>
           <div class="readonly-field text-muted small">{{ modalData.created_at }}</div>
         </div>
         <div class="col-sm-3">
-          <label class="form-label small mb-1">Оновлено</label>
+          <label class="form-label small mb-1">{{ t('stoList.updatedLabel') }}</label>
           <div class="readonly-field text-muted small">{{ modalData.updated_at }}</div>
         </div>
       </template>
@@ -95,10 +95,10 @@
     <template #footer>
       <div></div>
       <div class="d-flex gap-2">
-        <button class="btn btn-sm btn-secondary" @click="close">Скасувати</button>
+        <button class="btn btn-sm btn-secondary" @click="close">{{ t('common.cancel') }}</button>
         <button v-if="canEdit" class="btn btn-sm btn-primary" :disabled="saving" @click="save">
           <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-          Зберегти
+          {{ t('common.save') }}
         </button>
       </div>
     </template>
@@ -107,9 +107,11 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import BaseModal from './BaseModal.vue'
 
+const { t } = useI18n({ useScope: 'global' })
 const { can, authHeaders } = useAuth()
 
 // Props
@@ -132,18 +134,18 @@ const props = defineProps({
   }
 })
 
-const BODY_TYPE_LABELS = {
-  sedan:       'Седан',
-  hatchback:   'Хетчбек',
-  suv:         'Позашляховик',
-  coupe:       'Купе',
-  convertible: 'Кабріолет',
-  wagon:       'Універсал',
-  pickup:      'Пікап',
-  van:         'Фургон',
-  minivan:     'Мінівен',
-  other:       'Інше',
-}
+const BODY_TYPE_LABELS = computed(() => ({
+  sedan:       t('catalog.bodyTypeSedan'),
+  hatchback:   t('catalog.bodyTypeHatchback'),
+  suv:         t('catalog.bodyTypeSuv'),
+  coupe:       t('catalog.bodyTypeCoupe'),
+  convertible: t('catalog.bodyTypeConvertible'),
+  wagon:       t('catalog.bodyTypeWagon'),
+  pickup:      t('catalog.bodyTypePickup'),
+  van:         t('catalog.bodyTypeVan'),
+  minivan:     t('catalog.bodyTypeMinivan'),
+  other:       t('feedback.typeOther'),
+}))
 
 const API = '/api/admin/catalog/car-models'
 
@@ -196,15 +198,15 @@ async function save() {
   saveError.value = null
   try {
     if (!modalForm.value.car_brand_id) {
-      saveError.value = 'Оберіть марку авто'
+      saveError.value = t('carModels.selectBrandError')
       return
     }
     if (!modalForm.value.vehicle_type_id) {
-      saveError.value = 'Оберіть тип ТЗ'
+      saveError.value = t('carModels.selectTypeError')
       return
     }
     if (!modalForm.value.name?.trim()) {
-      saveError.value = 'Вкажіть назву моделі'
+      saveError.value = t('carModels.nameRequiredError')
       return
     }
 
@@ -225,7 +227,7 @@ async function save() {
         body: JSON.stringify(payload),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.message ?? 'Помилка')
+      if (!res.ok) throw new Error(json.message ?? t('common.error'))
       window.dispatchEvent(new CustomEvent('car-model-created', { detail: json.data }))
     } else {
       const res = await fetch(`${API}/${modalData.value.id}`, {
@@ -234,7 +236,7 @@ async function save() {
         body: JSON.stringify(payload),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.message ?? 'Помилка збереження')
+      if (!res.ok) throw new Error(json.message ?? t('list.saveError'))
       window.dispatchEvent(new CustomEvent('car-model-updated', { detail: { id: modalData.value.id, data: json.data } }))
     }
     close()

@@ -2,8 +2,8 @@
   <BaseLayout>
     <!-- Header -->
     <div class="d-flex align-items-center justify-content-between mb-3 gap-2 flex-wrap">
-      <h5 class="mb-0">Імпорт СТО</h5>
-      <span class="text-muted small">Результати скрапінгу зовнішніх джерел</span>
+      <h5 class="mb-0">{{ t('stoImport.title') }}</h5>
+      <span class="text-muted small">{{ t('stoImport.subtitle') }}</span>
     </div>
 
     <div v-if="loading" class="text-center py-5">
@@ -18,15 +18,15 @@
           <table class="table table-hover align-middle mb-0 small">
             <thead>
               <tr>
-                <th style="width:50px" class="text-end">ID</th>
-                <th>Регіон</th>
-                <th style="width:80px" class="text-center">Статус</th>
-                <th style="width:90px" class="text-center">Знайдено</th>
-                <th style="width:90px" class="text-center">Конфліктів</th>
-                <th style="width:90px" class="text-center">Очікують</th>
-                <th style="width:90px" class="text-center">Прийнято</th>
-                <th style="width:90px" class="text-center">Відхилено</th>
-                <th style="width:150px">Створено</th>
+                <th style="width:50px" class="text-end">{{ t('table.id') }}</th>
+                <th>{{ t('stoImport.colRegion') }}</th>
+                <th style="width:80px" class="text-center">{{ t('filter.status') }}</th>
+                <th style="width:90px" class="text-center">{{ t('stoImport.colFound') }}</th>
+                <th style="width:90px" class="text-center">{{ t('stoImport.colConflicts') }}</th>
+                <th style="width:90px" class="text-center">{{ t('users.pending') }}</th>
+                <th style="width:90px" class="text-center">{{ t('stoImport.colAccepted') }}</th>
+                <th style="width:90px" class="text-center">{{ t('stoImport.colRejected') }}</th>
+                <th style="width:150px">{{ t('stoList.createdLabel') }}</th>
                 <th style="width:80px"></th>
               </tr>
             </thead>
@@ -40,7 +40,7 @@
                   <td class="text-end text-muted">{{ batch.id }}</td>
                   <td>
                     <span class="fw-medium">{{ batch.region_query }}</span>
-                    <span class="text-muted ms-1">(ліміт: {{ batch.batch_size }})</span>
+                    <span class="text-muted ms-1">({{ t('stoImport.limitSuffix', { size: batch.batch_size }) }})</span>
                   </td>
                   <td class="text-center">
                     <span class="badge" :class="statusBadge(batch.status)">
@@ -61,7 +61,7 @@
                   <td class="text-end">
                     <button
                       class="btn btn-sm btn-outline-danger py-0 px-1"
-                      title="Видалити батч"
+                      :title="t('stoImport.deleteBatchTooltip')"
                       @click.stop="deleteBatch(batch)"
                     >
                       <i class="bi bi-trash"></i>
@@ -78,12 +78,12 @@
                     <table v-else class="table table-sm align-middle mb-0 small">
                       <thead>
                         <tr class="table-secondary">
-                          <th class="ps-4" style="width:50px">ID</th>
-                          <th>Назва</th>
-                          <th>Адреса</th>
-                          <th style="width:80px" class="text-center">Статус</th>
-                          <th style="width:80px" class="text-center">Конфл.</th>
-                          <th style="width:90px" class="text-center">Джерела</th>
+                          <th class="ps-4" style="width:50px">{{ t('table.id') }}</th>
+                          <th>{{ t('table.name') }}</th>
+                          <th>{{ t('table.address') }}</th>
+                          <th style="width:80px" class="text-center">{{ t('filter.status') }}</th>
+                          <th style="width:80px" class="text-center">{{ t('stoImport.colConflictsShort') }}</th>
+                          <th style="width:90px" class="text-center">{{ t('stoImport.colSources') }}</th>
                           <th style="width:80px"></th>
                         </tr>
                       </thead>
@@ -125,13 +125,13 @@
                               class="btn btn-sm btn-outline-primary py-0 px-1"
                               @click="openCandidate(c)"
                             >
-                              Огляд
+                              {{ t('stoImport.reviewButton') }}
                             </button>
                             <span v-else class="text-muted">—</span>
                           </td>
                         </tr>
                         <tr v-if="candidates.length === 0">
-                          <td colspan="7" class="text-center text-muted py-3">Немає кандидатів</td>
+                          <td colspan="7" class="text-center text-muted py-3">{{ t('stoImport.noCandidates') }}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -141,7 +141,7 @@
 
               <tr v-if="batches.length === 0">
                 <td colspan="10" class="text-center text-muted py-4">
-                  Немає батчів. Запустіть <code>php yii sto:scrape -l 20 -o 10</code> щоб зібрати дані.
+                  {{ t('stoImport.noBatchesPrefix') }} <code>php yii sto:scrape -l 20 -o 10</code> {{ t('stoImport.noBatchesSuffix') }}
                 </td>
               </tr>
             </tbody>
@@ -156,7 +156,7 @@
         <div class="card shadow-lg" style="width:900px; max-width:96vw; margin:6vh auto; max-height:88vh; display:flex; flex-direction:column; overflow:hidden">
 
         <div class="card-header d-flex align-items-center justify-content-between py-2 px-4">
-          <span class="fw-semibold">{{ modalData?.name || 'Кандидат #' + modalCandidate.id }}</span>
+          <span class="fw-semibold">{{ modalData?.name || t('stoImport.candidatePrefix') + modalCandidate.id }}</span>
           <button class="btn-close btn-sm" @click="closeModal"></button>
         </div>
 
@@ -169,7 +169,7 @@
             <!-- Source summary badges (always visible) -->
             <div class="mb-2">
               <div class="d-flex gap-2 flex-wrap align-items-center mb-1">
-                <span class="text-muted small fw-semibold">Джерела даних:</span>
+                <span class="text-muted small fw-semibold">{{ t('stoImport.dataSourcesLabel') }}</span>
               </div>
               <div class="d-flex gap-2 flex-wrap">
                 <div v-if="modalData?.google_data" class="d-inline-flex align-items-center gap-1">
@@ -177,7 +177,7 @@
                   <button
                     class="btn btn-sm btn-outline-warning py-0 px-1"
                     style="font-size:.7rem; line-height:1"
-                    title="Розділити: створити окремий кандидат з цих даних"
+                    :title="t('stoImport.splitSourceTooltip')"
                     @click="splitSource('google_data')"
                   ><i class="bi bi-scissors"></i></button>
                 </div>
@@ -186,7 +186,7 @@
                   <button
                     class="btn btn-sm btn-outline-warning py-0 px-1"
                     style="font-size:.7rem; line-height:1"
-                    title="Розділити: створити окремий кандидат з цих даних"
+                    :title="t('stoImport.splitSourceTooltip')"
                     @click="splitSource('osm_data')"
                   ><i class="bi bi-scissors"></i></button>
                 </div>
@@ -195,7 +195,7 @@
                   <button
                     class="btn btn-sm btn-outline-warning py-0 px-1"
                     style="font-size:.7rem; line-height:1"
-                    title="Розділити: створити окремий кандидат з цих даних"
+                    :title="t('stoImport.splitSourceTooltip')"
                     @click="splitSource('autoria_data')"
                   ><i class="bi bi-scissors"></i></button>
                 </div>
@@ -204,7 +204,7 @@
                   <button
                     class="btn btn-sm btn-outline-warning py-0 px-1"
                     style="font-size:.7rem; line-height:1"
-                    title="Розділити: створити окремий кандидат з цих даних"
+                    :title="t('stoImport.splitSourceTooltip')"
                     @click="splitSource('vsesto_data')"
                   ><i class="bi bi-scissors"></i></button>
                 </div>
@@ -213,7 +213,7 @@
                   <button
                     class="btn btn-sm btn-outline-warning py-0 px-1"
                     style="font-size:.7rem; line-height:1"
-                    title="Розділити: створити окремий кандидат з цих даних"
+                    :title="t('stoImport.splitSourceTooltip')"
                     @click="splitSource('twogis_data')"
                   ><i class="bi bi-scissors"></i></button>
                 </div>
@@ -222,7 +222,7 @@
                   <button
                     class="btn btn-sm btn-outline-warning py-0 px-1"
                     style="font-size:.7rem; line-height:1"
-                    title="Розділити: створити окремий кандидат з цих даних"
+                    :title="t('stoImport.splitSourceTooltip')"
                     @click="splitSource('stoua_data')"
                   ><i class="bi bi-scissors"></i></button>
                 </div>
@@ -232,14 +232,14 @@
             <!-- Source comparison table (collapsible) -->
             <details class="mb-3">
               <summary class="text-muted mb-2" style="font-size:.8rem; cursor:pointer; user-select:none">
-                <strong>Детальне порівняння джерел</strong>
-                <span class="text-muted ms-1">(клікніть щоб розгорнути)</span>
+                <strong>{{ t('stoImport.detailedComparisonTitle') }}</strong>
+                <span class="text-muted ms-1">{{ t('stoImport.clickToExpand') }}</span>
               </summary>
             <div class="table-responsive mt-2">
               <table class="table table-bordered table-sm small align-middle">
                 <thead>
                   <tr>
-                    <th style="width:110px">Поле</th>
+                    <th style="width:110px">{{ t('stoImport.fieldCol') }}</th>
                     <th v-if="modalData?.google_data">
                       <span class="badge bg-primary">Google Maps</span>
                     </th>
@@ -259,7 +259,7 @@
                       <span class="badge bg-warning text-dark">Sto.ua</span>
                     </th>
                     <th style="width:180px">
-                      <span class="badge bg-dark">Прийняте значення</span>
+                      <span class="badge bg-dark">{{ t('stoImport.acceptedValueBadge') }}</span>
                     </th>
                   </tr>
                 </thead>
@@ -350,7 +350,7 @@
 
                   <!-- Map links row — shown when any source has coordinates -->
                   <tr v-if="anySourceHasCoords">
-                    <td class="text-muted fw-medium">На карті</td>
+                    <td class="text-muted fw-medium">{{ t('stoImport.mapRowLabel') }}</td>
                     <td v-if="modalData?.google_data">
                       <a
                         v-if="mapUrl(modalData.google_data)"
@@ -358,9 +358,9 @@
                         target="_blank"
                         class="text-primary"
                         style="font-size:.8rem"
-                        title="Відкрити в Google Maps"
+                        :title="t('stoImport.openInGoogleMapsTooltip')"
                       >
-                        <i class="bi bi-geo-alt-fill me-1"></i>Maps
+                        <i class="bi bi-geo-alt-fill me-1"></i>{{ t('stoImport.mapsLinkText') }}
                       </a>
                       <span v-else class="text-muted">—</span>
                     </td>
@@ -371,9 +371,9 @@
                         target="_blank"
                         class="text-info"
                         style="font-size:.8rem"
-                        title="Відкрити в Google Maps"
+                        :title="t('stoImport.openInGoogleMapsTooltip')"
                       >
-                        <i class="bi bi-geo-alt-fill me-1"></i>Maps
+                        <i class="bi bi-geo-alt-fill me-1"></i>{{ t('stoImport.mapsLinkText') }}
                       </a>
                       <span v-else class="text-muted">—</span>
                     </td>
@@ -384,9 +384,9 @@
                         target="_blank"
                         class="text-danger"
                         style="font-size:.8rem"
-                        title="Відкрити в Google Maps"
+                        :title="t('stoImport.openInGoogleMapsTooltip')"
                       >
-                        <i class="bi bi-geo-alt-fill me-1"></i>Maps
+                        <i class="bi bi-geo-alt-fill me-1"></i>{{ t('stoImport.mapsLinkText') }}
                       </a>
                       <span v-else class="text-muted">—</span>
                     </td>
@@ -397,9 +397,9 @@
                         target="_blank"
                         class="text-secondary"
                         style="font-size:.8rem"
-                        title="Відкрити в Google Maps"
+                        :title="t('stoImport.openInGoogleMapsTooltip')"
                       >
-                        <i class="bi bi-geo-alt-fill me-1"></i>Maps
+                        <i class="bi bi-geo-alt-fill me-1"></i>{{ t('stoImport.mapsLinkText') }}
                       </a>
                       <span v-else class="text-muted">—</span>
                     </td>
@@ -410,9 +410,9 @@
                         target="_blank"
                         class="text-success"
                         style="font-size:.8rem"
-                        title="Відкрити в Google Maps"
+                        :title="t('stoImport.openInGoogleMapsTooltip')"
                       >
-                        <i class="bi bi-geo-alt-fill me-1"></i>Maps
+                        <i class="bi bi-geo-alt-fill me-1"></i>{{ t('stoImport.mapsLinkText') }}
                       </a>
                       <span v-else class="text-muted">—</span>
                     </td>
@@ -423,9 +423,9 @@
                         target="_blank"
                         class="text-warning"
                         style="font-size:.8rem"
-                        title="Відкрити в Google Maps"
+                        :title="t('stoImport.openInGoogleMapsTooltip')"
                       >
-                        <i class="bi bi-geo-alt-fill me-1"></i>Maps
+                        <i class="bi bi-geo-alt-fill me-1"></i>{{ t('stoImport.mapsLinkText') }}
                       </a>
                       <span v-else class="text-muted">—</span>
                     </td>
@@ -437,7 +437,7 @@
                         target="_blank"
                         class="text-dark"
                         style="font-size:.8rem"
-                        title="Відкрити прийняті координати в Google Maps"
+                        :title="t('stoImport.openResolvedCoordsTooltip')"
                       >
                         <i class="bi bi-geo-alt-fill me-1"></i>Google Maps
                       </a>
@@ -450,13 +450,13 @@
 
             <!-- Photos -->
             <div v-if="allPhotos.length > 0" class="mb-3">
-              <h6 class="text-muted mb-2" style="font-size:.8rem">Фото з Google Maps</h6>
+              <h6 class="text-muted mb-2" style="font-size:.8rem">{{ t('stoImport.photosFromGoogleTitle') }}</h6>
               <div class="d-flex flex-wrap gap-2">
                 <div v-for="(url, i) in allPhotos" :key="i" class="position-relative">
-                  <a :href="url" target="_blank" title="Відкрити фото">
+                  <a :href="url" target="_blank" :title="t('stoImport.openPhotoTooltip')">
                     <img
                       :src="url"
-                      :alt="'Фото ' + (i+1)"
+                      :alt="t('stoImport.photoAlt', { n: i + 1 })"
                       style="width:120px; height:90px; object-fit:cover; border-radius:4px; border:1px solid var(--bs-border-color)"
                     />
                   </a>
@@ -467,14 +467,13 @@
             <!-- Conflicts summary -->
             <div v-if="modalConflicts.length > 0" class="alert alert-warning py-2 small mb-2">
               <i class="bi bi-exclamation-triangle me-1"></i>
-              <strong>{{ modalConflicts.length }}</strong> конфлікт(и) між джерелами.
-              Клацніть на значення щоб обрати правильне, або відредагуйте в колонці «Прийняте».
+              <strong>{{ modalConflicts.length }}</strong> {{ t('stoImport.conflictsSummaryText') }}
             </div>
 
             <!-- City picker (required before accept) -->
             <div class="border rounded p-3 mb-2">
               <label class="form-label small fw-semibold mb-2">
-                <i class="bi bi-geo-alt-fill me-1"></i>Місто (обов'язково) <span class="text-danger">*</span>
+                <i class="bi bi-geo-alt-fill me-1"></i>{{ t('stoImport.cityRequiredLabel') }} <span class="text-danger">*</span>
               </label>
               <div class="d-flex gap-2 align-items-center">
                 <div class="readonly-field flex-grow-1 small">
@@ -482,16 +481,16 @@
                     <span class="text-muted me-1">{{ selectedCity.city_type_name }}</span>{{ selectedCity.name_uk }}
                     <span v-if="selectedCity.area_region_name" class="text-muted ms-1">({{ selectedCity.area_region_name }})</span>
                   </template>
-                  <span v-else class="text-muted">— Оберіть місто —</span>
+                  <span v-else class="text-muted">{{ t('stoImport.selectCityPlaceholder') }}</span>
                 </div>
                 <button type="button"
                         class="btn btn-sm btn-outline-primary flex-shrink-0"
                         @click="openImportCityPicker">
-                  <i class="bi bi-search me-1"></i>Обрати місто
+                  <i class="bi bi-search me-1"></i>{{ t('stoImport.selectCityButton') }}
                 </button>
               </div>
               <div class="text-muted mt-1" style="font-size:0.72rem">
-                Автоматичне визначення міста не завжди працює — краще обрати вручну.
+                {{ t('stoImport.cityAutoDetectHint') }}
               </div>
             </div>
 
@@ -500,13 +499,13 @@
 
         <div class="card-footer d-flex justify-content-between align-items-center px-4 py-2">
           <button class="btn btn-sm btn-outline-danger" :disabled="saving" @click="rejectCandidate">
-            <i class="bi bi-x-circle me-1"></i>Відхилити
+            <i class="bi bi-x-circle me-1"></i>{{ t('stoImport.rejectButton') }}
           </button>
           <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-outline-secondary" @click="closeModal">Скасувати</button>
+            <button class="btn btn-sm btn-outline-secondary" @click="closeModal">{{ t('common.cancel') }}</button>
             <button class="btn btn-sm btn-primary" :disabled="saving" @click="acceptCandidate">
               <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-              <i v-else class="bi bi-check-circle me-1"></i>Прийняти
+              <i v-else class="bi bi-check-circle me-1"></i>{{ t('stoImport.acceptButton') }}
             </button>
           </div>
         </div>
@@ -522,7 +521,7 @@
              style="max-width:520px; margin:10vh auto; max-height:75vh; display:flex; flex-direction:column; overflow:hidden">
 
           <div class="card-header d-flex justify-content-between align-items-center py-2 px-3">
-            <h6 class="mb-0">Оберіть місто</h6>
+            <h6 class="mb-0">{{ t('stoImport.selectCityModalTitle') }}</h6>
             <button class="btn btn-sm btn-outline-secondary" @click="closeImportCityPicker">✕</button>
           </div>
 
@@ -532,12 +531,12 @@
               v-model="importCityPickerSearch"
               type="text"
               class="form-control form-control-sm"
-              placeholder="Введіть назву міста..."
+              :placeholder="t('stoImport.citySearchPlaceholder')"
               @input="debounceImportCitySearch"
             />
             <div v-if="importCityPickerSearch.length > 0 && importCityPickerSearch.length < 2"
                  class="text-muted small mt-1">
-              Введіть мінімум 2 символи
+              {{ t('stoList.minSearchChars') }}
             </div>
           </div>
 
@@ -547,7 +546,7 @@
             </div>
             <div v-else-if="importCityPickerResults.length === 0 && importCityPickerSearch.length >= 2"
                  class="text-muted text-center py-3 small">
-              Нічого не знайдено
+              {{ t('stoList.noCityResults') }}
             </div>
             <div v-else class="list-group list-group-flush">
               <button
@@ -574,38 +573,40 @@
 
 <script setup>
 import { ref, onMounted, computed, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import BaseLayout from '../layouts/BaseLayout.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useNotify } from '@/composables/useNotify'
 import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import { formatDate } from '@/utils/date'
 
+const { t } = useI18n({ useScope: 'global' })
 const { authHeaders } = useAuth()
 const { notify } = useNotify()
 const { deleteWithUndo } = useUndoableDelete()
 const headers = () => ({ ...authHeaders(), 'Content-Type': 'application/json' })
 
-const DISPLAY_FIELDS = [
-  { key: 'name',            label: 'Назва (UK)' },
-  { key: 'name_ru',         label: 'Назва (RU)' },
-  { key: 'name_en',         label: 'Назва (EN)' },
-  { key: 'address',         label: 'Адреса (UK)' },
-  { key: 'address_ru',      label: 'Адреса (RU)' },
-  { key: 'address_en',      label: 'Адреса (EN)' },
-  { key: 'postal_code',     label: 'Індекс' },
-  { key: 'phone',           label: 'Телефон' },
-  { key: 'website',         label: 'Сайт' },
-  { key: 'email',           label: 'Email' },
-  { key: 'latitude',        label: 'Широта' },
-  { key: 'longitude',       label: 'Довгота' },
-  { key: 'rating',          label: 'Рейтинг' },
-  { key: 'reviews_count',   label: 'Відгуків' },
-  { key: 'description',     label: 'Опис (UK)' },
-  { key: 'description_ru',  label: 'Опис (RU)' },
-  { key: 'description_en',  label: 'Опис (EN)' },
-  { key: 'specializations', label: 'Спеціалізація' },
-  { key: 'city_id',         label: 'Місто (ID)' },
-]
+const DISPLAY_FIELDS = computed(() => [
+  { key: 'name',            label: t('stoList.colNameUk') },
+  { key: 'name_ru',         label: t('stoList.nameRuLabel') },
+  { key: 'name_en',         label: t('stoList.nameEnLabel') },
+  { key: 'address',         label: t('stoImport.fieldAddressUk') },
+  { key: 'address_ru',      label: t('stoImport.fieldAddressRu') },
+  { key: 'address_en',      label: t('stoImport.fieldAddressEn') },
+  { key: 'postal_code',     label: t('stoImport.fieldPostalCode') },
+  { key: 'phone',           label: t('stoList.colPhone') },
+  { key: 'website',         label: t('stoList.websiteLabel') },
+  { key: 'email',           label: t('stoImport.fieldEmail') },
+  { key: 'latitude',        label: t('stoImport.fieldLatitude') },
+  { key: 'longitude',       label: t('stoImport.fieldLongitude') },
+  { key: 'rating',          label: t('table.rating') },
+  { key: 'reviews_count',   label: t('stoImport.fieldReviewsCount') },
+  { key: 'description',     label: t('stoList.descUkLabel') },
+  { key: 'description_ru',  label: t('stoList.descRuLabel') },
+  { key: 'description_en',  label: t('stoList.descEnLabel') },
+  { key: 'specializations', label: t('stoImport.fieldSpecializations') },
+  { key: 'city_id',         label: t('stoImport.fieldCityId') },
+])
 
 const loading          = ref(true)
 const error            = ref(null)
@@ -682,7 +683,7 @@ function deleteBatch(batch) {
   if (index === -1) return
 
   deleteWithUndo({
-    message: `Батч #${batch.id} видалено`,
+    message: t('stoImport.batchDeletedMessage', { id: batch.id }),
     remove: () => {
       batches.value.splice(index, 1)
       if (selectedBatch.value?.id === batch.id) {
@@ -695,7 +696,7 @@ function deleteBatch(batch) {
     },
     commit: async () => {
       const res = await fetch(`/api/admin/import/batches/${batch.id}`, { method: 'DELETE', headers: headers() })
-      if (!res.ok) throw new Error('Помилка видалення батчу')
+      if (!res.ok) throw new Error(t('stoImport.deleteBatchError'))
     },
     onCommitError: () => loadBatches(),
   })
@@ -717,7 +718,7 @@ async function openCandidate(c) {
 
     // Pre-fill resolved values with best available data (prefer Google → OSM → AUTO.RIA → VseSTO → 2GIS → StoUA)
     const sources = ['google_data', 'osm_data', 'autoria_data', 'vsesto_data', 'twogis_data', 'stoua_data']
-    for (const field of DISPLAY_FIELDS) {
+    for (const field of DISPLAY_FIELDS.value) {
       for (const src of sources) {
         const val = getValue(j.data?.[src], field.key)
         if (val !== null && val !== '' && val !== undefined) {
@@ -903,14 +904,14 @@ const allPhotos = computed(() => {
 async function acceptCandidate() {
   // Validate city selection
   if (!selectedCity.value) {
-    notify('Будь ласка, оберіть місто перед прийняттям кандидата.', { type: 'error' })
+    notify(t('stoImport.selectCityBeforeAccept'), { type: 'error' })
     return
   }
 
   saving.value = true
   try {
     const resolvedData = {}
-    for (const field of DISPLAY_FIELDS) {
+    for (const field of DISPLAY_FIELDS.value) {
       if (resolvedValues.value[field.key]) {
         resolvedData[field.key] = resolvedValues.value[field.key]
       }
@@ -933,7 +934,7 @@ async function acceptCandidate() {
     })
     const j = await r.json()
     if (j.status === 'error') {
-      notify('Помилка: ' + j.message, { type: 'error' })
+      notify(t('common.error') + ': ' + j.message, { type: 'error' })
       return
     }
     // Закрити модалку та оновити список
@@ -941,7 +942,7 @@ async function acceptCandidate() {
     await reloadBatch()
     await loadBatches()
     if (j.warnings?.length) {
-      notify('СТО створено (#' + j.sto_id + '), але:\n' + j.warnings.join('\n'), { type: 'error', duration: 8000 })
+      notify(t('stoImport.stoCreatedWithWarnings', { id: j.sto_id, warnings: j.warnings.join('\n') }), { type: 'error', duration: 8000 })
     }
   } finally {
     saving.value = false
@@ -949,7 +950,7 @@ async function acceptCandidate() {
 }
 
 async function rejectCandidate() {
-  if (!confirm('Відхилити цього кандидата?')) return
+  if (!confirm(t('stoImport.confirmReject'))) return
   saving.value = true
   try {
     await fetch(`/api/admin/import/candidates/${modalCandidate.value.id}/reject`, {
@@ -974,7 +975,7 @@ function statusBadge(status) {
 }
 
 function statusLabel(status) {
-  return { pending: 'Очікує', running: 'Виконується', completed: 'Завершено', failed: 'Помилка' }[status] || status
+  return { pending: t('stoList.bookingPending'), running: t('stoImport.statusRunning'), completed: t('stoImport.statusCompleted'), failed: t('common.error') }[status] || status
 }
 
 function candidateStatusBadge(status) {
@@ -982,7 +983,7 @@ function candidateStatusBadge(status) {
 }
 
 function candidateStatusLabel(status) {
-  return { pending: 'Очікує', accepted: 'Прийнято', rejected: 'Відхилено' }[status] || status
+  return { pending: t('stoList.bookingPending'), accepted: t('stoImport.candidateAccepted'), rejected: t('stoList.reviewRejected') }[status] || status
 }
 
 function candidateRowClass(c) {
@@ -1002,12 +1003,7 @@ async function splitSource(sourceKey) {
   }
   const label = sourceLabels[sourceKey] || sourceKey
 
-  if (!confirm(
-    `Розділити джерело "${label}"?\n\n` +
-    `• З цього кандидата видаляться дані ${label}\n` +
-    `• Створиться новий окремий кандидат тільки з даними ${label}\n` +
-    `• Обидва кандидати можна буде окремо прийняти або відхилити`
-  )) return
+  if (!confirm(t('stoImport.splitSourceConfirm', { label }))) return
 
   saving.value = true
   try {
@@ -1019,19 +1015,18 @@ async function splitSource(sourceKey) {
     const json = await res.json()
 
     if (json.status === 'error') {
-      notify('Помилка: ' + json.message, { type: 'error' })
+      notify(t('common.error') + ': ' + json.message, { type: 'error' })
       return
     }
 
     if (json.merged) {
       notify(
-        `Джерело "${label}" розділено та об'єднано! Поточний кандидат #${json.original_id}, ` +
-        `об'єднано з існуючим кандидатом #${json.merged_into} (знайдено схожий СТО).`,
+        t('stoImport.sourceSplitMerged', { label, originalId: json.original_id, mergedInto: json.merged_into }),
         { type: 'success', duration: 8000 }
       )
     } else {
       notify(
-        `Джерело "${label}" розділено! Поточний кандидат #${json.original_id}, новий кандидат #${json.new_candidate_id}.`,
+        t('stoImport.sourceSplitCreated', { label, originalId: json.original_id, newId: json.new_candidate_id }),
         { type: 'success', duration: 8000 }
       )
     }
@@ -1040,7 +1035,7 @@ async function splitSource(sourceKey) {
     await reloadBatch()
     await loadBatches()
   } catch (e) {
-    notify('Помилка: ' + e.message, { type: 'error' })
+    notify(t('common.error') + ': ' + e.message, { type: 'error' })
   } finally {
     saving.value = false
   }

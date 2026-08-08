@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { apiGet, apiPatch, apiPost, apiDelete as apiDeleteRequest } from '@/utils/api'
 import { notify } from '@/hooks/useNotify'
 import { useUndoableMutation } from '@/hooks/useUndoableMutation'
@@ -51,6 +52,7 @@ export function useTableState({
   rowKey = 'id',
   onRowUpdated,
 }: UseTableStateOptions) {
+  const { t } = useTranslation()
   const { deleteWithUndo, deleteManyWithUndo, updateWithUndo } = useUndoableMutation()
 
   // Separate state for each concern
@@ -202,7 +204,7 @@ export function useTableState({
 
     updateWithUndo({
       key: `${id}:${field.key}`,
-      message: `«${label}»: ${prev} → ${normalized}`,
+      message: t('list.cellChanged', { label, prev, next: normalized }),
       apply: () => {
         setItems(items => items.map(r => (r[rowKey] === id ? { ...r, [field.key]: normalized } : r)))
       },
@@ -287,8 +289,8 @@ export function useTableState({
       })
       .catch(err => {
         // Якщо показане з кешу — не затираємо його помилкою, лише сповіщаємо
-        if (cached) notify(err instanceof Error ? err.message : 'Помилка оновлення', { type: 'error' })
-        else setError(err instanceof Error ? err.message : 'Помилка завантаження')
+        if (cached) notify(err instanceof Error ? err.message : t('list.updateError'), { type: 'error' })
+        else setError(err instanceof Error ? err.message : t('list.loadError'))
       })
       .finally(() => {
         setLoading(false)
@@ -308,7 +310,7 @@ export function useTableState({
       : `${apiDelete}/${id}`
 
     deleteWithUndo({
-      message: `Запис #${id} видалено`,
+      message: t('list.recordDeleted', { id }),
       remove: () => {
         setItems(items => items.filter(r => r[rowKey] !== id))
         setTotal(t => t - 1)
@@ -346,11 +348,11 @@ export function useTableState({
       })
 
       const res = await apiPost<{ affected?: number }>(apiBulk, body)
-      notify(`Оновлено: ${res.affected ?? 0} запис(ів)`, { type: 'success' })
+      notify(t('list.recordUpdated', { count: res.affected ?? 0 }), { type: 'success' })
       clearRowSelection()
       reload()
     } catch (err) {
-      notify(err instanceof Error ? err.message : 'Помилка масового оновлення', { type: 'error' })
+      notify(err instanceof Error ? err.message : t('list.bulkUpdateError'), { type: 'error' })
     } finally {
       setBulkApplying(false)
     }
@@ -373,11 +375,11 @@ export function useTableState({
       })
 
       const res = await apiPost<{ affected?: number }>(apiBulk, body)
-      notify(`${label}: ${res.affected ?? 0} запис(ів)`, { type: 'success' })
+      notify(t('list.actionSuccess', { label, count: res.affected ?? 0 }), { type: 'success' })
       clearRowSelection()
       reload()
     } catch (err) {
-      notify(err instanceof Error ? err.message : 'Помилка виконання дії', { type: 'error' })
+      notify(err instanceof Error ? err.message : t('list.actionError'), { type: 'error' })
     } finally {
       setBulkApplying(false)
     }
@@ -395,7 +397,7 @@ export function useTableState({
 
     deleteManyWithUndo({
       items: removed,
-      message: `Видалено ${removed.length} запис(ів)`,
+      message: t('list.recordsDeleted', { count: removed.length }),
       remove: () => {
         const ids = new Set(removed.map(r => r.row[rowKey]))
         setItems(list => list.filter(r => !ids.has(r[rowKey])))
@@ -459,7 +461,7 @@ export function useTableState({
 
       if (allRows.length >= EXPORT_MAX_ROWS) {
         notify(
-          `Експортовано перші ${EXPORT_MAX_ROWS} записів (забагато для одного файлу) — звузьте фільтр`,
+          t('list.exportTruncated', { max: EXPORT_MAX_ROWS }),
           { type: 'info', duration: 8000 }
         )
       }
@@ -474,9 +476,9 @@ export function useTableState({
         `export-${new Date().toISOString().slice(0, 10)}.csv`,
         rowsToCsv(headers, csvRows)
       )
-      notify(`Експортовано ${allRows.length} запис(ів)`, { type: 'success' })
+      notify(t('list.exportSuccess', { count: allRows.length }), { type: 'success' })
     } catch (err) {
-      notify(err instanceof Error ? err.message : 'Помилка експорту', { type: 'error' })
+      notify(err instanceof Error ? err.message : t('list.exportError'), { type: 'error' })
     } finally {
       setExporting(false)
     }

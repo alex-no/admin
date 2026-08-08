@@ -9,6 +9,7 @@
  *   50 27 30.5 N   N50°27'30"   -50°27'30"
  *   Comma as decimal separator: 30,5
  */
+import { i18n } from '@/i18n'
 
 /**
  * Convert decimal degrees → DMS string.
@@ -103,5 +104,5 @@ export function coordHint(value, type = 'lat') {
     return { text: String(d), error: false }
   }
 
-  return { text: 'Невірний формат', error: true }
+  return { text: i18n.global.t('cities.invalidFormatHint'), error: true }
 }

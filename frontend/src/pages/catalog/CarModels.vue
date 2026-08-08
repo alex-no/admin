@@ -4,7 +4,7 @@
     <div :style="contentMargin" class="page-content-wrapper">
       <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
         <div class="d-flex align-items-center gap-2">
-          <h5 class="mb-0">Моделі авто</h5>
+          <h5 class="mb-0">{{ t('carModels.title') }}</h5>
           <button v-if="canCreate" class="btn btn-sm btn-success" @click="openCreateModal">
             <i class="bi bi-plus-lg"></i>
           </button>
@@ -15,15 +15,15 @@
             type="text"
             class="form-control form-control-sm"
             style="width:180px"
-            placeholder="Назва моделі..."
+            :placeholder="t('carModels.searchPlaceholder')"
             @input="debounceLoad"
           />
           <select v-model="filterBrand" class="form-select form-select-sm" style="width:auto" @change="load(1)">
-            <option :value="null">Всі марки</option>
+            <option :value="null">{{ t('carModels.allBrands') }}</option>
             <option v-for="b in brands" :key="b.id" :value="b.id">{{ b.name }}</option>
           </select>
           <select v-model="filterVehicleType" class="form-select form-select-sm" style="width:auto" @change="load(1)">
-            <option :value="null">Всі типи ТЗ</option>
+            <option :value="null">{{ t('carModels.allVehicleTypes') }}</option>
             <option v-for="vt in vehicleTypes" :key="vt.id" :value="vt.id">{{ vt.name_uk }}</option>
           </select>
         </div>
@@ -40,24 +40,24 @@
             <table class="table table-hover align-middle mb-0 small">
               <thead>
                 <tr>
-                  <th style="width:50px" class="text-end">ID</th>
+                  <th style="width:50px" class="text-end">{{ t('table.id') }}</th>
                   <th class="th-sortable" @click="toggleSort('name')">
-                    Модель
+                    {{ t('carModels.colModel') }}
                     <SortIcon col="name" :sort-key="sortKey" :sort-dir="sortDir" />
                   </th>
-                  <th>Марка</th>
-                  <th>Тип ТЗ</th>
+                  <th>{{ t('carModels.colBrand') }}</th>
+                  <th>{{ t('carModels.colVehicleType') }}</th>
                   <th class="th-sortable" style="width:110px" @click="toggleSort('body_type')">
-                    Тип кузова
+                    {{ t('carModels.colBodyType') }}
                     <SortIcon col="body_type" :sort-key="sortKey" :sort-dir="sortDir" />
                   </th>
-                  <th style="width:90px">Покоління</th>
+                  <th style="width:90px">{{ t('carModels.colGeneration') }}</th>
                   <th class="th-sortable" style="width:80px" @click="toggleSort('production_start')">
-                    З
+                    {{ t('carModels.colFrom') }}
                     <SortIcon col="production_start" :sort-key="sortKey" :sort-dir="sortDir" />
                   </th>
                   <th class="th-sortable" style="width:80px" @click="toggleSort('production_end')">
-                    По
+                    {{ t('carModels.colTo') }}
                     <SortIcon col="production_end" :sort-key="sortKey" :sort-dir="sortDir" />
                   </th>
                   <th style="width:60px"></th>
@@ -74,18 +74,18 @@
                   </td>
                   <td class="text-muted">{{ row.generation ?? '—' }}</td>
                   <td class="text-muted">{{ row.production_start ?? '—' }}</td>
-                  <td class="text-muted">{{ row.production_end ?? 'н.в.' }}</td>
+                  <td class="text-muted">{{ row.production_end ?? t('catalog.presentDay') }}</td>
                   <td class="text-nowrap">
                     <button v-if="canEdit || justCreatedIds.has(row.id)" class="btn btn-sm btn-outline-secondary me-1" @click="openModal(row)">
                       <i class="bi bi-pencil"></i>
                     </button>
-                    <button v-if="canDelete" class="btn btn-sm btn-outline-danger" title="Видалити" @click="deleteRow(row)">
+                    <button v-if="canDelete" class="btn btn-sm btn-outline-danger" :title="t('common.delete')" @click="deleteRow(row)">
                       <i class="bi bi-trash"></i>
                     </button>
                   </td>
                 </tr>
                 <tr v-if="!items.length">
-                  <td colspan="9" class="text-center text-muted py-4">Немає даних</td>
+                  <td colspan="9" class="text-center text-muted py-4">{{ t('common.noData') }}</td>
                 </tr>
               </tbody>
             </table>
@@ -93,7 +93,7 @@
         </div>
 
         <div class="d-flex justify-content-between align-items-center mt-3">
-          <span class="text-muted small">Всього: {{ total }}</span>
+          <span class="text-muted small">{{ t('analytics.totalCount', { value: total }) }}</span>
           <nav v-if="totalPages > 1">
             <ul class="pagination pagination-sm mb-0">
               <li class="page-item" :class="{ disabled: page === 1 }">
@@ -115,12 +115,14 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import BaseLayout from '@/layouts/BaseLayout.vue'
 import CarModelModal from '@/components/CarModelModal.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import { usePageLayout } from '@/composables/usePageLayout'
 
+const { t } = useI18n({ useScope: 'global' })
 const { can, authHeaders } = useAuth()
 const { deleteWithUndo } = useUndoableDelete()
 const { contentMargin } = usePageLayout()
@@ -129,18 +131,18 @@ const canCreate = computed(() => can('catalog.car-models.create'))
 const canDelete = computed(() => can('catalog.car-models.edit'))
 const canEdit   = computed(() => can('catalog.car-models.edit') || can('catalog.car-models.create'))
 
-const BODY_TYPE_LABELS = {
-  sedan:       'Седан',
-  hatchback:   'Хетчбек',
-  suv:         'Позашляховик',
-  coupe:       'Купе',
-  convertible: 'Кабріолет',
-  wagon:       'Універсал',
-  pickup:      'Пікап',
-  van:         'Фургон',
-  minivan:     'Мінівен',
-  other:       'Інше',
-}
+const BODY_TYPE_LABELS = computed(() => ({
+  sedan:       t('catalog.bodyTypeSedan'),
+  hatchback:   t('catalog.bodyTypeHatchback'),
+  suv:         t('catalog.bodyTypeSuv'),
+  coupe:       t('catalog.bodyTypeCoupe'),
+  convertible: t('catalog.bodyTypeConvertible'),
+  wagon:       t('catalog.bodyTypeWagon'),
+  pickup:      t('catalog.bodyTypePickup'),
+  van:         t('catalog.bodyTypeVan'),
+  minivan:     t('catalog.bodyTypeMinivan'),
+  other:       t('feedback.typeOther'),
+}))
 
 const API = '/api/admin/catalog/car-models'
 
@@ -198,7 +200,7 @@ async function load(p = 1) {
     const vid  = filterVehicleType.value !== null ? `&vehicle_type_id=${filterVehicleType.value}` : ''
     const res  = await fetch(`${API}?per_page=100&page=${p}${sort}${q}${bid}${vid}`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     items.value      = json.data ?? []
     total.value      = json.pagination?.total ?? 0
     totalPages.value = json.pagination?.total_pages ?? 1
@@ -215,7 +217,7 @@ function deleteRow(row) {
   if (index === -1) return
 
   deleteWithUndo({
-    message: `Модель «${row.name}» видалено`,
+    message: t('carModels.deletedMessage', { name: row.name }),
     remove: () => {
       items.value.splice(index, 1)
       justCreatedIds.value.delete(row.id)
@@ -228,7 +230,7 @@ function deleteRow(row) {
     commit: async () => {
       const res  = await fetch(`${API}/${row.id}`, { method: 'DELETE', headers: authHeaders() })
       const json = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(json.message ?? 'Помилка видалення')
+      if (!res.ok) throw new Error(json.message ?? t('list.deleteError'))
     },
     onCommitError: () => load(page.value),
   })

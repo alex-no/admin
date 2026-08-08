@@ -11,13 +11,13 @@
     :max-height="700"
   >
     <template #title>
-      <h6 class="mb-0">{{ modalMode === 'create' ? 'Новий тип ТЗ' : 'Редагування типу ТЗ' }}</h6>
+      <h6 class="mb-0">{{ modalMode === 'create' ? t('vehicleTypes.newTitle') : t('vehicleTypes.editTitle') }}</h6>
     </template>
 
     <div class="row g-3">
       <template v-for="mf in config.modal" :key="mf.key">
         <div :class="`col-sm-${mf.col}`">
-          <label class="form-label small mb-1">{{ config.fields[mf.key].label }}</label>
+          <label class="form-label small mb-1">{{ fieldLabel(mf.key) }}</label>
 
           <template v-if="mf.key === 'id'">
             <div v-if="modalMode === 'edit'" class="readonly-field">{{ modalData.id }}</div>
@@ -47,10 +47,10 @@
     <template #footer>
       <div></div>
       <div class="d-flex gap-2">
-        <button class="btn btn-sm btn-secondary" @click="close">Скасувати</button>
+        <button class="btn btn-sm btn-secondary" @click="close">{{ t('common.cancel') }}</button>
         <button class="btn btn-sm btn-primary" :disabled="saving" @click="save">
           <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-          Зберегти
+          {{ t('common.save') }}
         </button>
       </div>
     </template>
@@ -59,11 +59,27 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import BaseModal from './BaseModal.vue'
 import config from '../pages/catalog/vehicle-types.config.json'
 
+const { t } = useI18n({ useScope: 'global' })
 const { can, authHeaders } = useAuth()
+
+const FIELD_LABEL_KEYS = {
+  id: 'table.id',
+  slug: 'roles.colSlug',
+  name_uk: 'cityTmpReview.nameUaLabel',
+  name_en: 'cityTmpReview.nameEnBracketLabel',
+  name_ru: 'cityTmpReview.nameRuBracketLabel',
+  created_at: 'stoList.createdLabel',
+  updated_at: 'stoList.updatedLabel',
+}
+function fieldLabel(key) {
+  const k = FIELD_LABEL_KEYS[key]
+  return k ? t(k) : config.fields[key]?.label ?? key
+}
 
 // Props
 const props = defineProps({
@@ -122,7 +138,7 @@ async function patch(id, fields) {
     body: JSON.stringify(fields),
   })
   const json = await res.json()
-  if (!res.ok) throw new Error(json.message ?? 'Помилка збереження')
+  if (!res.ok) throw new Error(json.message ?? t('list.saveError'))
   return json.data
 }
 
@@ -142,7 +158,7 @@ async function save() {
         body: JSON.stringify(fields),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.message ?? 'Помилка')
+      if (!res.ok) throw new Error(json.message ?? t('common.error'))
       window.dispatchEvent(new CustomEvent('vehicle-type-created', { detail: json.data }))
     } else {
       const updated = await patch(modalData.value.id, fields)

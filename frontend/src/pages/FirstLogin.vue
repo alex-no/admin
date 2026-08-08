@@ -12,11 +12,11 @@
 
         <form v-if="!redirecting" @submit.prevent="doSetup">
           <div class="alert alert-info py-2 small mb-3">
-            <strong>Перший вхід:</strong> Встановіть пароль для доступу до адмін-панелі
+            <strong>{{ t('auth.firstLoginTitle') }}:</strong> {{ t('authPages.firstLoginHintShort') }}
           </div>
 
           <div class="mb-3">
-            <label class="form-label small">Ваш логін (username)</label>
+            <label class="form-label small">{{ t('authPages.usernameLabel') }}</label>
             <input
               v-model="username"
               type="text"
@@ -32,7 +32,7 @@
           </div>
 
           <div class="mb-3">
-            <label class="form-label small">Новий пароль</label>
+            <label class="form-label small">{{ t('authPages.newPasswordLabelShort') }}</label>
             <input
               v-model="password"
               type="password"
@@ -46,12 +46,12 @@
               {{ errors.password[0] }}
             </div>
             <div class="form-text small">
-              Мінімум 8 символів, великі/малі літери, цифра, спецсимвол (@$!%*?&#_-)
+              {{ t('authPages.passwordRequirementsHintShort') }}
             </div>
           </div>
 
           <div class="mb-4">
-            <label class="form-label small">Підтвердження пароля</label>
+            <label class="form-label small">{{ t('authPages.confirmPasswordLabelShort') }}</label>
             <input
               v-model="passwordConfirm"
               type="password"
@@ -68,12 +68,12 @@
 
           <button type="submit" class="btn btn-primary w-100" :disabled="loading">
             <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
-            Встановити пароль
+            {{ t('auth.setPassword') }}
           </button>
 
           <div class="text-center mt-3">
             <router-link to="/login" class="small text-muted">
-              Вже є пароль? Увійти
+              {{ t('authPages.alreadyHavePasswordLink') }}
             </router-link>
           </div>
         </form>
@@ -84,8 +84,10 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
+const { t } = useI18n({ useScope: 'global' })
 const router = useRouter()
 
 const username = ref('')
@@ -117,20 +119,20 @@ async function doSetup() {
     const json = await response.json()
 
     if (json.status === 'success') {
-      successMessage.value = 'Пароль встановлено! Перенаправлення на сторінку входу...'
+      successMessage.value = t('authPages.setPasswordSuccessRedirecting')
       redirecting.value = true
 
       setTimeout(() => {
         router.push({
           path: '/login',
-          query: { message: 'Пароль встановлено. Увійдіть з новим паролем.' }
+          query: { message: t('authPages.redirectWithNewPasswordMessage') }
         })
       }, 2000)
     } else if (json.errors) {
       errors.value = json.errors
     } else {
       // Если пароль уже установлен или доступ не выдан
-      error.value = json.message || 'Помилка встановлення пароля'
+      error.value = json.message || t('authPages.setPasswordError')
 
       if (json.message?.includes('already set') || json.message?.includes('вже встановлено')) {
         redirecting.value = true
@@ -140,7 +142,7 @@ async function doSetup() {
       }
     }
   } catch (e) {
-    error.value = 'Помилка з\'єднання з сервером'
+    error.value = t('roles.connectionError')
   } finally {
     loading.value = false
   }

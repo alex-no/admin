@@ -8,7 +8,7 @@
     <div>
       <!-- Header + filters -->
       <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
-        <h5 class="mb-0">Таймзони</h5>
+        <h5 class="mb-0">{{ t('timezones.title') }}</h5>
         <div class="d-flex gap-2 flex-wrap">
           <select
             v-model="filterOffset"
@@ -16,7 +16,7 @@
             style="width:auto"
             @change="load(1)"
           >
-            <option value="">Всі UTC зміщення</option>
+            <option value="">{{ t('timezones.allOffsets') }}</option>
             <option
               v-for="o in offsetOptions"
               :key="o.utc_offset"
@@ -28,7 +28,7 @@
             type="text"
             class="form-control form-select-sm"
             style="width:220px"
-            placeholder="Пошук за назвою..."
+            :placeholder="t('filter.searchPlaceholder')"
             @input="debounceLoad"
           />
         </div>
@@ -49,12 +49,12 @@
                     ID <SortIcon col="id" :sortKey :sortDir />
                   </th>
                   <th class="th-sortable" @click="toggleSort('name')">
-                    Назва <SortIcon col="name" :sortKey :sortDir />
+                    {{ t('table.name') }} <SortIcon col="name" :sortKey :sortDir />
                   </th>
                   <th class="th-sortable" style="width:130px" @click="toggleSort('utc_offset')">
-                    UTC зміщення <SortIcon col="utc_offset" :sortKey :sortDir />
+                    {{ t('timezones.utcOffsetCol') }} <SortIcon col="utc_offset" :sortKey :sortDir />
                   </th>
-                  <th style="width:120px">Прив'язки</th>
+                  <th style="width:120px">{{ t('timezones.assignmentsCol') }}</th>
                   <th style="width:40px"></th>
                 </tr>
               </thead>
@@ -130,7 +130,7 @@
                   </td>
                 </tr>
                 <tr v-if="!items.length">
-                  <td colspan="5" class="text-center text-muted py-4">Таймзон не знайдено</td>
+                  <td colspan="5" class="text-center text-muted py-4">{{ t('timezones.notFound') }}</td>
                 </tr>
               </tbody>
             </table>
@@ -138,7 +138,7 @@
         </div>
 
         <div class="d-flex justify-content-between align-items-center mt-3">
-          <span class="text-muted small">Всього: {{ total }}</span>
+          <span class="text-muted small">{{ t('analytics.totalCount', { value: total }) }}</span>
           <nav v-if="totalPages > 1">
             <ul class="pagination pagination-sm mb-0">
               <li class="page-item" :class="{ disabled: page === 1 }">
@@ -160,10 +160,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ListPageWrapper from '@/components/ListPageWrapper.vue'
 import TimezoneAssignmentsModal from '@/components/TimezoneAssignmentsModal.vue'
 import { useAuth } from '@/composables/useAuth'
 
+const { t } = useI18n({ useScope: 'global' })
 const { can, authHeaders } = useAuth()
 
 const canEdit = computed(() => can('geography.timezones.edit') || can('*'))
@@ -228,7 +230,7 @@ async function load(p = 1) {
     if (filterOffset.value)   params.set('utc_offset', filterOffset.value)
     const res  = await fetch(`/api/admin/geography/timezones?${params}`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     items.value      = json.data ?? []
     total.value      = json.pagination?.total ?? 0
     totalPages.value = json.pagination?.total_pages ?? 1
@@ -283,7 +285,7 @@ async function commitInline(row) {
       body:    JSON.stringify({ [field]: newVal }),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     row[field] = json.data[field]
   } catch (e) {
     inlineSaveError.value = e.message

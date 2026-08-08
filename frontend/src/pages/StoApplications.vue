@@ -1,13 +1,13 @@
 <template>
   <BaseLayout>
     <div class="d-flex align-items-center justify-content-between mb-3 gap-2 flex-wrap">
-      <h5 class="mb-0">Заявки на управління СТО</h5>
+      <h5 class="mb-0">{{ t('stoApplications.title') }}</h5>
       <div class="d-flex gap-2">
         <select v-model="filterStatus" class="form-select form-select-sm" style="width:auto" @change="load(1)">
-          <option value="pending">Очікують</option>
-          <option value="approved">Схвалені</option>
-          <option value="rejected">Відхилені</option>
-          <option value="">Всі</option>
+          <option value="pending">{{ t('users.pending') }}</option>
+          <option value="approved">{{ t('stoApplications.filterApproved') }}</option>
+          <option value="rejected">{{ t('stoApplications.filterRejected') }}</option>
+          <option value="">{{ t('common.all') }}</option>
         </select>
       </div>
     </div>
@@ -23,11 +23,11 @@
             <thead>
               <tr>
                 <th style="width:50px" class="text-muted text-end">ID</th>
-                <th>СТО</th>
-                <th>Користувач</th>
-                <th>Повідомлення</th>
-                <th style="width:110px">Подано</th>
-                <th style="width:130px">Статус</th>
+                <th>{{ t('stoApplications.colSto') }}</th>
+                <th>{{ t('analytics.user') }}</th>
+                <th>{{ t('stoApplications.colMessage') }}</th>
+                <th style="width:110px">{{ t('stoApplications.colSubmitted') }}</th>
+                <th style="width:130px">{{ t('table.status') }}</th>
                 <th style="width:80px"></th>
               </tr>
             </thead>
@@ -62,7 +62,7 @@
                 </tr>
               </template>
               <tr v-if="!items.length">
-                <td colspan="7" class="text-center text-muted py-4">Заявок не знайдено</td>
+                <td colspan="7" class="text-center text-muted py-4">{{ t('stoApplications.notFound') }}</td>
               </tr>
             </tbody>
           </table>
@@ -70,7 +70,7 @@
       </div>
 
       <div class="d-flex justify-content-between align-items-center mt-3">
-        <span class="text-muted small">Всього: {{ total }}</span>
+        <span class="text-muted small">{{ t('analytics.totalCount', { value: total }) }}</span>
         <Pagination :current-page="page" :total-pages="totalPages" @change="load" />
       </div>
     </template>
@@ -80,36 +80,36 @@
       <div v-if="reviewOpen" class="modal-backdrop-simple" @click.self="closeReview">
         <div class="card shadow" style="max-width:480px;margin:12vh auto">
           <div class="card-header d-flex justify-content-between align-items-center py-2 px-4">
-            <h6 class="mb-0">Розгляд заявки #{{ reviewing?.id }}</h6>
+            <h6 class="mb-0">{{ t('stoApplications.reviewModalTitle', { id: reviewing?.id }) }}</h6>
             <button class="btn btn-sm btn-outline-secondary" @click="closeReview">✕</button>
           </div>
           <div class="card-body px-4 py-3">
             <div class="mb-2 small">
-              <span class="text-muted">СТО:</span> <strong>{{ reviewing?.sto_name }}</strong>
+              <span class="text-muted">{{ t('stoApplications.stoLabel') }}</span> <strong>{{ reviewing?.sto_name }}</strong>
             </div>
             <div class="mb-3 small">
-              <span class="text-muted">Користувач:</span> {{ reviewing?.user_name || reviewing?.username }}
+              <span class="text-muted">{{ t('stoApplications.userLabel') }}</span> {{ reviewing?.user_name || reviewing?.username }}
               <span class="text-muted ms-1">({{ reviewing?.user_email }})</span>
             </div>
             <div v-if="reviewing?.user_note" class="mb-3 small bg-light p-2 rounded">
-              <div class="text-muted mb-1">Повідомлення від користувача:</div>
+              <div class="text-muted mb-1">{{ t('stoApplications.userMessageLabel') }}</div>
               {{ reviewing.user_note }}
             </div>
             <div class="mb-3">
-              <label class="form-label small mb-1">Примітка адміністратора (необов'язково)</label>
+              <label class="form-label small mb-1">{{ t('stoApplications.adminNoteLabel') }}</label>
               <textarea v-model="adminNote" class="form-control form-control-sm" rows="2"></textarea>
             </div>
             <div v-if="reviewError" class="alert alert-danger py-2 small mb-2">{{ reviewError }}</div>
           </div>
           <div class="card-footer d-flex gap-2 justify-content-end py-2 px-4">
-            <button class="btn btn-sm btn-outline-secondary" @click="closeReview">Скасувати</button>
+            <button class="btn btn-sm btn-outline-secondary" @click="closeReview">{{ t('common.cancel') }}</button>
             <button class="btn btn-sm btn-danger" :disabled="saving" @click="doReview('rejected')">
               <span v-if="saving === 'rejected'" class="spinner-border spinner-border-sm me-1"></span>
-              Відхилити
+              {{ t('stoImport.rejectButton') }}
             </button>
             <button class="btn btn-sm btn-success" :disabled="saving" @click="doReview('approved')">
               <span v-if="saving === 'approved'" class="spinner-border spinner-border-sm me-1"></span>
-              Схвалити
+              {{ t('reviews.approveTooltip') }}
             </button>
           </div>
         </div>
@@ -120,20 +120,22 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import BaseLayout from '@/layouts/BaseLayout.vue'
 import Pagination from '@/components/Pagination.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useUrlFilters } from '@/composables/useUrlFilters'
 import { formatDateShort } from '@/utils/date'
 
+const { t } = useI18n({ useScope: 'global' })
 const { authHeaders } = useAuth()
 
-const STO_TYPES = {
-  individual: 'Індивідуальне', company: 'Компанія',
-  network: 'Мережа', specialized: 'Спеціалізоване', mobile: 'Мобільне',
-}
-function typeLabel(v) { return STO_TYPES[v] ?? v ?? '—' }
-function statusLabel(v) { return { pending: 'Очікує', approved: 'Схвалено', rejected: 'Відхилено' }[v] ?? v }
+const STO_TYPES = computed(() => ({
+  individual: t('stoList.typeIndividual'), company: t('stoList.typeCompany'),
+  network: t('stoList.typeNetwork'), specialized: t('stoList.typeSpecialized'), mobile: t('stoList.typeMobile'),
+}))
+function typeLabel(v) { return STO_TYPES.value[v] ?? v ?? '—' }
+function statusLabel(v) { return { pending: t('stoList.bookingPending'), approved: t('stoApplications.statusApprovedLabel'), rejected: t('stoList.reviewRejected') }[v] ?? v }
 function statusBadge(v) { return { pending: 'bg-warning text-dark', approved: 'bg-success', rejected: 'bg-danger' }[v] ?? 'bg-secondary' }
 
 const items       = ref([])
@@ -183,7 +185,7 @@ async function load(p = 1) {
     const params = new URLSearchParams({ page: p, per_page: 50, status: filterStatus.value })
     const res  = await fetch(`/api/admin/sto-applications?${params}`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     items.value      = json.data ?? []
     total.value      = json.pagination?.total ?? 0
     totalPages.value = json.pagination?.total_pages ?? 1
@@ -224,7 +226,7 @@ async function doReview(status) {
       body:    JSON.stringify({ status, admin_note: adminNote.value }),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     reviewing.value.status      = json.data.status
     reviewing.value.admin_note  = adminNote.value
     reviewing.value.reviewed_at = json.data.reviewed_at

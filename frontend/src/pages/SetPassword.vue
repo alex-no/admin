@@ -2,17 +2,17 @@
   <div class="min-vh-100 d-flex align-items-center justify-content-center bg-dark">
     <div class="card shadow" style="width: 480px; max-width: 90vw;">
       <div class="card-header px-4 py-3">
-        <h5 class="mb-0">Встановити пароль адміністратора</h5>
+        <h5 class="mb-0">{{ t('authPages.setPasswordTitle') }}</h5>
       </div>
 
       <form @submit.prevent="submitPassword">
         <div class="card-body px-4 py-3">
           <div class="alert alert-info mb-3">
-            <strong>Перший вхід:</strong> Встановіть окремий пароль для доступу до адмін-панелі.
+            <strong>{{ t('auth.firstLoginTitle') }}:</strong> {{ t('authPages.firstLoginHint') }}
           </div>
 
           <div class="mb-3">
-            <label class="form-label">Новий пароль *</label>
+            <label class="form-label">{{ t('authPages.newPasswordLabel') }}</label>
             <input
               v-model="form.password"
               type="password"
@@ -26,12 +26,12 @@
               {{ errors.password[0] }}
             </div>
             <div class="form-text small">
-              Вимоги: мінімум 8 символів, великі та малі літери, цифра, спецсимвол (@$!%*?&#_-)
+              {{ t('authPages.passwordRequirementsHint') }}
             </div>
           </div>
 
           <div class="mb-3">
-            <label class="form-label">Підтвердження пароля *</label>
+            <label class="form-label">{{ t('authPages.confirmPasswordLabel') }}</label>
             <input
               v-model="form.password_confirm"
               type="password"
@@ -56,7 +56,7 @@
               ></div>
             </div>
             <small class="text-muted">
-              Складність: {{ strengthLabel }}
+              {{ t('authPages.strengthPrefix') }} {{ strengthLabel }}
             </small>
           </div>
 
@@ -68,7 +68,7 @@
         <div class="card-footer px-4 py-3 text-end">
           <button type="submit" class="btn btn-primary btn-sm" :disabled="loading">
             <span v-if="loading" class="spinner-border spinner-border-sm me-1"></span>
-            Встановити пароль
+            {{ t('auth.setPassword') }}
           </button>
         </div>
       </form>
@@ -78,8 +78,10 @@
 
 <script setup>
 import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
+const { t } = useI18n({ useScope: 'global' });
 const router = useRouter();
 
 const form = ref({
@@ -112,9 +114,9 @@ const strengthColor = computed(() => {
 });
 
 const strengthLabel = computed(() => {
-  if (passwordStrength.value < 40) return 'Слабкий';
-  if (passwordStrength.value < 70) return 'Середній';
-  return 'Надійний';
+  if (passwordStrength.value < 40) return t('authPages.strengthWeak');
+  if (passwordStrength.value < 70) return t('authPages.strengthMedium');
+  return t('authPages.strengthStrong');
 });
 
 async function submitPassword() {
@@ -135,17 +137,17 @@ async function submitPassword() {
       // Redirect to login to re-authenticate with new password
       await router.push({
         path: '/login',
-        query: { message: 'Пароль встановлено. Увійдіть знову.' }
+        query: { message: t('authPages.redirectAfterLoginMessage') }
       });
     } else {
       if (json.errors) {
         errors.value = json.errors;
       } else {
-        errorMessage.value = json.message || 'Помилка встановлення пароля';
+        errorMessage.value = json.message || t('authPages.setPasswordError');
       }
     }
   } catch (error) {
-    errorMessage.value = 'Помилка з\'єднання з сервером';
+    errorMessage.value = t('roles.connectionError');
   } finally {
     loading.value = false;
   }

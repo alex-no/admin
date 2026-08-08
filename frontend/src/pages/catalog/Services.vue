@@ -4,7 +4,7 @@
     <div :style="contentMargin" class="page-content-wrapper">
       <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
         <div class="d-flex align-items-center gap-2">
-          <h5 class="mb-0">Послуги</h5>
+          <h5 class="mb-0">{{ t('services.title') }}</h5>
           <button v-if="canCreate" class="btn btn-sm btn-success" @click="openCreateModal">
             <i class="bi bi-plus-lg"></i>
           </button>
@@ -15,11 +15,11 @@
             type="text"
             class="form-control form-control-sm"
             style="width:200px"
-            placeholder="Пошук..."
+            :placeholder="t('feedback.searchPlaceholder')"
             @input="debounceLoad"
           />
           <select v-model="filterGroup" class="form-select form-select-sm" style="width:auto" @change="load(1)">
-            <option :value="null">Всі групи</option>
+            <option :value="null">{{ t('services.allGroups') }}</option>
             <option v-for="g in groups" :key="g.id" :value="g.id">{{ g.name_uk }}</option>
           </select>
         </div>
@@ -36,8 +36,8 @@
             <table class="table table-hover align-middle mb-0 small">
               <thead>
                 <tr>
-                  <th style="width:50px" class="text-end">ID</th>
-                  <th>Група</th>
+                  <th style="width:50px" class="text-end">{{ t('table.id') }}</th>
+                  <th>{{ t('services.colGroup') }}</th>
                   <th class="th-sortable" @click="toggleSort('slug')">
                     Slug
                     <i v-if="sortKey==='slug'&&sortDir==='asc'"       class="bi bi-chevron-up ms-1"></i>
@@ -45,19 +45,19 @@
                     <i v-else class="bi bi-chevron-expand ms-1 opacity-25"></i>
                   </th>
                   <th class="th-sortable" @click="toggleSort('name_uk')">
-                    Назва [UA]
+                    {{ t('cityTmpReview.nameUaLabel') }}
                     <i v-if="sortKey==='name_uk'&&sortDir==='asc'"       class="bi bi-chevron-up ms-1"></i>
                     <i v-else-if="sortKey==='name_uk'&&sortDir==='desc'" class="bi bi-chevron-down ms-1"></i>
                     <i v-else class="bi bi-chevron-expand ms-1 opacity-25"></i>
                   </th>
                   <th class="th-sortable" @click="toggleSort('name_en')">
-                    Назва [EN]
+                    {{ t('cityTmpReview.nameEnBracketLabel') }}
                     <i v-if="sortKey==='name_en'&&sortDir==='asc'"       class="bi bi-chevron-up ms-1"></i>
                     <i v-else-if="sortKey==='name_en'&&sortDir==='desc'" class="bi bi-chevron-down ms-1"></i>
                     <i v-else class="bi bi-chevron-expand ms-1 opacity-25"></i>
                   </th>
                   <th class="th-sortable" @click="toggleSort('name_ru')">
-                    Назва [RU]
+                    {{ t('cityTmpReview.nameRuBracketLabel') }}
                     <i v-if="sortKey==='name_ru'&&sortDir==='asc'"       class="bi bi-chevron-up ms-1"></i>
                     <i v-else-if="sortKey==='name_ru'&&sortDir==='desc'" class="bi bi-chevron-down ms-1"></i>
                     <i v-else class="bi bi-chevron-expand ms-1 opacity-25"></i>
@@ -146,13 +146,13 @@
                     <button v-if="canEdit || justCreatedIds.has(row.id)" class="btn btn-sm btn-outline-secondary me-1" @click="openModal(row)">
                       <i class="bi bi-pencil"></i>
                     </button>
-                    <button v-if="canDelete" class="btn btn-sm btn-outline-danger" title="Видалити" @click="deleteRow(row)">
+                    <button v-if="canDelete" class="btn btn-sm btn-outline-danger" :title="t('common.delete')" @click="deleteRow(row)">
                       <i class="bi bi-trash"></i>
                     </button>
                   </td>
                 </tr>
                 <tr v-if="!items.length">
-                  <td colspan="7" class="text-center text-muted py-4">Немає даних</td>
+                  <td colspan="7" class="text-center text-muted py-4">{{ t('common.noData') }}</td>
                 </tr>
               </tbody>
             </table>
@@ -160,7 +160,7 @@
         </div>
 
         <div class="d-flex justify-content-between align-items-center mt-3">
-          <span class="text-muted small">Всього: {{ total }}</span>
+          <span class="text-muted small">{{ t('analytics.totalCount', { value: total }) }}</span>
           <Pagination :current-page="page" :total-pages="totalPages" @change="load" />
         </div>
       </div>
@@ -170,6 +170,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import BaseLayout from '@/layouts/BaseLayout.vue'
 import ServiceModal from '@/components/ServiceModal.vue'
 import Pagination from '@/components/Pagination.vue'
@@ -179,6 +180,7 @@ import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import { usePageLayout } from '@/composables/usePageLayout'
 import { useUrlFilters } from '@/composables/useUrlFilters'
 
+const { t } = useI18n({ useScope: 'global' })
 const { can, authHeaders } = useAuth()
 const { notify } = useNotify()
 const { deleteWithUndo } = useUndoableDelete()
@@ -265,7 +267,7 @@ async function load(p = 1) {
     const gid  = filterGroup.value !== null ? `&group_id=${filterGroup.value}` : ''
     const res  = await fetch(`${API}?per_page=200&page=${p}${sort}${q}${gid}`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     items.value      = json.data ?? []
     total.value      = json.pagination?.total ?? 0
     totalPages.value = json.pagination?.total_pages ?? 1
@@ -290,7 +292,7 @@ async function saveInline(row, field) {
       body: JSON.stringify({ [field]: newVal }),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     const idx = items.value.findIndex(r => r.id === row.id)
     if (idx !== -1) Object.assign(items.value[idx], json.data)
   } catch (e) { notify(e.message, { type: 'error' }) }
@@ -303,7 +305,7 @@ function deleteRow(row) {
   if (index === -1) return
 
   deleteWithUndo({
-    message: `Послугу «${row.name_uk || row.slug}» видалено`,
+    message: t('services.deletedMessage', { name: row.name_uk || row.slug }),
     remove: () => {
       items.value.splice(index, 1)
       justCreatedIds.value.delete(row.id)
@@ -316,7 +318,7 @@ function deleteRow(row) {
     commit: async () => {
       const res  = await fetch(`${API}/${row.id}`, { method: 'DELETE', headers: authHeaders() })
       const json = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(json.message ?? 'Помилка видалення')
+      if (!res.ok) throw new Error(json.message ?? t('list.deleteError'))
     },
     onCommitError: () => load(page.value),
   })

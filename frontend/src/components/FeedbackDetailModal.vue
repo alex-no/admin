@@ -11,7 +11,7 @@
     :max-height="900"
   >
     <template #title>
-      <h6 class="mb-0">Деталі #{{ feedbackId }}</h6>
+      <h6 class="mb-0">{{ t('feedbackDetailModal.title', { id: feedbackId }) }}</h6>
     </template>
 
     <div v-if="loading" class="text-center py-4">
@@ -21,50 +21,50 @@
     <div v-else-if="item">
       <div class="row g-3">
         <div class="col-md-6">
-          <label class="form-label small fw-semibold text-muted">Тип</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('filter.type') }}</label>
           <div><span :class="typeBadge(item.type)">{{ typeLabel(item.type) }}</span></div>
         </div>
         <div class="col-md-6">
-          <label class="form-label small fw-semibold text-muted">ID</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('table.id') }}</label>
           <div class="text-muted">#{{ item.id }}</div>
         </div>
         <div class="col-12">
-          <label class="form-label small fw-semibold text-muted">Тема</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('feedback.colSubject') }}</label>
           <div class="fw-semibold">{{ item.subject }}</div>
         </div>
         <div class="col-12">
-          <label class="form-label small fw-semibold text-muted">Повідомлення</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('feedbackDetailModal.messageLabel') }}</label>
           <div class="border rounded p-3 bg-light" style="white-space: pre-wrap">{{ item.message }}</div>
         </div>
 
         <div class="col-md-6">
-          <label class="form-label small fw-semibold text-muted">Статус</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('filter.status') }}</label>
           <select v-model="formData.status" class="form-select form-select-sm">
-            <option value="new">Новий</option>
-            <option value="in_progress">В роботі</option>
-            <option value="resolved">Вирішено</option>
-            <option value="rejected">Відхилено</option>
+            <option value="new">{{ t('feedback.statusNewSingular') }}</option>
+            <option value="in_progress">{{ t('feedback.statusInProgress') }}</option>
+            <option value="resolved">{{ t('feedback.statusResolvedSingular') }}</option>
+            <option value="rejected">{{ t('stoList.reviewRejected') }}</option>
           </select>
         </div>
         <div class="col-md-6">
-          <label class="form-label small fw-semibold text-muted">Пріоритет</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('feedback.colPriority') }}</label>
           <select v-model="formData.priority" class="form-select form-select-sm">
-            <option value="low">Низький</option>
-            <option value="normal">Звичайний</option>
-            <option value="high">Високий</option>
-            <option value="urgent">Термін</option>
+            <option value="low">{{ t('feedback.priorityLow') }}</option>
+            <option value="normal">{{ t('feedback.priorityNormal') }}</option>
+            <option value="high">{{ t('feedback.priorityHigh') }}</option>
+            <option value="urgent">{{ t('feedback.priorityUrgentAbbr') }}</option>
           </select>
         </div>
 
         <div class="col-12">
-          <label class="form-label small fw-semibold text-muted">Відповідь адміністратора</label>
-          <textarea v-model="formData.response" class="form-control form-control-sm" rows="4" placeholder="Введіть відповідь..."></textarea>
+          <label class="form-label small fw-semibold text-muted">{{ t('feedbackDetailModal.adminResponseLabel') }}</label>
+          <textarea v-model="formData.response" class="form-control form-control-sm" rows="4" :placeholder="t('feedbackDetailModal.responsePlaceholder')"></textarea>
         </div>
 
         <hr class="my-2" />
 
         <div class="col-md-6">
-          <label class="form-label small fw-semibold text-muted">Ім'я</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('users.nameLabel') }}</label>
           <div>{{ item.name || '—' }}</div>
         </div>
         <div class="col-md-6">
@@ -72,46 +72,46 @@
           <div>{{ item.email || '—' }}</div>
         </div>
         <div class="col-md-6">
-          <label class="form-label small fw-semibold text-muted">Телефон</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('stoList.colPhone') }}</label>
           <div>{{ item.phone || '—' }}</div>
         </div>
         <div class="col-md-6">
-          <label class="form-label small fw-semibold text-muted">IP адреса</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('feedbackDetailModal.ipAddressLabel') }}</label>
           <div class="text-muted small">{{ item.ip_address || '—' }}</div>
         </div>
 
         <div v-if="item.related_entity_type" class="col-12">
-          <label class="form-label small fw-semibold text-muted">Пов'язана сутність</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('feedbackDetailModal.relatedEntityLabel') }}</label>
           <div class="text-muted small">
             {{ item.related_entity_type }} #{{ item.related_entity_id }}
           </div>
         </div>
 
         <div class="col-md-6">
-          <label class="form-label small fw-semibold text-muted">Дата створення</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('reviewDetailModal.createdAtLabel') }}</label>
           <div class="text-muted small">{{ formatDate(item.created_at) }}</div>
         </div>
         <div class="col-md-6">
-          <label class="form-label small fw-semibold text-muted">Дата оновлення</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('reviewDetailModal.updatedAtLabel') }}</label>
           <div class="text-muted small">{{ formatDate(item.updated_at) }}</div>
         </div>
         <div v-if="item.resolved_at" class="col-md-6">
-          <label class="form-label small fw-semibold text-muted">Дата вирішення</label>
+          <label class="form-label small fw-semibold text-muted">{{ t('feedbackDetailModal.resolvedAtLabel') }}</label>
           <div class="text-muted small">{{ formatDate(item.resolved_at) }}</div>
         </div>
 
         <div v-if="saveError" class="alert alert-danger small mb-0 mt-3">{{ saveError }}</div>
-        <div v-if="saveSuccess" class="alert alert-success small mb-0 mt-3">Збережено успішно!</div>
+        <div v-if="saveSuccess" class="alert alert-success small mb-0 mt-3">{{ t('feedbackDetailModal.savedSuccessfully') }}</div>
       </div>
     </div>
 
     <template #footer>
       <div></div>
       <div class="d-flex gap-2">
-        <button class="btn btn-sm btn-secondary" @click="close">Скасувати</button>
+        <button class="btn btn-sm btn-secondary" @click="close">{{ t('common.cancel') }}</button>
         <button class="btn btn-sm btn-primary" @click="save" :disabled="saving">
           <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-          Зберегти
+          {{ t('common.save') }}
         </button>
       </div>
     </template>
@@ -120,8 +120,11 @@
 
 <script setup>
 import { ref, reactive, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import BaseModal from './BaseModal.vue'
 import { apiGet, apiPatch } from '../utils/api'
+
+const { t } = useI18n({ useScope: 'global' })
 
 // Component state
 const visible = ref(false)
@@ -161,7 +164,7 @@ async function loadDetail() {
       formData.priority = res.data.priority
       formData.response = res.data.response || ''
     } else {
-      error.value = res.message || 'Помилка завантаження'
+      error.value = res.message || t('list.loadError')
     }
   } catch (err) {
     error.value = err.message
@@ -184,7 +187,7 @@ async function save() {
         close()
       }, 1000)
     } else {
-      saveError.value = res.message || 'Помилка збереження'
+      saveError.value = res.message || t('list.saveError')
     }
   } catch (err) {
     saveError.value = err.message
@@ -218,10 +221,10 @@ function formatDate(dt) {
 
 function typeLabel(type) {
   const labels = {
-    complaint: 'Скарга',
-    suggestion: 'Пропозиція',
-    question: 'Питання',
-    other: 'Інше',
+    complaint: t('feedback.typeComplaintSingular'),
+    suggestion: t('feedback.typeSuggestionSingular'),
+    question: t('feedback.typeQuestion'),
+    other: t('feedback.typeOther'),
   }
   return labels[type] || type
 }

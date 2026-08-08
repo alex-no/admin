@@ -4,15 +4,15 @@
     <div>
     <div class="d-flex justify-content-between align-items-center mb-3">
       <div class="d-flex align-items-center gap-2">
-        <h5 class="mb-0">Країни</h5>
+        <h5 class="mb-0">{{ t('countries.title') }}</h5>
         <button v-if="canCreate" class="btn btn-sm btn-success" @click="openCreateModal">
-          <i class="bi bi-plus-lg"></i> Додати
+          <i class="bi bi-plus-lg"></i> {{ t('common.add') }}
         </button>
       </div>
       <select v-model="statusFilter" class="form-select form-select-sm" style="width:auto" @change="load(1)">
-        <option value="all">Всі</option>
-        <option value="active">Активні</option>
-        <option value="inactive">Неактивні</option>
+        <option value="all">{{ t('common.all') }}</option>
+        <option value="active">{{ t('filter.active') }}</option>
+        <option value="inactive">{{ t('filter.inactive') }}</option>
       </select>
     </div>
 
@@ -38,7 +38,7 @@
                   ]"
                   @click="col.sortable ? toggleSort(col.key) : null"
                 >
-                  {{ cfg.fields[col.key].label }}
+                  {{ fieldLabel(col.key) }}
                   <template v-if="col.sortable">
                     <i v-if="sortKey === col.key && sortDir === 'asc'"  class="bi bi-chevron-up   ms-1"></i>
                     <i v-else-if="sortKey === col.key && sortDir === 'desc'" class="bi bi-chevron-down ms-1"></i>
@@ -106,17 +106,17 @@
                     @click="toggleStatus(c)"
                   >
                     <span v-if="togglingId === c.id" class="spinner-border spinner-border-sm"></span>
-                    <span v-else>{{ c.is_active ? 'Активна' : 'Неактивна' }}</span>
+                    <span v-else>{{ c.is_active ? t('geography.activeFeminine') : t('geography.inactiveFeminine') }}</span>
                   </button>
                   <span v-else class="badge" :class="c.is_active ? 'bg-success' : 'bg-danger'">
-                    {{ c.is_active ? 'Активна' : 'Неактивна' }}
+                    {{ c.is_active ? t('geography.activeFeminine') : t('geography.inactiveFeminine') }}
                   </span>
                 </td>
                 <td class="text-nowrap">
                   <button
                     v-if="canOpenModal || justCreatedIds.has(c.id)"
                     class="btn btn-sm btn-outline-secondary me-1"
-                    title="Редагувати"
+                    :title="t('common.edit')"
                     @click="openModal(c)"
                   >
                     <i class="bi bi-pencil"></i>
@@ -124,7 +124,7 @@
                   <button
                     v-if="canDelete"
                     class="btn btn-sm btn-outline-danger"
-                    title="Видалити"
+                    :title="t('common.delete')"
                     @click="deleteRow(c)"
                   >
                     <i class="bi bi-trash"></i>
@@ -132,7 +132,7 @@
                 </td>
               </tr>
               <tr v-if="!countries.length">
-                <td colspan="8" class="text-center text-muted py-4">Немає даних</td>
+                <td colspan="8" class="text-center text-muted py-4">{{ t('common.noData') }}</td>
               </tr>
             </tbody>
           </table>
@@ -140,7 +140,7 @@
       </div>
 
       <div class="d-flex justify-content-between align-items-center mt-3">
-        <span class="text-muted small">Всього: {{ total }}</span>
+        <span class="text-muted small">{{ t('analytics.totalCount', { value: total }) }}</span>
         <nav v-if="totalPages > 1">
           <ul class="pagination pagination-sm mb-0">
             <li class="page-item" :class="{ disabled: page === 1 }">
@@ -162,6 +162,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ListPageWrapper from '@/components/ListPageWrapper.vue'
 import CountryModal from '@/components/CountryModal.vue'
 import { useAuth } from '@/composables/useAuth'
@@ -169,9 +170,26 @@ import { useNotify } from '@/composables/useNotify'
 import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import cfg from './countries.config.json'
 
+const { t } = useI18n({ useScope: 'global' })
 const { can, authHeaders } = useAuth()
 const { notify } = useNotify()
 const { deleteWithUndo } = useUndoableDelete()
+
+const FIELD_LABEL_KEYS = {
+  id: 'table.id',
+  order_num: 'geography.orderNumLabel',
+  name_uk: 'cityTmpReview.nameUaLabel',
+  name_en: 'cityTmpReview.nameEnBracketLabel',
+  name_ru: 'cityTmpReview.nameRuBracketLabel',
+  currency_code: 'geography.currencyLabel',
+  is_active: 'filter.status',
+  created_at: 'stoList.createdLabel',
+  updated_at: 'stoList.updatedLabel',
+}
+function fieldLabel(key) {
+  const k = FIELD_LABEL_KEYS[key]
+  return k ? t(k) : cfg.fields[key]?.label ?? key
+}
 
 // Permissions
 const canCreate     = computed(() => can(cfg.createPermission))
@@ -231,7 +249,7 @@ async function load(p = 1) {
       { headers: authHeaders() }
     )
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     countries.value = json.data ?? []
     total.value = json.pagination?.total ?? 0
     totalPages.value = json.pagination?.total_pages ?? 1
@@ -249,7 +267,7 @@ async function patch(id, fields) {
     body: JSON.stringify(fields),
   })
   const json = await res.json()
-  if (!res.ok) throw new Error(json.message ?? 'Помилка збереження')
+  if (!res.ok) throw new Error(json.message ?? t('list.saveError'))
   return json.data
 }
 
@@ -301,7 +319,7 @@ function deleteRow(c) {
   if (index === -1) return
 
   deleteWithUndo({
-    message: `Країну "${c.name_uk}" видалено`,
+    message: t('countries.deletedMessage', { name: c.name_uk }),
     remove: () => {
       countries.value.splice(index, 1)
       total.value--
@@ -317,7 +335,7 @@ function deleteRow(c) {
       })
       if (!res.ok) {
         const json = await res.json().catch(() => ({}))
-        throw new Error(json.message ?? 'Помилка видалення')
+        throw new Error(json.message ?? t('list.deleteError'))
       }
     },
     onCommitError: () => load(page.value),

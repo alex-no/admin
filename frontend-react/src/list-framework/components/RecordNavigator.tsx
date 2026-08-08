@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 interface RecordNavigatorProps {
   position: number | null
   totalCount: number
@@ -17,12 +19,13 @@ export default function RecordNavigator({
   onPrev,
   onNext,
 }: RecordNavigatorProps) {
+  const { t } = useTranslation()
   return (
     <div className="d-inline-flex align-items-center" style={{ gap: '0.125rem', marginRight: '2rem' }}>
       <button
         className="btn btn-sm btn-outline-secondary py-0 px-2"
         disabled={!hasPrev || busy}
-        title="Попередній запис"
+        title={t('common.prevRecord')}
         onClick={onPrev}
       >
         ‹
@@ -43,7 +46,7 @@ export default function RecordNavigator({
       <button
         className="btn btn-sm btn-outline-secondary py-0 px-2"
         disabled={!hasNext || busy}
-        title="Наступний запис"
+        title={t('common.nextRecord')}
         onClick={onNext}
       >
         ›

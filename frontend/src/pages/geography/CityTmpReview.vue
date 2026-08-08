@@ -1,7 +1,7 @@
 <template>
   <BaseLayout>
     <div class="d-flex align-items-center gap-2 mb-3">
-      <h5 class="mb-0">Обробка нових населених пунктів</h5>
+      <h5 class="mb-0">{{ t('cityTmpReview.title') }}</h5>
       <span v-if="!loading && total" class="badge bg-warning text-dark">{{ total }}</span>
     </div>
 
@@ -10,7 +10,7 @@
     </div>
     <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
     <div v-else-if="!items.length" class="alert alert-success">
-      <i class="bi bi-check-circle me-2"></i>Немає записів для обробки
+      <i class="bi bi-check-circle me-2"></i>{{ t('cityTmpReview.noRecordsToProcess') }}
     </div>
 
     <div v-else>
@@ -19,11 +19,11 @@
           <table class="table table-hover align-middle mb-0 small">
             <thead>
               <tr>
-                <th style="width:50px" class="text-end">ID</th>
-                <th>Назва (чернетка)</th>
-                <th>Країна</th>
-                <th>Вихідні дані</th>
-                <th style="width:120px">Дата</th>
+                <th style="width:50px" class="text-end">{{ t('table.id') }}</th>
+                <th>{{ t('cityTmpReview.colDraftName') }}</th>
+                <th>{{ t('stoList.countryLabel') }}</th>
+                <th>{{ t('cityTmpReview.colOutgoingData') }}</th>
+                <th style="width:120px">{{ t('analytics.colDate') }}</th>
                 <th style="width:100px"></th>
               </tr>
             </thead>
@@ -36,7 +36,7 @@
                 <td class="text-muted">{{ formatDateShort(row.created_at) }}</td>
                 <td>
                   <button class="btn btn-sm btn-primary" @click="openModal(row)">
-                    <i class="bi bi-pencil-square me-1"></i>Обробити
+                    <i class="bi bi-pencil-square me-1"></i>{{ t('cityTmpReview.processButton') }}
                   </button>
                 </td>
               </tr>
@@ -46,7 +46,7 @@
       </div>
 
       <div class="d-flex justify-content-between align-items-center mt-3">
-        <span class="text-muted small">Всього: {{ total }}</span>
+        <span class="text-muted small">{{ t('analytics.totalCount', { value: total }) }}</span>
         <nav v-if="totalPages > 1">
           <ul class="pagination pagination-sm mb-0">
             <li class="page-item" :class="{ disabled: page === 1 }">
@@ -72,7 +72,7 @@
 
               <div class="modal-header">
                 <h5 class="modal-title">
-                  Обробка: <span class="text-primary">{{ modalRow?.name_uk }}</span>
+                  {{ t('cityTmpReview.processingTitle') }} <span class="text-primary">{{ modalRow?.name_uk }}</span>
                   <span class="badge bg-secondary ms-2 fw-normal small">city_tmp #{{ modalRow?.id }}</span>
                 </h5>
                 <button type="button" class="btn-close" @click="closeModal"></button>
@@ -88,41 +88,41 @@
                   <div class="col-md-4">
                     <div class="card border bg-light h-100">
                       <div class="card-header py-2 fw-semibold small">
-                        <i class="bi bi-info-circle me-1"></i>Вихідні дані (з форми СТО)
+                        <i class="bi bi-info-circle me-1"></i>{{ t('cityTmpReview.outgoingDataCardTitle') }}
                       </div>
                       <div class="card-body p-2">
                         <table class="table table-sm small mb-0">
                           <tbody>
                             <tr>
-                              <td class="text-muted" style="width:40%">Назва</td>
+                              <td class="text-muted" style="width:40%">{{ t('table.name') }}</td>
                               <td>{{ fullData?.addr_data?.city_name || fullData?.name_uk || '—' }}</td>
                             </tr>
                             <tr>
-                              <td class="text-muted">Тип НП</td>
+                              <td class="text-muted">{{ t('cityTmpReview.cityTypeLabel') }}</td>
                               <td>{{ fullData?.city_type_name || fullData?.addr_data?.city_type_text || '—' }}</td>
                             </tr>
                             <tr>
-                              <td class="text-muted">Область</td>
+                              <td class="text-muted">{{ t('stoList.oblastLabel') }}</td>
                               <td>{{ fullData?.addr_data?.region_text || fullData?.area_region_name || '—' }}</td>
                             </tr>
                             <tr>
-                              <td class="text-muted">Район</td>
+                              <td class="text-muted">{{ t('stoList.districtLabel') }}</td>
                               <td>{{ fullData?.addr_data?.district_text || '—' }}</td>
                             </tr>
                             <tr>
-                              <td class="text-muted">Адреса</td>
+                              <td class="text-muted">{{ t('table.address') }}</td>
                               <td>{{ fullData?.address_record?.address_detail || '—' }}</td>
                             </tr>
                             <tr v-if="fullData?.address_record?.description">
-                              <td class="text-muted">Опис</td>
+                              <td class="text-muted">{{ t('common.description') }}</td>
                               <td>{{ fullData.address_record.description }}</td>
                             </tr>
                             <tr>
-                              <td class="text-muted">СТО ID</td>
+                              <td class="text-muted">{{ t('cityTmpReview.stoIdLabel') }}</td>
                               <td>{{ fullData?.addr_data?.sto_id ?? '—' }}</td>
                             </tr>
                             <tr>
-                              <td class="text-muted">Address ID</td>
+                              <td class="text-muted">{{ t('cityTmpReview.addressIdLabel') }}</td>
                               <td>{{ fullData?.addr_data?.address_id ?? '—' }}</td>
                             </tr>
                           </tbody>
@@ -138,18 +138,18 @@
                     <div class="row g-2">
 
                       <div class="col-sm-5">
-                        <label class="form-label small mb-1">Країна <span class="text-danger">*</span></label>
+                        <label class="form-label small mb-1">{{ t('stoList.countryLabel') }} <span class="text-danger">*</span></label>
                         <select v-model.number="cityForm.country_id" class="form-select form-select-sm">
                           <option v-for="c in countriesList" :key="c.id" :value="c.id">{{ c.name_uk }}</option>
                         </select>
                       </div>
 
                       <div class="col-sm-5">
-                        <label class="form-label small mb-1">Тип населеного пункту</label>
+                        <label class="form-label small mb-1">{{ t('cityTmpReview.cityTypeFullLabel') }}</label>
                         <select v-model.number="cityForm.city_type_id" class="form-select form-select-sm">
-                          <option :value="null">— не вказано —</option>
-                          <option v-for="t in modalCityTypesList" :key="t.id" :value="t.id">
-                            {{ t.short_name_uk }} – {{ t.long_name_uk }}
+                          <option :value="null">{{ t('cityTmpReview.notSpecifiedOption') }}</option>
+                          <option v-for="t2 in modalCityTypesList" :key="t2.id" :value="t2.id">
+                            {{ t2.short_name_uk }} – {{ t2.long_name_uk }}
                           </option>
                         </select>
                       </div>
@@ -157,7 +157,7 @@
                       <div class="col-sm-2 d-flex align-items-end">
                         <div class="form-check mb-1">
                           <input v-model="cityForm.is_capital" type="checkbox" class="form-check-input" id="tmp-capital" />
-                          <label class="form-check-label small" for="tmp-capital">Столиця</label>
+                          <label class="form-check-label small" for="tmp-capital">{{ t('cityTmpReview.capitalLabel') }}</label>
                         </div>
                       </div>
 
@@ -165,56 +165,56 @@
                       <div class="col-sm-12">
                         <div class="row g-2">
                           <div class="col-sm-6">
-                            <label class="form-label small mb-1">Область</label>
+                            <label class="form-label small mb-1">{{ t('stoList.oblastLabel') }}</label>
                             <select v-model.number="modalFilterArea" class="form-select form-select-sm">
-                              <option :value="null">— не вказано —</option>
+                              <option :value="null">{{ t('cityTmpReview.notSpecifiedOption') }}</option>
                               <option v-for="a in modalAreasList" :key="a.id" :value="a.id">{{ a.name_uk }}</option>
                             </select>
                           </div>
                           <div class="col-sm-6">
-                            <label class="form-label small mb-1">Район</label>
+                            <label class="form-label small mb-1">{{ t('stoList.districtLabel') }}</label>
                             <select v-if="modalFilterArea" v-model.number="cityForm.area_region_id" class="form-select form-select-sm">
-                              <option :value="null">— не вказано —</option>
+                              <option :value="null">{{ t('cityTmpReview.notSpecifiedOption') }}</option>
                               <option v-for="d in modalDistrictsList" :key="d.id" :value="d.id">{{ d.name_uk }}</option>
                             </select>
-                            <div v-else class="readonly-field text-muted small fst-italic">спочатку оберіть область</div>
+                            <div v-else class="readonly-field text-muted small fst-italic">{{ t('cityTmpReview.selectOblastFirstHint') }}</div>
                           </div>
                         </div>
                       </div>
 
                       <div class="col-sm-12">
-                        <label class="form-label small mb-1">Назва [UA] <span class="text-danger">*</span></label>
+                        <label class="form-label small mb-1">{{ t('cityTmpReview.nameUaLabel') }} <span class="text-danger">*</span></label>
                         <input v-model="cityForm.name_uk" type="text" class="form-control form-control-sm" />
                       </div>
                       <div class="col-sm-6">
-                        <label class="form-label small mb-1">Назва [EN]</label>
+                        <label class="form-label small mb-1">{{ t('cityTmpReview.nameEnBracketLabel') }}</label>
                         <input v-model="cityForm.name_en" type="text" class="form-control form-control-sm" />
                       </div>
                       <div class="col-sm-6">
-                        <label class="form-label small mb-1">Назва [RU]</label>
+                        <label class="form-label small mb-1">{{ t('cityTmpReview.nameRuBracketLabel') }}</label>
                         <input v-model="cityForm.name_ru" type="text" class="form-control form-control-sm" />
                       </div>
                       <div class="col-sm-6">
-                        <label class="form-label small mb-1">Широта</label>
+                        <label class="form-label small mb-1">{{ t('stoImport.fieldLatitude') }}</label>
                         <input v-model="cityForm.latitude" type="number" step="any" class="form-control form-control-sm" />
                       </div>
                       <div class="col-sm-6">
-                        <label class="form-label small mb-1">Довгота</label>
+                        <label class="form-label small mb-1">{{ t('stoImport.fieldLongitude') }}</label>
                         <input v-model="cityForm.longitude" type="number" step="any" class="form-control form-control-sm" />
                       </div>
                     </div>
 
                     <!-- Address fields -->
                     <hr class="my-3" />
-                    <p class="small fw-semibold mb-2">Адреса (таблиця address)</p>
+                    <p class="small fw-semibold mb-2">{{ t('cityTmpReview.addressSectionTitle') }}</p>
                     <div class="row g-2">
                       <div class="col-sm-12">
-                        <label class="form-label small mb-1">Деталі адреси</label>
-                        <input v-model="addressForm.address_detail" type="text" class="form-control form-control-sm" placeholder="вул. Шевченка, 5" />
+                        <label class="form-label small mb-1">{{ t('stoList.addressDetailLabel') }}</label>
+                        <input v-model="addressForm.address_detail" type="text" class="form-control form-control-sm" :placeholder="t('cityTmpReview.addressDetailPlaceholderShort')" />
                       </div>
                       <div class="col-sm-12">
-                        <label class="form-label small mb-1">Опис</label>
-                        <input v-model="addressForm.description" type="text" class="form-control form-control-sm" placeholder="Поруч з АТБ" />
+                        <label class="form-label small mb-1">{{ t('common.description') }}</label>
+                        <input v-model="addressForm.description" type="text" class="form-control form-control-sm" :placeholder="t('cityTmpReview.descriptionPlaceholder')" />
                       </div>
                     </div>
                   </div>
@@ -225,12 +225,12 @@
 
               <div class="modal-footer">
                 <button class="btn btn-outline-secondary me-auto" :disabled="saving" @click="dismissRow">
-                  <i class="bi bi-x-circle me-1"></i>Відхилити (прибрати з черги)
+                  <i class="bi bi-x-circle me-1"></i>{{ t('cityTmpReview.dismissButton') }}
                 </button>
-                <button class="btn btn-secondary" @click="closeModal">Скасувати</button>
+                <button class="btn btn-secondary" @click="closeModal">{{ t('common.cancel') }}</button>
                 <button class="btn btn-success" :disabled="saving || modalLoading" @click="approveModal">
                   <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-                  <i v-else class="bi bi-check-circle me-1"></i>Затвердити та активувати
+                  <i v-else class="bi bi-check-circle me-1"></i>{{ t('cityTmpReview.approveButton') }}
                 </button>
               </div>
 
@@ -245,11 +245,13 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import BaseLayout from '@/layouts/BaseLayout.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useUndoableDelete } from '@/composables/useUndoableDelete'
 import { formatDateShort } from '@/utils/date'
 
+const { t } = useI18n({ useScope: 'global' })
 const { authHeaders } = useAuth()
 const { deleteWithUndo } = useUndoableDelete()
 
@@ -322,7 +324,7 @@ async function load(p = 1) {
   try {
     const res  = await fetch(`${API}?per_page=50&page=${p}`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     items.value      = json.data ?? []
     total.value      = json.pagination?.total ?? 0
     totalPages.value = json.pagination?.total_pages ?? 1
@@ -345,7 +347,7 @@ async function openModal(row) {
   try {
     const res  = await fetch(`${API}/${row.id}`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка завантаження')
+    if (!res.ok) throw new Error(json.message ?? t('list.loadError'))
     const d = json.data
     fullData.value = d
 
@@ -396,11 +398,11 @@ function closeModal() {
 async function approveModal() {
   saveError.value = null
   if (!cityForm.value.name_uk?.trim()) {
-    saveError.value = 'Назва [UA] є обовʼязковою'
+    saveError.value = t('cityTmpReview.nameRequiredError')
     return
   }
   if (!cityForm.value.country_id) {
-    saveError.value = 'Оберіть країну'
+    saveError.value = t('cityTmpReview.selectCountryError')
     return
   }
 
@@ -420,7 +422,7 @@ async function approveModal() {
       }),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
 
     items.value = items.value.filter(r => r.id !== modalRow.value.id)
     total.value--
@@ -439,7 +441,7 @@ function dismissRow() {
 
   closeModal()
   deleteWithUndo({
-    message: 'Запис прибрано з черги',
+    message: t('cityTmpReview.recordDismissedMessage'),
     remove: () => {
       items.value.splice(index, 1)
       total.value--
@@ -451,7 +453,7 @@ function dismissRow() {
     commit: async () => {
       const res  = await fetch(`${API}/${row.id}`, { method: 'DELETE', headers: authHeaders() })
       const json = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(json.message ?? 'Помилка')
+      if (!res.ok) throw new Error(json.message ?? t('common.error'))
     },
     onCommitError: () => load(page.value),
   })

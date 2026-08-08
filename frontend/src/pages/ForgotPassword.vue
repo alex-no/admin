@@ -8,15 +8,15 @@
           <span class="badge bg-danger ms-2">Admin</span>
         </h5>
 
-        <h6 class="mb-3 text-center">Відновлення паролю адміністратора</h6>
+        <h6 class="mb-3 text-center">{{ t('authPages.forgotPasswordTitle') }}</h6>
 
         <div v-if="sent" class="alert alert-success py-2 small">
-          Посилання для скидання паролю відправлено на вашу пошту.
+          {{ t('authPages.resetLinkSentMessage') }}
         </div>
 
         <form v-else @submit.prevent="handleSubmit">
           <div class="mb-3">
-            <label class="form-label small">Email</label>
+            <label class="form-label small">{{ t('auth.email') }}</label>
             <input
               v-model="login"
               type="email"
@@ -30,12 +30,12 @@
 
           <button type="submit" class="btn btn-primary w-100 mb-3" :disabled="loading">
             <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
-            Відправити посилання
+            {{ t('authPages.sendLinkButton') }}
           </button>
 
           <div class="text-center">
             <router-link to="/login" class="text-decoration-none small">
-              Повернутися до входу
+              {{ t('authPages.backToLoginLink') }}
             </router-link>
           </div>
         </form>
@@ -46,6 +46,9 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n({ useScope: 'global' })
 
 const login      = ref('')
 const fieldError = ref('')
@@ -53,7 +56,7 @@ const loading    = ref(false)
 const sent       = ref(false)
 
 onMounted(() => {
-  document.title = 'Відновлення паролю адміністратора - Oleksandr Nosov Admin'
+  document.title = t('authPages.forgotPasswordPageTitle')
 })
 
 async function handleSubmit() {
@@ -61,7 +64,7 @@ async function handleSubmit() {
   const trimmed = login.value.trim()
 
   if (!trimmed) {
-    fieldError.value = 'Поле обов\'язкове'
+    fieldError.value = t('authPages.fieldRequiredError')
     return
   }
 
@@ -69,7 +72,7 @@ async function handleSubmit() {
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
   if (!emailPattern.test(trimmed)) {
-    fieldError.value = 'Введіть коректний email'
+    fieldError.value = t('authPages.invalidEmailError')
     return
   }
 

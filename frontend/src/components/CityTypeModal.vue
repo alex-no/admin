@@ -11,14 +11,14 @@
     :max-height="850"
   >
     <template #title>
-      <h6 class="mb-0">{{ modalMode === 'create' ? 'Новий тип населеного пункту' : 'Редагування типу' }}</h6>
+      <h6 class="mb-0">{{ modalMode === 'create' ? t('cityTypes.newTitle') : t('cityTypes.editTitle') }}</h6>
     </template>
 
     <!-- Name fields -->
     <div class="row g-3">
       <template v-for="mf in config.modal" :key="mf.key">
         <div :class="`col-sm-${mf.col}`">
-          <label class="form-label small mb-1">{{ config.fields[mf.key].label }}</label>
+          <label class="form-label small mb-1">{{ fieldLabel(mf.key) }}</label>
 
           <template v-if="mf.key === 'id'">
             <div v-if="modalMode === 'edit'" class="readonly-field">{{ modalData.id }}</div>
@@ -47,7 +47,7 @@
     <hr class="my-3" />
     <div class="d-flex align-items-center gap-2 mb-2">
       <span class="small fw-semibold">
-        Країни
+        {{ t('cityTypes.countriesLabel') }}
         <span v-if="canEditInModal('short_name_uk')" class="text-danger">*</span>
       </span>
       <span class="badge" :class="modalCountryIds.length ? 'bg-secondary' : 'bg-danger'">
@@ -58,7 +58,7 @@
         type="text"
         class="form-control form-control-sm ms-auto"
         style="max-width:220px"
-        placeholder="Пошук країни..."
+        :placeholder="t('cityTypes.countrySearchPlaceholder')"
       />
     </div>
     <div class="border rounded p-2" style="max-height:200px; overflow-y:auto">
@@ -82,7 +82,7 @@
           <label :for="`ct-c-${c.id}`" class="form-check-label small">{{ c.name_uk }}</label>
         </div>
         <div v-if="!filteredCountriesList.length" class="text-muted small text-center py-2">
-          Нічого не знайдено
+          {{ t('stoList.noCityResults') }}
         </div>
       </template>
     </div>
@@ -92,10 +92,10 @@
     <template #footer>
       <div></div>
       <div class="d-flex gap-2">
-        <button class="btn btn-sm btn-secondary" @click="close">Скасувати</button>
+        <button class="btn btn-sm btn-secondary" @click="close">{{ t('common.cancel') }}</button>
         <button class="btn btn-sm btn-primary" :disabled="saving" @click="save">
           <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-          Зберегти
+          {{ t('common.save') }}
         </button>
       </div>
     </template>
@@ -104,11 +104,29 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import BaseModal from './BaseModal.vue'
 import config from '../pages/geography/city-types.config.json'
 
+const { t } = useI18n({ useScope: 'global' })
 const { can, authHeaders } = useAuth()
+
+const FIELD_LABEL_KEYS = {
+  id: 'table.id',
+  short_name_uk: 'cityTypes.shortNameUk',
+  short_name_en: 'cityTypes.shortNameEn',
+  short_name_ru: 'cityTypes.shortNameRu',
+  long_name_uk: 'cityTypes.longNameUk',
+  long_name_en: 'cityTypes.longNameEn',
+  long_name_ru: 'cityTypes.longNameRu',
+  created_at: 'stoList.createdLabel',
+  updated_at: 'stoList.updatedLabel',
+}
+function fieldLabel(key) {
+  const k = FIELD_LABEL_KEYS[key]
+  return k ? t(k) : config.fields[key]?.label ?? key
+}
 
 // Props
 const props = defineProps({
@@ -210,7 +228,7 @@ async function patch(id, fields) {
     body: JSON.stringify(fields),
   })
   const json = await res.json()
-  if (!res.ok) throw new Error(json.message ?? 'Помилка збереження')
+  if (!res.ok) throw new Error(json.message ?? t('list.saveError'))
   return json.data
 }
 
@@ -219,7 +237,7 @@ async function save() {
   saveError.value = null
   try {
     if (canEditInModal('short_name_uk') && modalCountryIds.value.length === 0) {
-      saveError.value = 'Оберіть хоча б одну країну'
+      saveError.value = t('cityTypes.selectAtLeastOneCountryError')
       saving.value = false
       return
     }
@@ -238,7 +256,7 @@ async function save() {
         body: JSON.stringify(fields),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.message ?? 'Помилка')
+      if (!res.ok) throw new Error(json.message ?? t('common.error'))
       window.dispatchEvent(new CustomEvent('city-type-created', { detail: json.data }))
     } else {
       const updated = await patch(modalData.value.id, fields)

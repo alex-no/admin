@@ -4,7 +4,7 @@
     <div>
       <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
         <div class="d-flex align-items-center gap-2">
-          <h5 class="mb-0">Зворотній зв'язок</h5>
+          <h5 class="mb-0">{{ t('feedback.title') }}</h5>
           <span class="badge bg-secondary">{{ total }}</span>
         </div>
         <div class="d-flex gap-2 flex-wrap">
@@ -13,29 +13,29 @@
             type="text"
             class="form-control form-control-sm"
             style="width:220px"
-            placeholder="Пошук..."
+            :placeholder="t('feedback.searchPlaceholder')"
             @input="debounceLoad"
           />
           <select v-model="filterType" class="form-select form-select-sm" style="width:auto" @change="load(1)">
-            <option value="">Всі типи</option>
-            <option value="complaint">Скарги</option>
-            <option value="suggestion">Пропозиції</option>
-            <option value="question">Питання</option>
-            <option value="other">Інше</option>
+            <option value="">{{ t('filter.allTypes') }}</option>
+            <option value="complaint">{{ t('feedback.typeComplaint') }}</option>
+            <option value="suggestion">{{ t('feedback.typeSuggestion') }}</option>
+            <option value="question">{{ t('feedback.typeQuestion') }}</option>
+            <option value="other">{{ t('feedback.typeOther') }}</option>
           </select>
           <select v-model="filterStatus" class="form-select form-select-sm" style="width:auto" @change="load(1)">
-            <option value="">Всі статуси</option>
-            <option value="new">Нові</option>
-            <option value="in_progress">В роботі</option>
-            <option value="resolved">Вирішені</option>
-            <option value="rejected">Відхилені</option>
+            <option value="">{{ t('filter.allStatuses') }}</option>
+            <option value="new">{{ t('feedback.statusNew') }}</option>
+            <option value="in_progress">{{ t('feedback.statusInProgress') }}</option>
+            <option value="resolved">{{ t('feedback.statusResolved') }}</option>
+            <option value="rejected">{{ t('reviews.statusRejectedOption') }}</option>
           </select>
           <select v-model="filterPriority" class="form-select form-select-sm" style="width:auto" @change="load(1)">
-            <option value="">Всі пріоритети</option>
-            <option value="urgent">Терміново</option>
-            <option value="high">Високий</option>
-            <option value="normal">Звичайний</option>
-            <option value="low">Низький</option>
+            <option value="">{{ t('feedback.allPriorities') }}</option>
+            <option value="urgent">{{ t('feedback.priorityUrgent') }}</option>
+            <option value="high">{{ t('feedback.priorityHigh') }}</option>
+            <option value="normal">{{ t('feedback.priorityNormal') }}</option>
+            <option value="low">{{ t('feedback.priorityLow') }}</option>
           </select>
         </div>
       </div>
@@ -51,13 +51,13 @@
           <table class="table table-hover align-middle mb-0 small">
             <thead>
               <tr>
-                <th style="width:60px" class="text-end">ID</th>
-                <th style="width:100px">Тип</th>
-                <th style="width:100px">Статус</th>
-                <th style="width:90px">Пріоритет</th>
-                <th>Тема</th>
-                <th style="width:180px">Контакт</th>
-                <th style="width:140px">Дата</th>
+                <th style="width:60px" class="text-end">{{ t('table.id') }}</th>
+                <th style="width:100px">{{ t('filter.type') }}</th>
+                <th style="width:100px">{{ t('filter.status') }}</th>
+                <th style="width:90px">{{ t('feedback.colPriority') }}</th>
+                <th>{{ t('feedback.colSubject') }}</th>
+                <th style="width:180px">{{ t('stoOutreach.colContact') }}</th>
+                <th style="width:140px">{{ t('analytics.colDate') }}</th>
                 <th style="width:80px"></th>
               </tr>
             </thead>
@@ -84,13 +84,13 @@
                   {{ formatDate(row.created_at) }}
                 </td>
                 <td>
-                  <button class="btn btn-sm btn-outline-primary" @click="openDetail(row.id)" title="Переглянути">
+                  <button class="btn btn-sm btn-outline-primary" @click="openDetail(row.id)" :title="t('reviews.viewTooltip')">
                     <i class="bi bi-eye"></i>
                   </button>
                 </td>
               </tr>
               <tr v-if="!items.length">
-                <td colspan="8" class="text-center text-muted py-4">Немає даних</td>
+                <td colspan="8" class="text-center text-muted py-4">{{ t('common.noData') }}</td>
               </tr>
             </tbody>
           </table>
@@ -98,7 +98,7 @@
         </div>
 
         <div class="d-flex justify-content-between align-items-center mt-3">
-          <span class="text-muted small">Всього: {{ total }}</span>
+          <span class="text-muted small">{{ t('analytics.totalCount', { value: total }) }}</span>
           <Pagination :current-page="page" :total-pages="totalPages" @change="load" />
         </div>
       </div>
@@ -108,12 +108,14 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ListPageWrapper from '../components/ListPageWrapper.vue'
 import Pagination from '../components/Pagination.vue'
 import FeedbackDetailModal from '../components/FeedbackDetailModal.vue'
 import { apiGet } from '../utils/api'
 import { useUrlFilters } from '../composables/useUrlFilters'
 
+const { t } = useI18n({ useScope: 'global' })
 const loading = ref(false)
 const error = ref(null)
 const items = ref([])
@@ -171,7 +173,7 @@ async function load(p = 1) {
       items.value = res.data
       total.value = res.pagination.total
     } else {
-      error.value = res.message || 'Помилка завантаження'
+      error.value = res.message || t('list.loadError')
     }
   } catch (err) {
     error.value = err.message
@@ -198,10 +200,10 @@ function formatDate(dt) {
 
 function typeLabel(type) {
   const labels = {
-    complaint: 'Скарга',
-    suggestion: 'Пропозиція',
-    question: 'Питання',
-    other: 'Інше',
+    complaint: t('feedback.typeComplaintSingular'),
+    suggestion: t('feedback.typeSuggestionSingular'),
+    question: t('feedback.typeQuestion'),
+    other: t('feedback.typeOther'),
   }
   return labels[type] || type
 }
@@ -218,10 +220,10 @@ function typeBadge(type) {
 
 function statusLabel(status) {
   const labels = {
-    new: 'Новий',
-    in_progress: 'В роботі',
-    resolved: 'Вирішено',
-    rejected: 'Відхилено',
+    new: t('feedback.statusNewSingular'),
+    in_progress: t('feedback.statusInProgress'),
+    resolved: t('feedback.statusResolvedSingular'),
+    rejected: t('stoList.reviewRejected'),
   }
   return labels[status] || status
 }
@@ -238,10 +240,10 @@ function statusBadge(status) {
 
 function priorityLabel(priority) {
   const labels = {
-    urgent: 'Термін',
-    high: 'Високий',
-    normal: 'Норм',
-    low: 'Низький',
+    urgent: t('feedback.priorityUrgentAbbr'),
+    high: t('feedback.priorityHigh'),
+    normal: t('feedback.priorityNormalAbbr'),
+    low: t('feedback.priorityLow'),
   }
   return labels[priority] || priority
 }

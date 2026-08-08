@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type React from 'react'
+import { useTranslation } from 'react-i18next'
 import { useModalWindow } from '@/hooks/useModalWindow'
 
 interface BaseModalProps {
@@ -37,6 +38,7 @@ export default function BaseModal({
   maxHeight = 800,
   closeOnBackdrop = true,
 }: BaseModalProps) {
+  const { t } = useTranslation()
   const modalRef = useRef<HTMLDivElement>(null)
 
   const {
@@ -127,9 +129,9 @@ export default function BaseModal({
   }
 
   const getModeTitle = () => {
-    if (mode === 'floating') return 'Закріпити справа'
-    if (mode === 'docked-right') return 'Закріпити знизу'
-    return 'Плаваюче вікно'
+    if (mode === 'floating') return t('modal.dockRight')
+    if (mode === 'docked-right') return t('modal.dockBottom')
+    return t('modal.undock')
   }
 
   // Floating mode
@@ -195,7 +197,7 @@ export default function BaseModal({
             <div
               className="modal-resize-handle modal-resize-se"
               onMouseDown={handleResizeMouseDown}
-              title="Змінити розмір"
+              title={t('common.resize')}
             />
           </div>
         </div>
@@ -254,7 +256,7 @@ export default function BaseModal({
         <div
           className="modal-resize-handle modal-resize-w"
           onMouseDown={handleResizeMouseDown}
-          title="Змінити ширину"
+          title={t('common.resize')}
         />
       </div>
     )
@@ -310,7 +312,7 @@ export default function BaseModal({
       <div
         className="modal-resize-handle modal-resize-n"
         onMouseDown={handleResizeMouseDown}
-        title="Змінити висоту"
+        title={t('common.resize')}
       />
     </div>
   )

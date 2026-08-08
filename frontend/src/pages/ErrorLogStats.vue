@@ -3,17 +3,17 @@
     <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
       <div class="d-flex align-items-center gap-2">
         <router-link to="/error-logs" class="btn btn-sm btn-outline-secondary">
-          <i class="bi bi-arrow-left"></i> Назад
+          <i class="bi bi-arrow-left"></i> {{ t('analytics.back') }}
         </router-link>
-        <h5 class="mb-0">Статистика помилок</h5>
+        <h5 class="mb-0">{{ t('errorLogs.statsTitle') }}</h5>
       </div>
       <div class="d-flex gap-2">
         <select v-model="days" class="form-select form-select-sm" style="width:auto" @change="load">
-          <option :value="7">За 7 днів</option>
-          <option :value="14">За 14 днів</option>
-          <option :value="30">За 30 днів</option>
-          <option :value="60">За 60 днів</option>
-          <option :value="90">За 90 днів</option>
+          <option :value="7">{{ t('errorLogs.periodOption', { days: 7 }) }}</option>
+          <option :value="14">{{ t('errorLogs.periodOption', { days: 14 }) }}</option>
+          <option :value="30">{{ t('errorLogs.periodOption', { days: 30 }) }}</option>
+          <option :value="60">{{ t('errorLogs.periodOption', { days: 60 }) }}</option>
+          <option :value="90">{{ t('errorLogs.periodOption', { days: 90 }) }}</option>
         </select>
       </div>
     </div>
@@ -28,9 +28,9 @@
       <div class="col-md-3">
         <div class="card text-center shadow-sm">
           <div class="card-body">
-            <h6 class="text-muted mb-2">Всього помилок</h6>
+            <h6 class="text-muted mb-2">{{ t('errorLogs.totalErrors') }}</h6>
             <h2 class="mb-0">{{ stats.total }}</h2>
-            <small class="text-muted">за {{ stats.period_days }} днів</small>
+            <small class="text-muted">{{ t('analytics.periodDaysSuffix', { days: stats.period_days }) }}</small>
           </div>
         </div>
       </div>
@@ -39,7 +39,7 @@
       <div class="col-md-9">
         <div class="card shadow-sm">
           <div class="card-header bg-light">
-            <strong>По рівнях</strong>
+            <strong>{{ t('errorLogs.byLevel') }}</strong>
           </div>
           <div class="card-body">
             <div class="row g-2">
@@ -50,7 +50,7 @@
                 </div>
               </div>
               <div v-if="!stats.by_level.length" class="col-12 text-center text-muted py-3">
-                Немає даних
+                {{ t('common.noData') }}
               </div>
             </div>
           </div>
@@ -61,14 +61,14 @@
       <div class="col-md-6">
         <div class="card shadow-sm">
           <div class="card-header bg-light">
-            <strong>Топ-10 категорій</strong>
+            <strong>{{ t('errorLogs.topCategories') }}</strong>
           </div>
           <div class="card-body">
             <table class="table table-sm table-hover mb-0">
               <thead>
                 <tr>
-                  <th>Категорія</th>
-                  <th class="text-end">Кількість</th>
+                  <th>{{ t('errorLogs.category') }}</th>
+                  <th class="text-end">{{ t('errorLogs.count') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -77,7 +77,7 @@
                   <td class="text-end"><strong>{{ item.count }}</strong></td>
                 </tr>
                 <tr v-if="!stats.by_category.length">
-                  <td colspan="2" class="text-center text-muted py-3">Немає даних</td>
+                  <td colspan="2" class="text-center text-muted py-3">{{ t('common.noData') }}</td>
                 </tr>
               </tbody>
             </table>
@@ -89,14 +89,14 @@
       <div class="col-md-6">
         <div class="card shadow-sm">
           <div class="card-header bg-light">
-            <strong>Топ-10 exceptions</strong>
+            <strong>{{ t('errorLogs.topExceptions') }}</strong>
           </div>
           <div class="card-body">
             <table class="table table-sm table-hover mb-0">
               <thead>
                 <tr>
-                  <th>Exception</th>
-                  <th class="text-end">Кількість</th>
+                  <th>{{ t('errorLogs.exception') }}</th>
+                  <th class="text-end">{{ t('errorLogs.count') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -107,7 +107,7 @@
                   <td class="text-end"><strong>{{ item.count }}</strong></td>
                 </tr>
                 <tr v-if="!stats.by_exception.length">
-                  <td colspan="2" class="text-center text-muted py-3">Немає даних</td>
+                  <td colspan="2" class="text-center text-muted py-3">{{ t('common.noData') }}</td>
                 </tr>
               </tbody>
             </table>
@@ -119,14 +119,14 @@
       <div class="col-12">
         <div class="card shadow-sm">
           <div class="card-header bg-light">
-            <strong>Динаміка помилок по днях</strong>
+            <strong>{{ t('errorLogs.trendTitle') }}</strong>
           </div>
           <div class="card-body">
             <div v-if="trendData.labels.length" style="max-height: 400px; overflow-x: auto;">
               <TrendChart :labels="trendData.labels" :datasets="trendData.datasets" />
             </div>
             <div v-else class="text-center text-muted py-5">
-              Немає даних для графіка
+              {{ t('errorLogs.noChartData') }}
             </div>
           </div>
         </div>
@@ -137,10 +137,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { authHeaders } from '@/utils/api'
 import BaseLayout from '../layouts/BaseLayout.vue'
 import TrendChart from '../components/TrendChart.vue'
 
+const { t } = useI18n({ useScope: 'global' })
 const stats = ref(null)
 const loading = ref(false)
 const error = ref('')
@@ -158,7 +160,7 @@ async function load() {
     if (json.status === 'success') {
       stats.value = json.data
     } else {
-      error.value = json.message || 'Помилка завантаження'
+      error.value = json.message || t('errorLogs.loadError')
     }
   } catch (e) {
     error.value = e.message

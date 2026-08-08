@@ -11,7 +11,7 @@
     :max-height="700"
   >
     <template #title>
-      <h6 class="mb-0">Ролі: {{ userName }}</h6>
+      <h6 class="mb-0">{{ t('roles.rolesModalTitle', { name: userName }) }}</h6>
     </template>
 
     <div v-if="error" class="alert alert-danger small mb-3">{{ error }}</div>
@@ -40,11 +40,11 @@
       <div></div>
       <div class="d-flex gap-2">
         <button @click="close" class="btn btn-secondary btn-sm">
-          Скасувати
+          {{ t('common.cancel') }}
         </button>
         <button @click="save" class="btn btn-primary btn-sm" :disabled="saving">
           <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-          Зберегти
+          {{ t('common.save') }}
         </button>
       </div>
     </template>
@@ -53,9 +53,11 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import BaseModal from './BaseModal.vue'
 
+const { t } = useI18n({ useScope: 'global' })
 const auth = useAuth()
 
 // Component state
@@ -90,10 +92,10 @@ async function loadRoles() {
     if (json.status === 'success') {
       availableRoles.value = json.roles
     } else {
-      error.value = json.message || 'Помилка завантаження ролей'
+      error.value = json.message || t('roles.loadError')
     }
   } catch (e) {
-    error.value = 'Помилка з\'єднання з сервером'
+    error.value = t('roles.connectionError')
   } finally {
     loading.value = false
   }
@@ -130,10 +132,10 @@ async function save() {
       window.dispatchEvent(new CustomEvent('roles-updated'))
       close()
     } else {
-      error.value = json.message || 'Помилка збереження ролей'
+      error.value = json.message || t('roles.saveRolesError')
     }
   } catch (e) {
-    error.value = 'Помилка з\'єднання'
+    error.value = t('adminManagement.connectionErrorShort')
   } finally {
     saving.value = false
   }

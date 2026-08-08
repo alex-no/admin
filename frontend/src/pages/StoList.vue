@@ -2,24 +2,24 @@
   <ListPageWrapper>
     <div>
     <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
-      <h5 class="mb-0">Список СТО</h5>
+      <h5 class="mb-0">{{ t('stoList.title') }}</h5>
       <div class="d-flex gap-2 flex-wrap">
         <input
           v-model="search"
           type="text"
           class="form-control form-control-sm"
           style="width:200px"
-          placeholder="Пошук за назвою..."
+          :placeholder="t('filter.searchPlaceholder')"
           @input="debounceLoad"
         />
         <select v-model="filterType" class="form-select form-select-sm" style="width:auto" @change="load(1)">
-          <option value="">Всі типи</option>
-          <option v-for="t in STO_TYPES" :key="t.value" :value="t.value">{{ t.label }}</option>
+          <option value="">{{ t('filter.allTypes') }}</option>
+          <option v-for="t2 in STO_TYPES" :key="t2.value" :value="t2.value">{{ t2.label }}</option>
         </select>
         <select v-model="filterStatus" class="form-select form-select-sm" style="width:auto" @change="load(1)">
-          <option value="">Всі статуси</option>
-          <option value="active">Активні</option>
-          <option value="inactive">Неактивні</option>
+          <option value="">{{ t('filter.allStatuses') }}</option>
+          <option value="active">{{ t('filter.active') }}</option>
+          <option value="inactive">{{ t('filter.inactive') }}</option>
         </select>
       </div>
     </div>
@@ -57,18 +57,18 @@
                   <SortIcon :col="'id'" :sortKey="sortKey" :sortDir="sortDir" />
                 </th>
                 <th class="th-sortable" @click="toggleSort('name_uk')">
-                  Назва (UK)
+                  {{ t('stoList.colNameUk') }}
                   <SortIcon :col="'name_uk'" :sortKey="sortKey" :sortDir="sortDir" />
                 </th>
-                <th>Тип</th>
-                <th>Адреса</th>
-                <th>Телефон</th>
+                <th>{{ t('filter.type') }}</th>
+                <th>{{ t('table.address') }}</th>
+                <th>{{ t('stoList.colPhone') }}</th>
                 <th class="th-sortable" style="width:90px" @click="toggleSort('rating')">
-                  Рейтинг
+                  {{ t('table.rating') }}
                   <SortIcon :col="'rating'" :sortKey="sortKey" :sortDir="sortDir" />
                 </th>
                 <th class="th-sortable" style="width:120px" @click="toggleSort('is_active')">
-                  Статус
+                  {{ t('filter.status') }}
                   <SortIcon :col="'is_active'" :sortKey="sortKey" :sortDir="sortDir" />
                 </th>
                 <th style="width:50px"></th>
@@ -122,7 +122,7 @@
                     :value="row.sto_type"
                     @change="changeType(row, $event.target.value)"
                   >
-                    <option v-for="t in STO_TYPES" :key="t.value" :value="t.value">{{ t.label }}</option>
+                    <option v-for="t2 in STO_TYPES" :key="t2.value" :value="t2.value">{{ t2.label }}</option>
                   </select>
                   <span v-else class="badge" :class="typeBadge(row.sto_type)">
                     {{ typeLabel(row.sto_type) }}
@@ -179,10 +179,10 @@
                     @click="toggleStatus(row)"
                   >
                     <span v-if="togglingId === row.id" class="spinner-border spinner-border-sm"></span>
-                    <span v-else>{{ row.is_active ? 'Активне' : 'Неактивне' }}</span>
+                    <span v-else>{{ row.is_active ? t('table.activeStatus') : t('table.inactiveStatus') }}</span>
                   </button>
                   <span v-else class="badge" :class="row.is_active ? 'bg-success' : 'bg-danger'">
-                    {{ row.is_active ? 'Активне' : 'Неактивне' }}
+                    {{ row.is_active ? t('table.activeStatus') : t('table.inactiveStatus') }}
                   </span>
                 </td>
 
@@ -190,7 +190,7 @@
                   <button
                     v-if="canEdit"
                     class="btn btn-sm btn-outline-secondary"
-                    title="Редагувати"
+                    :title="t('common.edit')"
                     @click="openModal(row)"
                   >
                     <i class="bi bi-pencil"></i>
@@ -198,7 +198,7 @@
                 </td>
               </tr>
               <tr v-if="!items.length">
-                <td :colspan="bulkActionsAvailable.length ? 9 : 8" class="text-center text-muted py-4">Немає СТО</td>
+                <td :colspan="bulkActionsAvailable.length ? 9 : 8" class="text-center text-muted py-4">{{ t('stoList.noRecords') }}</td>
               </tr>
             </tbody>
           </table>
@@ -206,7 +206,7 @@
       </div>
 
       <div class="d-flex justify-content-between align-items-center mt-3">
-        <span class="text-muted small">Всього: {{ total }}</span>
+        <span class="text-muted small">{{ t('analytics.totalCount', { value: total }) }}</span>
         <Pagination :current-page="page" :total-pages="totalPages" @change="load" />
       </div>
     </div>
@@ -225,7 +225,7 @@
     >
       <template #title>
         <h5 class="mb-0">
-          Редагування СТО <span class="text-muted fw-normal fs-6">#{{ modalData.id }}</span>
+          {{ t('stoList.editTitle') }} <span class="text-muted fw-normal fs-6">#{{ modalData.id }}</span>
           <span v-if="modalData.name_uk || modalData.name" class="text-primary fw-normal fs-6 ms-2">
             {{ modalData.name_uk || modalData.name }}
           </span>
@@ -239,42 +239,42 @@
                 <button class="nav-link py-2 px-2 small text-nowrap"
                         :class="{ active: activeTab === 'general' }"
                         @click="activeTab = 'general'">
-                  <i class="bi bi-info-circle me-1"></i>Основне
+                  <i class="bi bi-info-circle me-1"></i>{{ t('stoList.tabGeneral') }}
                 </button>
               </li>
               <li class="nav-item">
                 <button class="nav-link py-2 px-2 small text-nowrap"
                         :class="{ active: activeTab === 'vehicle-types' }"
                         @click="switchTab('vehicle-types')">
-                  <i class="bi bi-truck me-1"></i>Типи ТС
+                  <i class="bi bi-truck me-1"></i>{{ t('stoList.tabVehicleTypes') }}
                 </button>
               </li>
               <li class="nav-item">
                 <button class="nav-link py-2 px-2 small text-nowrap"
                         :class="{ active: activeTab === 'services' }"
                         @click="switchTab('services')">
-                  <i class="bi bi-wrench me-1"></i>Послуги
+                  <i class="bi bi-wrench me-1"></i>{{ t('stoList.tabServices') }}
                 </button>
               </li>
               <li class="nav-item">
                 <button class="nav-link py-2 px-2 small text-nowrap"
                         :class="{ active: activeTab === 'amenities' }"
                         @click="switchTab('amenities')">
-                  <i class="bi bi-stars me-1"></i>Зручності
+                  <i class="bi bi-stars me-1"></i>{{ t('stoList.tabAmenities') }}
                 </button>
               </li>
               <li class="nav-item">
                 <button class="nav-link py-2 px-2 small text-nowrap"
                         :class="{ active: activeTab === 'address' }"
                         @click="switchTab('address')">
-                  <i class="bi bi-geo-alt me-1"></i>Адреса
+                  <i class="bi bi-geo-alt me-1"></i>{{ t('table.address') }}
                 </button>
               </li>
               <li class="nav-item">
                 <button class="nav-link py-2 px-2 small text-nowrap"
                         :class="{ active: activeTab === 'photos' }"
                         @click="switchTab('photos')">
-                  <i class="bi bi-images me-1"></i>Фото
+                  <i class="bi bi-images me-1"></i>{{ t('stoList.tabPhotos') }}
                   <span v-if="photosTotal > 0" class="badge bg-secondary ms-1" style="font-size:.6rem">{{ photosTotal }}</span>
                 </button>
               </li>
@@ -282,21 +282,21 @@
                 <button class="nav-link py-2 px-2 small text-nowrap"
                         :class="{ active: activeTab === 'employees' }"
                         @click="switchTab('employees')">
-                  <i class="bi bi-people me-1"></i>Співробітники
+                  <i class="bi bi-people me-1"></i>{{ t('stoList.tabEmployees') }}
                 </button>
               </li>
               <li class="nav-item">
                 <button class="nav-link py-2 px-2 small text-nowrap"
                         :class="{ active: activeTab === 'bookings' }"
                         @click="switchTab('bookings')">
-                  <i class="bi bi-calendar-check me-1"></i>Записи
+                  <i class="bi bi-calendar-check me-1"></i>{{ t('stoList.tabBookings') }}
                 </button>
               </li>
               <li class="nav-item">
                 <button class="nav-link py-2 px-2 small text-nowrap"
                         :class="{ active: activeTab === 'reviews' }"
                         @click="switchTab('reviews')">
-                  <i class="bi bi-star me-1"></i>Відгуки
+                  <i class="bi bi-star me-1"></i>{{ t('stoList.tabReviews') }}
                 </button>
               </li>
             </ul>
@@ -309,13 +309,13 @@
             <template v-if="activeTab === 'general'">
               <div class="row g-3 mb-3">
                 <div class="col-sm-4">
-                  <label class="form-label small mb-1">Тип СТО <span class="text-danger">*</span></label>
+                  <label class="form-label small mb-1">{{ t('stoList.typeLabel') }} <span class="text-danger">*</span></label>
                   <select v-model="modalForm.sto_type" class="form-select form-select-sm">
-                    <option v-for="t in STO_TYPES" :key="t.value" :value="t.value">{{ t.label }}</option>
+                    <option v-for="t2 in STO_TYPES" :key="t2.value" :value="t2.value">{{ t2.label }}</option>
                   </select>
                 </div>
                 <div class="col-sm-2">
-                  <label class="form-label small mb-1">Статус</label>
+                  <label class="form-label small mb-1">{{ t('filter.status') }}</label>
                   <div class="mt-1">
                     <div class="form-check form-switch">
                       <input
@@ -326,86 +326,86 @@
                         role="switch"
                       />
                       <label class="form-check-label" for="is_active_toggle">
-                        {{ modalForm.is_active ? 'Активне' : 'Неактивне' }}
+                        {{ modalForm.is_active ? t('table.activeStatus') : t('table.inactiveStatus') }}
                       </label>
                     </div>
                   </div>
                 </div>
                 <div class="col-sm-2">
-                  <label class="form-label small mb-1">Рейтинг</label>
+                  <label class="form-label small mb-1">{{ t('table.rating') }}</label>
                   <input
                     v-model.number="modalForm.rating"
                     type="number" min="0" max="5" step="0.01"
                     class="form-control form-control-sm"
-                    placeholder="1.00 – 5.00"
+                    :placeholder="t('stoList.ratingPlaceholder')"
                     readonly
-                    title="Рейтинг розраховується автоматично на основі відгуків"
+                    :title="t('stoList.ratingAutoTooltip')"
                   />
-                  <small class="text-muted">Розраховується автоматично</small>
+                  <small class="text-muted">{{ t('stoList.ratingAutoHint') }}</small>
                 </div>
               </div>
 
               <div class="row g-3 mb-3">
                 <div class="col-sm-4">
-                  <label class="form-label small mb-1">Назва (UK) <span class="text-danger">*</span></label>
+                  <label class="form-label small mb-1">{{ t('stoList.colNameUk') }} <span class="text-danger">*</span></label>
                   <input v-model="modalForm.name_uk" type="text" class="form-control form-control-sm" />
                 </div>
                 <div class="col-sm-4">
-                  <label class="form-label small mb-1">Назва (EN)</label>
+                  <label class="form-label small mb-1">{{ t('stoList.nameEnLabel') }}</label>
                   <input v-model="modalForm.name_en" type="text" class="form-control form-control-sm" />
                 </div>
                 <div class="col-sm-4">
-                  <label class="form-label small mb-1">Назва (RU)</label>
+                  <label class="form-label small mb-1">{{ t('stoList.nameRuLabel') }}</label>
                   <input v-model="modalForm.name_ru" type="text" class="form-control form-control-sm" />
                 </div>
               </div>
 
               <div class="mb-3">
-                <label class="form-label small mb-1">Опис (UK)</label>
+                <label class="form-label small mb-1">{{ t('stoList.descUkLabel') }}</label>
                 <textarea v-model="modalForm.description_uk" class="form-control form-control-sm" rows="2" maxlength="2048"></textarea>
                 <div class="text-end text-muted" style="font-size:0.7rem">{{ (modalForm.description_uk ?? '').length }} / 2048</div>
               </div>
               <div class="mb-3">
-                <label class="form-label small mb-1">Опис (EN)</label>
+                <label class="form-label small mb-1">{{ t('stoList.descEnLabel') }}</label>
                 <textarea v-model="modalForm.description_en" class="form-control form-control-sm" rows="2" maxlength="2048"></textarea>
               </div>
               <div class="mb-3">
-                <label class="form-label small mb-1">Опис (RU)</label>
+                <label class="form-label small mb-1">{{ t('stoList.descRuLabel') }}</label>
                 <textarea v-model="modalForm.description_ru" class="form-control form-control-sm" rows="2" maxlength="2048"></textarea>
               </div>
 
               <!-- Extra fields -->
               <div class="row g-3 mb-3">
                 <div class="col-sm-2">
-                  <label class="form-label small mb-1">Рік заснування</label>
+                  <label class="form-label small mb-1">{{ t('stoList.foundedYearLabel') }}</label>
                   <input v-model.number="modalForm.founded_year" type="number" min="1900" :max="new Date().getFullYear()" class="form-control form-control-sm" placeholder="2010" />
                 </div>
                 <div class="col-sm-2">
-                  <label class="form-label small mb-1">Постів / боксів</label>
+                  <label class="form-label small mb-1">{{ t('stoList.postsCountLabel') }}</label>
                   <input v-model.number="modalForm.posts_count" type="number" min="1" max="255" class="form-control form-control-sm" placeholder="4" />
                 </div>
                 <div class="col-sm-4">
-                  <label class="form-label small mb-1">Email (внутр.)</label>
+                  <label class="form-label small mb-1">{{ t('stoList.emailLabel') }}</label>
                   <input v-model="modalForm.email" type="email" class="form-control form-control-sm" placeholder="sto@example.com" />
                 </div>
                 <div class="col-sm-4">
-                  <label class="form-label small mb-1">Сайт</label>
+                  <label class="form-label small mb-1">{{ t('stoList.websiteLabel') }}</label>
                   <input v-model="modalForm.website" type="url" class="form-control form-control-sm" placeholder="https://sto.com.ua" />
                 </div>
               </div>
               <div class="mb-3">
-                <label class="form-label small mb-1">Логотип СТО</label>
+                <label class="form-label small mb-1">{{ t('stoList.logoLabel') }}</label>
                 <div v-if="modalForm.logo_key" class="mb-2">
                   <img
                     :src="getStorageUrl(modalForm.logo_key)"
-                    alt="Логотип СТО"
+                    :alt="t('stoList.logoLabel')"
                     class="img-thumbnail"
                     style="max-width: 300px; max-height: 200px; object-fit: contain;"
                   />
                 </div>
                 <input v-model="modalForm.logo_key" type="text" class="form-control form-control-sm" placeholder="sto/1/logo/abc123.webp" />
                 <div class="text-muted mt-1" style="font-size:0.72rem">
-                  Логотип автоматично встановлюється при завантаженні першого фото у вкладці "Фото"
+                  {{ t('stoList.logoHint') }}
                 </div>
               </div>
 
@@ -415,47 +415,47 @@
                 <!-- Left: Working hours -->
                 <div class="col-md-6">
                   <label class="form-label small mb-1 fw-semibold">
-                    <i class="bi bi-clock me-1"></i>Графік роботи
+                    <i class="bi bi-clock me-1"></i>{{ t('stoList.scheduleLabel') }}
                   </label>
                   <div class="border rounded p-3">
                     <div class="row g-2 mb-2 align-items-center">
-                      <div class="col-4"><span class="small text-muted">Пн–Пт</span></div>
+                      <div class="col-4"><span class="small text-muted">{{ t('stoList.weekdayLabel') }}</span></div>
                       <div class="col-8">
                         <div class="d-flex gap-1 align-items-center">
                           <TimeInput v-model="modalForm.weekday_start" />
                           <span class="text-muted small">—</span>
                           <TimeInput v-model="modalForm.weekday_end" />
-                          <button type="button" class="btn btn-sm btn-outline-secondary py-0" title="Вихідний"
+                          <button type="button" class="btn btn-sm btn-outline-secondary py-0" :title="t('stoList.dayOffTooltip')"
                                   @click="modalForm.weekday_start = ''; modalForm.weekday_end = ''">✕</button>
                         </div>
                       </div>
                     </div>
                     <div class="row g-2 mb-2 align-items-center">
-                      <div class="col-4"><span class="small text-muted">Субота</span></div>
+                      <div class="col-4"><span class="small text-muted">{{ t('stoList.saturdayLabel') }}</span></div>
                       <div class="col-8">
                         <div class="d-flex gap-1 align-items-center">
                           <TimeInput v-model="modalForm.saturday_start" />
                           <span class="text-muted small">—</span>
                           <TimeInput v-model="modalForm.saturday_end" />
-                          <button type="button" class="btn btn-sm btn-outline-secondary py-0" title="Вихідний"
+                          <button type="button" class="btn btn-sm btn-outline-secondary py-0" :title="t('stoList.dayOffTooltip')"
                                   @click="modalForm.saturday_start = ''; modalForm.saturday_end = ''">✕</button>
                         </div>
                       </div>
                     </div>
                     <div class="row g-2 align-items-center">
-                      <div class="col-4"><span class="small text-muted">Неділя</span></div>
+                      <div class="col-4"><span class="small text-muted">{{ t('stoList.sundayLabel') }}</span></div>
                       <div class="col-8">
                         <div class="d-flex gap-1 align-items-center">
                           <TimeInput v-model="modalForm.sunday_start" />
                           <span class="text-muted small">—</span>
                           <TimeInput v-model="modalForm.sunday_end" />
-                          <button type="button" class="btn btn-sm btn-outline-secondary py-0" title="Вихідний"
+                          <button type="button" class="btn btn-sm btn-outline-secondary py-0" :title="t('stoList.dayOffTooltip')"
                                   @click="modalForm.sunday_start = ''; modalForm.sunday_end = ''">✕</button>
                         </div>
                       </div>
                     </div>
                     <div class="text-muted mt-2" style="font-size:0.72rem">
-                      💡 Порожнє поле = вихідний день. Двоеточие вводити не потрібно — воно вже є. Після введення годин автоматично фокус переходить на хвилини.
+                      {{ t('stoList.scheduleHint') }}
                     </div>
                   </div>
                 </div>
@@ -463,7 +463,7 @@
                 <!-- Right: Phones -->
                 <div class="col-md-6">
                   <label class="form-label small mb-1 fw-semibold">
-                    <i class="bi bi-telephone me-1"></i>Телефонні номери
+                    <i class="bi bi-telephone me-1"></i>{{ t('stoList.phonesLabel') }}
                   </label>
                   <div class="border rounded p-3" style="min-height:168px">
                     <div v-if="phonesLoading" class="text-center py-3">
@@ -478,14 +478,14 @@
                           class="badge"
                           :class="ph.is_main ? 'bg-success' : 'bg-secondary'"
                           style="cursor:pointer;font-size:.7rem"
-                          :title="ph.is_main ? 'Основний' : 'Зробити основним'"
+                          :title="ph.is_main ? t('stoList.phoneMainTooltip') : t('stoList.phoneMakeMainTooltip')"
                           @click="setMainPhone(idx)"
                         >{{ ph.is_main ? '★' : '☆' }}</span>
                         <span class="small flex-grow-1">{{ ph.formatted }}</span>
                         <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1"
-                                title="Видалити" @click="removePhone(idx)">✕</button>
+                                :title="t('common.delete')" @click="removePhone(idx)">✕</button>
                       </div>
-                      <div v-if="!phonesList.length" class="text-muted small mb-2">Телефони не додано</div>
+                      <div v-if="!phonesList.length" class="text-muted small mb-2">{{ t('stoList.noPhones') }}</div>
 
                       <!-- Add new phone -->
                       <div class="d-flex gap-2 mt-2">
@@ -493,14 +493,14 @@
                           v-model="newPhoneRaw"
                           type="tel"
                           class="form-control form-control-sm"
-                          placeholder="+380XXXXXXXXX"
+                          :placeholder="t('stoList.phoneAddPlaceholder')"
                           @keydown.enter.prevent="addPhone"
                         />
                         <button type="button" class="btn btn-sm btn-outline-primary text-nowrap"
-                                @click="addPhone">+ Додати</button>
+                                @click="addPhone">+ {{ t('stoList.addPhoneButton') }}</button>
                       </div>
                       <div class="text-muted mt-1" style="font-size:0.72rem">
-                        ★ — основний номер. Зберігається разом із загальними даними.
+                        {{ t('stoList.phoneMainHint') }}
                       </div>
                     </template>
                   </div>
@@ -510,11 +510,11 @@
 
               <div class="row g-3">
                 <div class="col-sm-6">
-                  <label class="form-label small mb-1">Створено</label>
+                  <label class="form-label small mb-1">{{ t('stoList.createdLabel') }}</label>
                   <div class="readonly-field text-muted small">{{ modalData.created_at }}</div>
                 </div>
                 <div class="col-sm-6">
-                  <label class="form-label small mb-1">Оновлено</label>
+                  <label class="form-label small mb-1">{{ t('stoList.updatedLabel') }}</label>
                   <div class="readonly-field text-muted small">{{ modalData.updated_at }}</div>
                 </div>
               </div>
@@ -529,7 +529,7 @@
               <div v-else-if="brandsError" class="alert alert-danger py-2 small">{{ brandsError }}</div>
               <template v-else>
                 <!-- Vehicle types block -->
-                <p class="text-muted small mb-2">Оберіть типи транспортних засобів, з якими працює це СТО.</p>
+                <p class="text-muted small mb-2">{{ t('stoList.vehicleTypesHint') }}</p>
                 <div class="d-flex flex-wrap gap-2 mb-4">
                   <label
                     v-for="vt in vtList"
@@ -545,24 +545,24 @@
                     />
                     {{ vt.name_uk }}
                   </label>
-                  <div v-if="!vtList.length" class="text-muted small">Типи ТС не знайдено</div>
+                  <div v-if="!vtList.length" class="text-muted small">{{ t('stoList.noVehicleTypes') }}</div>
                 </div>
 
                 <!-- Car brands block -->
                 <div class="border-top pt-3">
                   <div class="d-flex align-items-center justify-content-between mb-2 gap-2">
-                    <p class="text-muted small mb-0">Оберіть марки автомобілів, з якими працює це СТО.</p>
+                    <p class="text-muted small mb-0">{{ t('stoList.brandsHint') }}</p>
                     <div class="d-flex align-items-center gap-2 flex-shrink-0">
                       <span class="badge bg-primary">{{ checkedBrandIds.size }}</span>
                       <button v-if="checkedBrandIds.size > 0" type="button" class="btn btn-sm btn-outline-secondary py-0"
-                              @click="checkedBrandIds = new Set()">Зняти всі</button>
+                              @click="checkedBrandIds = new Set()">{{ t('stoList.clearAll') }}</button>
                     </div>
                   </div>
                   <input
                     v-model="brandSearch"
                     type="text"
                     class="form-control form-control-sm mb-2"
-                    placeholder="Фільтр марок..."
+                    :placeholder="t('stoList.brandsFilterPlaceholder')"
                     style="max-width:260px"
                   />
                   <div class="d-flex flex-wrap gap-2">
@@ -580,7 +580,7 @@
                       />
                       {{ b.name }}
                     </label>
-                    <div v-if="!filteredBrands.length" class="text-muted small">Марки не знайдено</div>
+                    <div v-if="!filteredBrands.length" class="text-muted small">{{ t('stoList.noBrandsFound') }}</div>
                   </div>
                 </div>
 
@@ -589,11 +589,11 @@
                   <div class="d-flex gap-4">
                     <div class="form-check form-switch">
                       <input id="is_official" v-model="modalForm.is_official" class="form-check-input" type="checkbox" role="switch" />
-                      <label class="form-check-label small" for="is_official">Офіційний дилер</label>
+                      <label class="form-check-label small" for="is_official">{{ t('stoList.officialDealer') }}</label>
                     </div>
                     <div class="form-check form-switch">
                       <input id="is_verified" v-model="modalForm.is_verified" class="form-check-input" type="checkbox" role="switch" />
-                      <label class="form-check-label small" for="is_verified">Перевірено платформою</label>
+                      <label class="form-check-label small" for="is_verified">{{ t('stoList.verifiedByPlatform') }}</label>
                     </div>
                   </div>
                 </div>
@@ -627,7 +627,7 @@
                   </div>
                 </div>
                 <div v-if="servicesGroups.length === 0" class="text-muted text-center py-4">
-                  Послуги не знайдено
+                  {{ t('stoList.noServicesFound') }}
                 </div>
               </template>
             </template>
@@ -639,7 +639,7 @@
               </div>
               <div v-else-if="amenitiesError" class="alert alert-danger py-2 small">{{ amenitiesError }}</div>
               <template v-else>
-                <p class="text-muted small mb-3">Оберіть зручності, які є в цьому СТО.</p>
+                <p class="text-muted small mb-3">{{ t('stoList.amenitiesHint') }}</p>
                 <div class="d-flex flex-wrap gap-2">
                   <label
                     v-for="a in amenitiesList"
@@ -665,7 +665,7 @@
                     {{ a.name }}
                   </label>
                 </div>
-                <div v-if="!amenitiesList.length" class="text-muted text-center py-4">Зручності не знайдено</div>
+                <div v-if="!amenitiesList.length" class="text-muted text-center py-4">{{ t('stoList.noAmenitiesFound') }}</div>
               </template>
             </template>
 
@@ -677,9 +677,9 @@
               <div v-else-if="addressError" class="alert alert-danger py-2 small">{{ addressError }}</div>
               <template v-else>
                 <div v-if="addressList.length === 0" class="text-center py-4">
-                  <p class="text-muted mb-3">Адреси не знайдено</p>
+                  <p class="text-muted mb-3">{{ t('stoList.noAddresses') }}</p>
                   <button class="btn btn-sm btn-primary" @click="createAddress">
-                    <i class="bi bi-plus-circle me-1"></i>Додати адресу
+                    <i class="bi bi-plus-circle me-1"></i>{{ t('stoList.addAddress') }}
                   </button>
                 </div>
                 <div v-for="addr in addressList" :key="addr.id" class="card mb-3">
@@ -694,33 +694,33 @@
 
                       <!-- Country -->
                       <div class="mb-2">
-                        <label class="form-label small mb-1">Країна</label>
+                        <label class="form-label small mb-1">{{ t('stoList.countryLabel') }}</label>
                         <select v-model="addrForms[addr.id].country_id"
                                 class="form-select form-select-sm"
                                 @change="onCountryChange(addr.id)">
-                          <option :value="null">— Оберіть країну —</option>
+                          <option :value="null">{{ t('stoList.selectCountryOption') }}</option>
                           <option v-for="c in countriesList" :key="c.id" :value="c.id">{{ c.name_uk }}</option>
                         </select>
                       </div>
 
                       <!-- Oblast (only if list non-empty) -->
                       <div v-if="oblastsByAddr[addr.id]?.length" class="mb-2">
-                        <label class="form-label small mb-1">Область</label>
+                        <label class="form-label small mb-1">{{ t('stoList.oblastLabel') }}</label>
                         <select v-model="addrForms[addr.id].oblast_id"
                                 class="form-select form-select-sm"
                                 @change="onOblastChange(addr.id)">
-                          <option :value="null">— Без області —</option>
+                          <option :value="null">{{ t('stoList.noOblastOption') }}</option>
                           <option v-for="a in oblastsByAddr[addr.id]" :key="a.id" :value="a.id">{{ a.name_uk }}</option>
                         </select>
                       </div>
 
                       <!-- District (only if list non-empty) -->
                       <div v-if="districtsByAddr[addr.id]?.length" class="mb-2">
-                        <label class="form-label small mb-1">Район</label>
+                        <label class="form-label small mb-1">{{ t('stoList.districtLabel') }}</label>
                         <select v-model="addrForms[addr.id].district_id"
                                 class="form-select form-select-sm"
                                 @change="onDistrictChange(addr.id)">
-                          <option :value="null">— Без району —</option>
+                          <option :value="null">{{ t('stoList.noDistrictOption') }}</option>
                           <option v-for="d in districtsByAddr[addr.id]" :key="d.id" :value="d.id">{{ d.name_uk }}</option>
                         </select>
                       </div>
@@ -728,7 +728,7 @@
                       <!-- City -->
                       <div class="mb-2">
                         <label class="form-label small mb-1">
-                          Населений пункт <span class="text-danger">*</span>
+                          {{ t('stoList.cityLabel') }} <span class="text-danger">*</span>
                         </label>
                         <div class="d-flex gap-2 align-items-center">
                           <div class="readonly-field flex-grow-1 small">
@@ -740,22 +740,22 @@
                           <button type="button"
                                   class="btn btn-sm btn-outline-primary flex-shrink-0"
                                   @click="openCityPicker(addr.id)">
-                            <i class="bi bi-search me-1"></i>Обрати
+                            <i class="bi bi-search me-1"></i>{{ t('stoList.selectCity') }}
                           </button>
                         </div>
                       </div>
 
                       <!-- address_detail -->
                       <div class="mb-2">
-                        <label class="form-label small mb-1">Деталі адреси</label>
+                        <label class="form-label small mb-1">{{ t('stoList.addressDetailLabel') }}</label>
                         <input v-model="addrForms[addr.id].address_detail"
                                type="text" class="form-control form-control-sm"
-                               placeholder="вул. Шевченка, 10, кв. 5" />
+                               :placeholder="t('stoList.addressDetailPlaceholder')" />
                       </div>
 
                       <!-- postal_code -->
                       <div class="mb-2">
-                        <label class="form-label small mb-1">Поштовий індекс</label>
+                        <label class="form-label small mb-1">{{ t('stoList.postalCodeLabel') }}</label>
                         <input v-model="addrForms[addr.id].postal_code"
                                type="text" class="form-control form-control-sm"
                                placeholder="61000" maxlength="10" />
@@ -763,7 +763,7 @@
 
                       <!-- description -->
                       <div class="mb-3">
-                        <label class="form-label small mb-1">Опис / Орієнтир</label>
+                        <label class="form-label small mb-1">{{ t('stoList.descriptionLandmarkLabel') }}</label>
                         <textarea v-model="addrForms[addr.id].description"
                                   class="form-control form-control-sm" rows="2"></textarea>
                       </div>
@@ -771,28 +771,28 @@
                       <!-- Coordinates (editable) -->
                       <div class="border-top pt-3 mb-3">
                         <label class="form-label small mb-2 fw-semibold">
-                          <i class="bi bi-geo-alt-fill me-1"></i>Координати (GPS)
+                          <i class="bi bi-geo-alt-fill me-1"></i>{{ t('stoList.coordinatesLabel') }}
                         </label>
                         <div class="row g-2">
                           <div class="col-md-6">
-                            <label class="form-label small mb-1">Широта (Latitude)</label>
+                            <label class="form-label small mb-1">{{ t('stoList.latitudeLabel') }}</label>
                             <input v-model.number="addrForms[addr.id].latitude"
                                    type="number" step="0.000001" class="form-control form-control-sm"
                                    placeholder="50.450100" />
-                            <div class="text-muted" style="font-size:0.7rem">Наприклад: 50.450100</div>
+                            <div class="text-muted" style="font-size:0.7rem">{{ t('stoList.latitudeExample') }}</div>
                           </div>
                           <div class="col-md-6">
-                            <label class="form-label small mb-1">Довгота (Longitude)</label>
+                            <label class="form-label small mb-1">{{ t('stoList.longitudeLabel') }}</label>
                             <input v-model.number="addrForms[addr.id].longitude"
                                    type="number" step="0.000001" class="form-control form-control-sm"
                                    placeholder="30.523400" />
-                            <div class="text-muted" style="font-size:0.7rem">Наприклад: 30.523400</div>
+                            <div class="text-muted" style="font-size:0.7rem">{{ t('stoList.longitudeExample') }}</div>
                           </div>
                         </div>
                         <div v-if="addrForms[addr.id].latitude && addrForms[addr.id].longitude" class="mt-2">
                           <a :href="`https://maps.google.com/?q=${addrForms[addr.id].latitude},${addrForms[addr.id].longitude}`"
                              target="_blank" rel="noopener" class="text-primary small">
-                            <i class="bi bi-geo-alt-fill me-1"></i>Переглянути на Google Maps
+                            <i class="bi bi-geo-alt-fill me-1"></i>{{ t('stoList.viewOnGoogleMaps') }}
                           </a>
                         </div>
                       </div>
@@ -820,19 +820,19 @@
 
                 <!-- ── Співробітники СТО ── -->
                 <h6 class="fw-semibold mb-2">
-                  <i class="bi bi-person-badge me-1"></i>Співробітники СТО
+                  <i class="bi bi-person-badge me-1"></i>{{ t('stoList.employeesTitle') }}
                 </h6>
                 <div v-if="!employeesList.length" class="text-muted small mb-4 ps-1">
-                  Співробітників не додано
+                  {{ t('stoList.noEmployees') }}
                 </div>
                 <table v-else class="table table-sm table-hover align-middle small mb-4">
                   <thead>
                     <tr>
-                      <th class="text-muted" style="width:45px">ID</th>
-                      <th style="width:200px">Ім'я / email</th>
-                      <th>Посада</th>
-                      <th style="width:115px">Статус</th>
-                      <th>Опис</th>
+                      <th class="text-muted" style="width:45px">{{ t('table.id') }}</th>
+                      <th style="width:200px">{{ t('stoList.nameEmailCol') }}</th>
+                      <th>{{ t('stoList.positionCol') }}</th>
+                      <th style="width:115px">{{ t('filter.status') }}</th>
+                      <th>{{ t('common.description') }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -848,7 +848,7 @@
                                 :value="emp.position_id ?? ''"
                                 :disabled="updatingEmployeeId === emp.id"
                                 @change="changeEmployeePosition(emp, $event.target.value)">
-                          <option value="">— Без посади —</option>
+                          <option value="">{{ t('stoList.noPositionOption') }}</option>
                           <optgroup v-for="grp in positionsGrouped" :key="grp.group_id" :label="grp.group_name">
                             <option v-for="pos in grp.positions" :key="pos.id" :value="pos.id">
                               {{ pos.name }}
@@ -867,10 +867,10 @@
                                 :disabled="togglingEmployeeId === emp.id"
                                 @click="toggleEmployee(emp)">
                           <span v-if="togglingEmployeeId === emp.id" class="spinner-border spinner-border-sm"></span>
-                          <span v-else>{{ emp.is_active ? 'Активний' : 'Неактивний' }}</span>
+                          <span v-else>{{ emp.is_active ? t('common.active') : t('common.inactive') }}</span>
                         </button>
                         <span v-else class="badge" :class="emp.is_active ? 'bg-success' : 'bg-danger'">
-                          {{ emp.is_active ? 'Активний' : 'Неактивний' }}
+                          {{ emp.is_active ? t('common.active') : t('common.inactive') }}
                         </span>
                       </td>
                       <td class="text-muted" style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
@@ -882,18 +882,18 @@
 
                 <!-- ── Менеджери платформи ── -->
                 <h6 class="fw-semibold mb-1">
-                  <i class="bi bi-shield-lock me-1"></i>Менеджери платформи
+                  <i class="bi bi-shield-lock me-1"></i>{{ t('stoList.managersTitle') }}
                 </h6>
                 <p class="text-muted small mb-2">
-                  Користувачі, які мають доступ до управління даними цього СТО на сайті.
+                  {{ t('stoList.managersHint') }}
                 </p>
-                <div v-if="!managersList.length" class="text-muted small ps-1">Менеджерів не призначено</div>
+                <div v-if="!managersList.length" class="text-muted small ps-1">{{ t('stoList.noManagers') }}</div>
                 <table v-else class="table table-sm align-middle small mb-0">
                   <thead>
                     <tr>
-                      <th>Ім'я / username</th>
+                      <th>{{ t('stoList.nameUsernameCol') }}</th>
                       <th>Email</th>
-                      <th style="width:145px">Додано</th>
+                      <th style="width:145px">{{ t('stoList.addedCol') }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -916,7 +916,7 @@
               <div class="d-flex gap-2 mb-3">
                 <select v-model="bookingsFilter" class="form-select form-select-sm" style="width:auto"
                         @change="loadBookings(1)">
-                  <option value="">Всі статуси</option>
+                  <option value="">{{ t('filter.allStatuses') }}</option>
                   <option v-for="s in BOOKING_STATUSES" :key="s.value" :value="s.value">{{ s.label }}</option>
                 </select>
               </div>
@@ -925,16 +925,16 @@
               </div>
               <div v-else-if="bookingsError" class="alert alert-danger py-2 small">{{ bookingsError }}</div>
               <template v-else>
-                <div v-if="!bookingsList.length" class="text-muted text-center py-4">Записи не знайдено</div>
+                <div v-if="!bookingsList.length" class="text-muted text-center py-4">{{ t('stoList.noBookings') }}</div>
                 <table v-else class="table table-sm table-hover align-middle small mb-0">
                   <thead>
                     <tr>
-                      <th class="text-muted" style="width:45px">ID</th>
-                      <th>Дата / Час</th>
-                      <th>Клієнт</th>
-                      <th>Авто</th>
-                      <th style="width:65px">Хв</th>
-                      <th style="width:140px">Статус</th>
+                      <th class="text-muted" style="width:45px">{{ t('table.id') }}</th>
+                      <th>{{ t('stoList.dateTimeCol') }}</th>
+                      <th>{{ t('stoList.clientCol') }}</th>
+                      <th>{{ t('stoList.carCol') }}</th>
+                      <th style="width:65px">{{ t('stoList.minutesCol') }}</th>
+                      <th style="width:140px">{{ t('filter.status') }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -965,7 +965,7 @@
                   </tbody>
                 </table>
                 <div v-if="bookingsTotalPages > 1" class="d-flex justify-content-between align-items-center mt-2">
-                  <span class="text-muted small">Всього: {{ bookingsTotal }}</span>
+                  <span class="text-muted small">{{ t('analytics.totalCount', { value: bookingsTotal }) }}</span>
                   <nav><ul class="pagination pagination-sm mb-0">
                     <li class="page-item" :class="{disabled: bookingsPage===1}">
                       <button class="page-link" @click="loadBookings(bookingsPage-1)">‹</button>
@@ -984,7 +984,7 @@
               <div class="d-flex gap-2 mb-3">
                 <select v-model="reviewsFilter" class="form-select form-select-sm" style="width:auto"
                         @change="loadReviews(1)">
-                  <option value="">Всі статуси</option>
+                  <option value="">{{ t('filter.allStatuses') }}</option>
                   <option v-for="s in REVIEW_STATUSES" :key="s.value" :value="s.value">{{ s.label }}</option>
                 </select>
               </div>
@@ -993,7 +993,7 @@
               </div>
               <div v-else-if="reviewsError" class="alert alert-danger py-2 small">{{ reviewsError }}</div>
               <template v-else>
-                <div v-if="!reviewsList.length" class="text-muted text-center py-4">Відгуків не знайдено</div>
+                <div v-if="!reviewsList.length" class="text-muted text-center py-4">{{ t('stoList.noReviews') }}</div>
                 <div v-for="rv in reviewsList" :key="rv.id" class="card mb-2">
                   <div class="card-body p-3 small">
                     <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
@@ -1005,7 +1005,7 @@
                             type="text"
                             class="form-control form-control-sm"
                             style="max-width:200px"
-                            placeholder="Ім'я гостя"
+                            :placeholder="t('stoList.guestNamePlaceholder')"
                             @input="markReviewChanged(rv.id)"
                           />
                           <input
@@ -1013,7 +1013,7 @@
                             type="email"
                             class="form-control form-control-sm"
                             style="max-width:200px"
-                            placeholder="Email (опційно)"
+                            :placeholder="t('stoList.guestEmailPlaceholder')"
                             @input="markReviewChanged(rv.id)"
                           />
                         </div>
@@ -1021,7 +1021,7 @@
                         <span v-else class="fw-semibold">{{ rv.user_name ?? rv.guest_name ?? rv.user_email ?? rv.guest_email }}</span>
 
                         <span class="text-muted ms-2" style="font-size:.75rem">{{ formatDateUA(rv.created_at) }}</span>
-                        <span v-if="rv.is_verified_purchase" class="badge bg-success ms-1" style="font-size:.65rem">верифіковано</span>
+                        <span v-if="rv.is_verified_purchase" class="badge bg-success ms-1" style="font-size:.65rem">{{ t('stoList.verifiedPurchase') }}</span>
                         <span v-if="rv.booking_id" class="text-muted ms-1" style="font-size:.75rem">#{{ rv.booking_id }}</span>
                       </div>
                       <div class="d-flex align-items-center gap-2 flex-shrink-0">
@@ -1051,7 +1051,7 @@
                       v-model="rv.title"
                       type="text"
                       class="form-control form-control-sm mb-2"
-                      placeholder="Заголовок відгуку (опційно)"
+                      :placeholder="t('stoList.reviewTitlePlaceholder')"
                       @input="markReviewChanged(rv.id)"
                     />
                     <div v-else-if="rv.title" class="fw-semibold mb-1">{{ rv.title }}</div>
@@ -1062,16 +1062,16 @@
                       v-model="rv.text"
                       class="form-control form-control-sm mb-2"
                       rows="3"
-                      placeholder="Текст відгуку"
+                      :placeholder="t('stoList.reviewTextPlaceholder')"
                       @input="markReviewChanged(rv.id)"
                     ></textarea>
                     <div v-else class="text-muted mb-2" style="white-space:pre-wrap">{{ rv.text }}</div>
 
                     <div class="d-flex flex-wrap gap-3 text-muted mb-2" style="font-size:.75rem">
-                      <span><i class="bi bi-tools me-1"></i>Якість: {{ rv.rating_quality }}/5</span>
-                      <span><i class="bi bi-lightning me-1"></i>Швидкість: {{ rv.rating_speed }}/5</span>
-                      <span><i class="bi bi-cash me-1"></i>Ціна: {{ rv.rating_price }}/5</span>
-                      <span><i class="bi bi-person-check me-1"></i>Сервіс: {{ rv.rating_service }}/5</span>
+                      <span><i class="bi bi-tools me-1"></i>{{ t('stoList.qualityLabel') }}: {{ rv.rating_quality }}/5</span>
+                      <span><i class="bi bi-lightning me-1"></i>{{ t('stoList.speedLabel') }}: {{ rv.rating_speed }}/5</span>
+                      <span><i class="bi bi-cash me-1"></i>{{ t('stoList.priceLabel') }}: {{ rv.rating_price }}/5</span>
+                      <span><i class="bi bi-person-check me-1"></i>{{ t('stoList.serviceLabel') }}: {{ rv.rating_service }}/5</span>
                       <span v-if="rv.helpful_count"><i class="bi bi-hand-thumbs-up me-1"></i>{{ rv.helpful_count }}</span>
                     </div>
 
@@ -1082,13 +1082,13 @@
                         <!-- STO Response - Button and Display -->
                         <div v-if="rv.response" class="p-3 bg-light rounded border-start border-primary border-3">
                           <div class="d-flex align-items-center justify-content-between mb-1">
-                            <strong class="text-primary small"><i class="bi bi-reply me-1"></i>Відповідь СТО</strong>
+                            <strong class="text-primary small"><i class="bi bi-reply me-1"></i>{{ t('stoList.stoResponseTitle') }}</strong>
                             <div v-if="canEdit" class="d-flex gap-2">
                               <button
                                 type="button"
                                 class="btn btn-sm btn-outline-primary"
                                 @click="openResponseModal(rv)"
-                                title="Редагувати відповідь"
+                                :title="t('stoList.editResponseTooltip')"
                               >
                                 <i class="bi bi-pencil"></i>
                               </button>
@@ -1096,7 +1096,7 @@
                                 type="button"
                                 class="btn btn-sm btn-outline-danger"
                                 @click="deleteReviewResponse(rv.id)"
-                                title="Видалити відповідь"
+                                :title="t('stoList.deleteResponseTooltip')"
                               >
                                 <i class="bi bi-trash"></i>
                               </button>
@@ -1105,7 +1105,7 @@
                           <div class="text-muted mt-1" style="white-space: pre-wrap;">{{ rv.response.text }}</div>
                           <div class="text-muted small mt-1">
                             {{ new Date(rv.response.created_at).toLocaleString('uk-UA') }}
-                            <span v-if="rv.response.is_edited" class="text-warning ms-1">(редаговано)</span>
+                            <span v-if="rv.response.is_edited" class="text-warning ms-1">{{ t('stoList.editedLabel') }}</span>
                           </div>
                         </div>
                         <div v-else-if="canEdit">
@@ -1114,7 +1114,7 @@
                             class="btn btn-sm btn-outline-primary"
                             @click="openResponseModal(rv)"
                           >
-                            <i class="bi bi-reply me-1"></i>Відповісти
+                            <i class="bi bi-reply me-1"></i>{{ t('stoList.replyButton') }}
                           </button>
                         </div>
                       </div>
@@ -1144,7 +1144,7 @@
                             class="btn btn-sm btn-danger position-absolute"
                             style="top: 4px; right: 4px; opacity: 0.9;"
                             @click="deleteReviewMedia(rv.id, media.id)"
-                            title="Видалити фото"
+                            :title="t('stoList.deletePhotoTooltip')"
                           >
                             <i class="bi bi-trash"></i>
                           </button>
@@ -1154,7 +1154,7 @@
                   </div>
                 </div>
                 <div v-if="reviewsTotalPages > 1" class="d-flex justify-content-between align-items-center mt-2">
-                  <span class="text-muted small">Всього: {{ reviewsTotal }}</span>
+                  <span class="text-muted small">{{ t('analytics.totalCount', { value: reviewsTotal }) }}</span>
                   <nav><ul class="pagination pagination-sm mb-0">
                     <li class="page-item" :class="{disabled: reviewsPage===1}">
                       <button class="page-link" @click="loadReviews(reviewsPage-1)">‹</button>
@@ -1175,7 +1175,7 @@
               <div class="mb-3">
                 <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
                   <label class="btn btn-sm btn-outline-primary mb-0" style="cursor:pointer">
-                    <i class="bi bi-upload me-1"></i>Завантажити фото
+                    <i class="bi bi-upload me-1"></i>{{ t('stoList.uploadPhoto') }}
                     <input
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
@@ -1188,16 +1188,16 @@
                     class="btn btn-sm btn-outline-secondary"
                     @click="showUrlUpload = !showUrlUpload; showBase64Upload = false; photosError = null"
                   >
-                    <i class="bi bi-link-45deg me-1"></i>Завантажити з URL
+                    <i class="bi bi-link-45deg me-1"></i>{{ t('stoList.uploadFromUrl') }}
                   </button>
                   <button
                     class="btn btn-sm btn-outline-info"
                     @click="showBase64Upload = !showBase64Upload; showUrlUpload = false; photosError = null"
                   >
-                    <i class="bi bi-clipboard-check me-1"></i>Вставити Base64
+                    <i class="bi bi-clipboard-check me-1"></i>{{ t('stoList.pasteBase64') }}
                   </button>
                   <span v-if="photosUploading" class="text-muted small">
-                    <span class="spinner-border spinner-border-sm me-1"></span>Завантаження...
+                    <span class="spinner-border spinner-border-sm me-1"></span>{{ t('stoList.uploading') }}
                   </span>
                   <span v-if="photosError" class="text-danger small">{{ photosError }}</span>
                 </div>
@@ -1206,7 +1206,7 @@
                 <div v-if="showUrlUpload" class="card border-secondary" style="max-width:600px">
                   <div class="card-body p-3">
                     <div class="mb-2">
-                      <label class="form-label small mb-1">URL зображення</label>
+                      <label class="form-label small mb-1">{{ t('stoList.imageUrlLabel') }}</label>
                       <input
                         v-model="photoUrl"
                         type="text"
@@ -1215,7 +1215,7 @@
                         @keydown.enter.prevent="uploadPhotoFromUrl"
                       />
                       <div class="text-muted small mt-1">
-                        Підтримуються формати: JPG, PNG, WebP. Зображення буде автоматично конвертовано в WebP.
+                        {{ t('stoList.supportedFormatsHint') }}
                       </div>
                     </div>
                     <div class="d-flex gap-2">
@@ -1224,13 +1224,13 @@
                         :disabled="!photoUrl.trim() || photosUploading"
                         @click="uploadPhotoFromUrl"
                       >
-                        <i class="bi bi-download me-1"></i>Завантажити
+                        <i class="bi bi-download me-1"></i>{{ t('stoList.download') }}
                       </button>
                       <button
                         class="btn btn-sm btn-secondary"
                         @click="showUrlUpload = false; photoUrl = ''; photosError = null"
                       >
-                        Скасувати
+                        {{ t('common.cancel') }}
                       </button>
                     </div>
                   </div>
@@ -1240,26 +1240,26 @@
                 <div v-if="showBase64Upload" class="card border-info" style="max-width:700px">
                   <div class="card-body p-3">
                     <div class="alert alert-info py-2 px-3 small mb-3">
-                      <strong>💡 Швидка інструкція:</strong>
+                      <strong>{{ t('stoList.base64QuickInstructions') }}</strong>
                       <ol class="mb-0 mt-1 ps-3" style="line-height:1.6">
-                        <li>Відкрийте <strong>Google Maps</strong> → знайдіть СТО → клацніть на <strong>фото</strong> або <strong>Street View</strong></li>
-                        <li>Натисніть <code class="bg-white px-1">F12</code> → вкладка <code class="bg-white px-1">Console</code></li>
-                        <li>Виконайте команду (скопіюйте і вставте):
+                        <li>{{ t('stoList.base64Step1Before') }} <strong>Google Maps</strong> {{ t('stoList.base64Step1Middle1') }} <strong>{{ t('stoList.photoWord') }}</strong> {{ t('stoList.base64Step1Middle2') }} <strong>Street View</strong></li>
+                        <li>{{ t('stoList.base64Step2') }} <code class="bg-white px-1">F12</code> {{ t('stoList.base64Step2Middle') }} <code class="bg-white px-1">Console</code></li>
+                        <li>{{ t('stoList.base64Step3') }}
                           <div class="mt-1 bg-white p-2 rounded border font-monospace" style="font-size:.7rem; user-select:all; cursor:pointer"
                                @click="copyCanvasCommand">
                             <div>(function(){const c=document.querySelector('canvas');const ctx=c.getContext('2d');const img=ctx.getImageData(0,0,c.width,c.height);const d=img.data;let t=c.height,b=0,l=c.width,r=0;for(let y=0;y&lt;c.height;y++){for(let x=0;x&lt;c.width;x++){const i=(y*c.width+x)*4;if(d[i]+d[i+1]+d[i+2]>30){t=Math.min(t,y);b=Math.max(b,y);l=Math.min(l,x);r=Math.max(r,x);}}}const w=r-l+1,h=b-t+1;const c2=document.createElement('canvas');c2.width=w;c2.height=h;c2.getContext('2d').drawImage(c,l,t,w,h,0,0,w,h);return c2.toDataURL('image/png');})()</div>
                             <i class="bi bi-clipboard ms-2 text-muted"></i>
                           </div>
                           <div class="text-muted mt-1" style="font-size:.7rem">
-                            ✂️ Команда автоматично обріже чорні поля
+                            {{ t('stoList.base64AutoCropHint') }}
                           </div>
                         </li>
-                        <li>Скопіюйте результат (починається з <code class="bg-white px-1">data:image/png;base64,</code>) і вставте нижче</li>
+                        <li>{{ t('stoList.base64Step4') }} <code class="bg-white px-1">data:image/png;base64,</code>{{ t('stoList.base64Step4After') }}</li>
                       </ol>
                     </div>
                     <div class="mb-2">
                       <label class="form-label small mb-1">
-                        <i class="bi bi-code-square me-1"></i>Base64 зображення
+                        <i class="bi bi-code-square me-1"></i>{{ t('stoList.base64ImageLabel') }}
                       </label>
                       <textarea
                         v-model="photoBase64"
@@ -1277,12 +1277,12 @@
                           checked
                         />
                         <label class="form-check-label small" for="autoCropCheck">
-                          ✂️ Автоматично обрізати чорні поля
+                          {{ t('stoList.autoCropCheckbox') }}
                         </label>
                       </div>
                     </div>
                     <div class="mb-2">
-                      <label class="form-label small mb-1">URL джерела (опціонально)</label>
+                      <label class="form-label small mb-1">{{ t('stoList.sourceUrlLabel') }}</label>
                       <input
                         v-model="photoSourceUrl"
                         type="text"
@@ -1290,7 +1290,7 @@
                         placeholder="https://www.google.com/maps/place/..."
                       />
                       <div class="text-muted small mt-1">
-                        Зазвичай це посилання на Google Maps, звідки скопійоване фото
+                        {{ t('stoList.sourceUrlHint') }}
                       </div>
                     </div>
                     <div class="d-flex gap-2">
@@ -1299,13 +1299,13 @@
                         :disabled="!photoBase64.trim() || photosUploading"
                         @click="uploadPhotoFromBase64"
                       >
-                        <i class="bi bi-cloud-upload me-1"></i>Завантажити
+                        <i class="bi bi-cloud-upload me-1"></i>{{ t('stoList.download') }}
                       </button>
                       <button
                         class="btn btn-sm btn-secondary"
                         @click="showBase64Upload = false; photoBase64 = ''; photoSourceUrl = ''; photosError = null"
                       >
-                        Скасувати
+                        {{ t('common.cancel') }}
                       </button>
                     </div>
                   </div>
@@ -1318,7 +1318,7 @@
 
               <div v-else-if="!photosList.length" class="text-muted text-center py-5">
                 <i class="bi bi-images" style="font-size:2rem"></i>
-                <div class="mt-2">Фото відсутні</div>
+                <div class="mt-2">{{ t('stoList.noPhotos') }}</div>
               </div>
 
               <div v-else class="row g-3">
@@ -1342,7 +1342,7 @@
                         class="badge bg-primary position-absolute"
                         style="top:6px;left:6px;font-size:.65rem"
                       >
-                        <i class="bi bi-star-fill me-1"></i>Обкладинка
+                        <i class="bi bi-star-fill me-1"></i>{{ t('stoList.coverBadge') }}
                       </span>
                     </div>
                     <div class="card-body p-2">
@@ -1350,21 +1350,21 @@
                         :value="photo.caption ?? ''"
                         type="text"
                         class="form-control form-control-sm mb-2"
-                        placeholder="Підпис..."
+                        :placeholder="t('stoList.captionPlaceholder')"
                         @change="updatePhotoCaption(photo, $event.target.value)"
                       />
                       <div class="d-flex gap-1 flex-wrap">
                         <button
                           v-if="!photo.is_cover"
                           class="btn btn-sm btn-outline-primary py-0 px-1 flex-fill"
-                          title="Зробити обкладинкою"
+                          :title="t('stoList.setCoverTooltip')"
                           @click="setCover(photo)"
                         >
                           <i class="bi bi-star"></i>
                         </button>
                         <button
                           class="btn btn-sm btn-outline-danger py-0 px-1 flex-fill"
-                          title="Видалити"
+                          :title="t('common.delete')"
                           @click="deletePhoto(photo)"
                         >
                           <i class="bi bi-trash"></i>
@@ -1383,7 +1383,7 @@
       <template #footer>
         <div></div>
         <div class="d-flex gap-2">
-          <button class="btn btn-secondary btn-sm" @click="closeModal">Закрити</button>
+          <button class="btn btn-secondary btn-sm" @click="closeModal">{{ t('common.close') }}</button>
 
           <!-- Кнопки для вкладок з формою -->
           <button
@@ -1393,7 +1393,7 @@
             @click="saveModal(false)"
           >
             <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-            Зберегти
+            {{ t('common.save') }}
           </button>
           <button
             v-if="['general','vehicle-types','services','amenities','address'].includes(activeTab)"
@@ -1402,7 +1402,7 @@
             @click="saveModal(true)"
           >
             <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-            Зберегти та зачинити
+            {{ t('stoList.saveAndCloseButton') }}
           </button>
 
           <!-- Кнопка для вкладки відгуків -->
@@ -1414,7 +1414,7 @@
           >
             <span v-if="reviewsSaving" class="spinner-border spinner-border-sm me-1"></span>
             <i v-else class="bi bi-check-lg me-1"></i>
-            Зберегти зміни ({{ changedReviews.size }})
+            {{ t('stoList.saveChangesButton', { count: changedReviews.size }) }}
           </button>
         </div>
       </template>
@@ -1425,30 +1425,30 @@
       <div v-if="responseModalOpen" class="modal-backdrop-simple" style="z-index:1070" @click.self="closeResponseModal">
         <div class="card shadow" style="max-width:600px; margin:10vh auto; max-height:75vh; display:flex; flex-direction:column; overflow:hidden">
           <div class="card-header px-4 py-3 d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="bi bi-reply me-2"></i>Відповідь на відгук</h5>
+            <h5 class="mb-0"><i class="bi bi-reply me-2"></i>{{ t('stoList.responseModalTitle') }}</h5>
             <button type="button" class="btn-close" @click="closeResponseModal"></button>
           </div>
           <div class="card-body px-4 py-3" style="overflow-y:auto; flex:1">
             <!-- Review preview -->
             <div class="mb-3 p-3 bg-light rounded">
-              <div class="small text-muted mb-1">Відгук від {{ responseModalReview?.author_name }}</div>
+              <div class="small text-muted mb-1">{{ t('stoList.reviewFromLabel', { name: responseModalReview?.author_name }) }}</div>
               <div class="text-muted" style="white-space: pre-wrap;">{{ responseModalReview?.text }}</div>
             </div>
             <!-- Response textarea -->
             <div class="mb-3">
-              <label class="form-label">Ваша відповідь</label>
+              <label class="form-label">{{ t('stoList.yourResponseLabel') }}</label>
               <textarea
                 v-model="responseModalText"
                 class="form-control"
                 rows="5"
-                placeholder="Введіть відповідь на відгук..."
+                :placeholder="t('stoList.responsePlaceholder')"
                 @input="responseModalChanged = true"
               ></textarea>
             </div>
           </div>
           <div class="card-footer px-4 py-3 d-flex justify-content-end gap-2">
             <button type="button" class="btn btn-sm btn-secondary" @click="closeResponseModal">
-              Скасувати
+              {{ t('common.cancel') }}
             </button>
             <button
               v-if="responseModalChanged"
@@ -1459,7 +1459,7 @@
             >
               <span v-if="responseModalSaving" class="spinner-border spinner-border-sm me-1"></span>
               <i v-else class="bi bi-check-lg me-1"></i>
-              {{ responseModalSaving ? 'Збереження...' : 'Зберегти' }}
+              {{ responseModalSaving ? t('stoList.savingLabel') : t('common.save') }}
             </button>
           </div>
         </div>
@@ -1473,7 +1473,7 @@
              style="max-width:520px; margin:10vh auto; max-height:75vh; display:flex; flex-direction:column; overflow:hidden">
 
           <div class="card-header d-flex justify-content-between align-items-center py-2 px-3">
-            <h6 class="mb-0">Оберіть населений пункт</h6>
+            <h6 class="mb-0">{{ t('stoList.selectCityTitle') }}</h6>
             <button class="btn btn-sm btn-outline-secondary" @click="closeCityPicker">✕</button>
           </div>
 
@@ -1483,12 +1483,12 @@
               v-model="cityPickerSearch"
               type="text"
               class="form-control form-control-sm"
-              placeholder="Введіть назву населеного пункту..."
+              :placeholder="t('stoList.citySearchPlaceholder')"
               @input="debounceCitySearch"
             />
             <div v-if="cityPickerSearch.length > 0 && cityPickerSearch.length < 2"
                  class="text-muted small mt-1">
-              Введіть мінімум 2 символи
+              {{ t('stoList.minSearchChars') }}
             </div>
           </div>
 
@@ -1498,7 +1498,7 @@
             </div>
             <div v-else-if="cityPickerResults.length === 0 && cityPickerSearch.length >= 2"
                  class="text-muted text-center py-3 small">
-              Нічого не знайдено
+              {{ t('stoList.noCityResults') }}
             </div>
             <div v-else class="list-group list-group-flush">
               <button
@@ -1525,6 +1525,7 @@
 
 <script setup>
 import { ref, computed, nextTick, onMounted, watch, defineComponent, h } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ListPageWrapper from '@/components/ListPageWrapper.vue'
 import BaseModal from '@/components/BaseModal.vue'
 import Pagination from '@/components/Pagination.vue'
@@ -1536,6 +1537,8 @@ import { usePageLayout } from '@/composables/usePageLayout'
 import { useUnsavedChanges } from '@/composables/useUnsavedChanges'
 import { useUrlFilters } from '@/composables/useUrlFilters'
 import { AMENITY_ICONS } from '@/utils/amenityIcons.js'
+
+const { t } = useI18n({ useScope: 'global' })
 
 // ── TimeInput Component ───────────────────────────────────────────────────────
 const TimeInput = defineComponent({
@@ -1621,7 +1624,7 @@ const TimeInput = defineComponent({
         type: 'text',
         class: 'form-control form-control-sm text-center p-1',
         style: 'width:35px',
-        placeholder: 'ГГ',
+        placeholder: t('stoList.hoursPlaceholder'),
         maxlength: 2,
         onInput: onHoursInput,
         onBlur: onHoursBlur,
@@ -1633,7 +1636,7 @@ const TimeInput = defineComponent({
         type: 'text',
         class: 'form-control form-control-sm text-center p-1',
         style: 'width:35px',
-        placeholder: 'ХХ',
+        placeholder: t('stoList.minutesPlaceholder'),
         maxlength: 2,
         onInput: onMinutesInput,
         onBlur: onMinutesBlur,
@@ -1691,7 +1694,7 @@ async function bulkRequest(ids, action) {
     body: JSON.stringify({ ids, action }),
   })
   const json = await res.json()
-  if (json.status !== 'success') throw new Error(json.message || 'Помилка виконання масової дії')
+  if (json.status !== 'success') throw new Error(json.message || t('stoList.bulkActionError'))
 }
 
 async function handleBulkAction(action) {
@@ -1710,7 +1713,7 @@ async function handleBulkAction(action) {
 
     deleteManyWithUndo({
       items: removed,
-      message: `Видалено ${removed.length} запис(ів)`,
+      message: t('list.recordsDeleted', { count: removed.length }),
       remove: () => {
         removed
           .slice()
@@ -1739,23 +1742,23 @@ async function handleBulkAction(action) {
     selectedIds.value = new Set()
     await load(page.value)
   } catch (err) {
-    notify(err.message || 'Помилка виконання масової дії', { type: 'error' })
+    notify(err.message || t('stoList.bulkActionError'), { type: 'error' })
   } finally {
     bulkBusy.value = false
   }
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const STO_TYPES = [
-  { value: 'individual',  label: 'Індивідуальне' },
-  { value: 'company',     label: 'Компанія' },
-  { value: 'network',     label: 'Мережа' },
-  { value: 'specialized', label: 'Спеціалізоване' },
-  { value: 'mobile',      label: 'Мобільне' },
-]
+const STO_TYPES = computed(() => [
+  { value: 'individual',  label: t('stoList.typeIndividual') },
+  { value: 'company',     label: t('stoList.typeCompany') },
+  { value: 'network',     label: t('stoList.typeNetwork') },
+  { value: 'specialized', label: t('stoList.typeSpecialized') },
+  { value: 'mobile',      label: t('stoList.typeMobile') },
+])
 
 function typeLabel(value) {
-  return STO_TYPES.find(t => t.value === value)?.label ?? value ?? '—'
+  return STO_TYPES.value.find(t2 => t2.value === value)?.label ?? value ?? '—'
 }
 
 const TYPE_BADGE = {
@@ -1840,11 +1843,11 @@ async function toggleStatus(row) {
       body:    JSON.stringify({ is_active: row.is_active ? 0 : 1 }),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     row.is_active   = json.data.is_active
     row.updated_at  = json.data.updated_at
   } catch (e) {
-    notify('Помилка зміни статусу: ' + e.message, { type: 'error' })
+    notify(t('stoList.statusChangeErrorPrefix') + ' ' + e.message, { type: 'error' })
   } finally {
     togglingId.value = null
   }
@@ -1863,10 +1866,10 @@ async function changeType(row, newType) {
       body:    JSON.stringify({ sto_type: newType }),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     row.sto_type = json.data.sto_type ?? newType
   } catch (e) {
-    notify('Помилка: ' + e.message, { type: 'error' })
+    notify(t('common.error') + ': ' + e.message, { type: 'error' })
   } finally {
     changingTypeId.value = null
   }
@@ -1906,10 +1909,10 @@ async function commitRating(row) {
       body:    JSON.stringify({ rating: newVal !== null && newVal !== '' ? Number(newVal) : null }),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     row.rating = json.data?.rating ?? newVal
   } catch (e) {
-    notify('Помилка: ' + e.message, { type: 'error' })
+    notify(t('common.error') + ': ' + e.message, { type: 'error' })
     row.rating = orig
   }
 }
@@ -1949,11 +1952,11 @@ async function commitName(row) {
       body:    JSON.stringify({ name_uk: newVal }),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     row.name_uk    = json.data.name_uk
     row.updated_at = json.data.updated_at
   } catch (e) {
-    notify('Помилка збереження назви: ' + e.message, { type: 'error' })
+    notify(t('stoList.nameSaveErrorPrefix') + ' ' + e.message, { type: 'error' })
     row.name_uk = editingNameOrig.value  // rollback
   } finally {
     savingName.value = null
@@ -1988,7 +1991,7 @@ async function load(p = 1) {
 
     const res  = await fetch(`/api/admin/sto?${params}`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     items.value      = json.data ?? []
     total.value      = json.pagination?.total ?? 0
     totalPages.value = json.pagination?.total_pages ?? 1
@@ -2086,7 +2089,7 @@ async function loadVehicleTypes() {
   try {
     const res  = await fetch(`/api/admin/sto/${modalData.value.id}/vehicle-types`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     vtList.value       = json.data ?? []
     checkedVtIds.value = new Set(vtList.value.filter(v => v.is_active).map(v => v.id))
     vtLoaded.value     = true
@@ -2109,7 +2112,7 @@ async function saveVehicleTypes(shouldClose = true) {
       body:    JSON.stringify({ vehicle_type_ids: [...checkedVtIds.value] }),
     })
     let json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка збереження типів ТС')
+    if (!res.ok) throw new Error(json.message ?? t('stoList.vehicleTypesSaveError'))
 
     res  = await fetch(`/api/admin/sto/${modalData.value.id}/car-brands`, {
       method:  'PATCH',
@@ -2117,7 +2120,7 @@ async function saveVehicleTypes(shouldClose = true) {
       body:    JSON.stringify({ car_brand_ids: [...checkedBrandIds.value] }),
     })
     json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка збереження марок')
+    if (!res.ok) throw new Error(json.message ?? t('stoList.brandsSaveError'))
 
     // Reset original states after successful save
     originalVtState.value = [...checkedVtIds.value].sort().join(',')
@@ -2156,7 +2159,7 @@ async function loadCarBrands() {
   try {
     const res  = await fetch(`/api/admin/sto/${modalData.value.id}/car-brands`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     brandsList.value      = json.data ?? []
     checkedBrandIds.value = new Set(brandsList.value.filter(b => b.is_active).map(b => b.id))
     brandsLoaded.value    = true
@@ -2188,7 +2191,7 @@ async function loadServices() {
   try {
     const res  = await fetch(`/api/admin/sto/${modalData.value.id}/services`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     servicesGroups.value   = json.data.groups ?? []
     checkedServiceIds.value = new Set(
       servicesGroups.value.flatMap(g => g.services.filter(s => s.active).map(s => s.id))
@@ -2222,7 +2225,7 @@ async function loadAmenities() {
   try {
     const res  = await fetch(`/api/admin/sto/${modalData.value.id}/amenities`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     amenitiesList.value     = json.data ?? []
     checkedAmenityIds.value = new Set(amenitiesList.value.filter(a => a.active).map(a => a.id))
     amenitiesLoaded.value   = true
@@ -2245,7 +2248,7 @@ async function saveAmenities(shouldClose = true) {
       body:    JSON.stringify({ amenity_ids: [...checkedAmenityIds.value] }),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка збереження')
+    if (!res.ok) throw new Error(json.message ?? t('list.saveError'))
 
     // Reset original state after successful save
     originalAmenitiesState.value = [...checkedAmenityIds.value].sort().join(',')
@@ -2307,12 +2310,12 @@ async function createAddress() {
       body:    JSON.stringify({}),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка створення адреси')
+    if (!res.ok) throw new Error(json.message ?? t('stoList.addressCreateError'))
 
     // Reload addresses list
     await loadAddresses()
   } catch (e) {
-    notify('Помилка: ' + e.message, { type: 'error' })
+    notify(t('common.error') + ': ' + e.message, { type: 'error' })
   } finally {
     addressLoading.value = false
   }
@@ -2324,7 +2327,7 @@ async function loadAddresses() {
   try {
     const res  = await fetch(`/api/admin/sto/${modalData.value.id}/addresses`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     addressList.value = json.data ?? []
     addrForms.value   = {}
     for (const addr of addressList.value) initAddrForm(addr)
@@ -2446,8 +2449,8 @@ async function saveAddresses(shouldClose = true) {
   for (const addr of addressList.value) {
     if (!addrForms.value[addr.id]?.city_id) {
       saveError.value = addressList.value.length > 1
-        ? `Адреса #${addr.id}: оберіть населений пункт`
-        : "Оберіть населений пункт"
+        ? t('stoList.selectCityValidationWithId', { id: addr.id })
+        : t('stoList.selectCityValidation')
       return
     }
   }
@@ -2470,7 +2473,7 @@ async function saveAddresses(shouldClose = true) {
         }),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.message ?? 'Помилка збереження')
+      if (!res.ok) throw new Error(json.message ?? t('list.saveError'))
 
       // Update address in list and reinit form
       const idx = addressList.value.findIndex(a => a.id === addr.id)
@@ -2652,7 +2655,7 @@ async function loadPhones() {
   try {
     const res  = await fetch(`/api/admin/sto/${modalData.value.id}/phones`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     // Normalize: add `raw` = e164 for existing phones (used when saving)
     phonesList.value = (json.data ?? []).map(p => ({ ...p, raw: p.e164 }))
   } catch (e) {
@@ -2688,7 +2691,7 @@ async function savePhones() {
     body:    JSON.stringify({ phones: payload }),
   })
   const json = await res.json()
-  if (!res.ok) throw new Error(json.message ?? 'Помилка збереження телефонів')
+  if (!res.ok) throw new Error(json.message ?? t('stoList.phonesSaveError'))
   phonesList.value = (json.data ?? []).map(p => ({ ...p, raw: p.e164 }))
   if (json.main_phone !== undefined) {
     const idx = items.value.findIndex(r => r.id === modalData.value.id)
@@ -2723,7 +2726,7 @@ function normalizeTime(value) {
 
 async function saveGeneral(shouldClose = true) {
   if (!modalForm.value.name_uk?.trim()) {
-    saveError.value = "Поле «Назва (UK)» обов'язкове"
+    saveError.value = t('stoList.nameRequiredValidation')
     return
   }
   saving.value    = true
@@ -2760,7 +2763,7 @@ async function saveGeneral(shouldClose = true) {
       body:   JSON.stringify(payload),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка збереження')
+    if (!res.ok) throw new Error(json.message ?? t('list.saveError'))
 
     const idx = items.value.findIndex(r => r.id === modalData.value.id)
     if (idx !== -1) Object.assign(items.value[idx], json.data)
@@ -2789,7 +2792,7 @@ async function saveServices(shouldClose = true) {
       body:   JSON.stringify({ service_ids: [...checkedServiceIds.value] }),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка збереження')
+    if (!res.ok) throw new Error(json.message ?? t('list.saveError'))
 
     // Reset original state after successful save
     originalServicesState.value = JSON.stringify(servicesGroups.value)
@@ -2827,7 +2830,7 @@ async function loadEmployees() {
   try {
     const res  = await fetch(`/api/admin/sto/${modalData.value.id}/employees`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     employeesList.value  = json.data.employees ?? []
     managersList.value   = json.data.managers  ?? []
     positionsList.value  = json.data.positions ?? []
@@ -2846,7 +2849,7 @@ async function toggleEmployee(emp) {
       body:   JSON.stringify({ is_active: emp.is_active ? 0 : 1 }),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     emp.is_active = json.data.is_active
   } catch (e) { notify(e.message, { type: 'error' }) }
   finally { togglingEmployeeId.value = null }
@@ -2862,7 +2865,7 @@ async function changeEmployeePosition(emp, newPositionId) {
       body:   JSON.stringify({ employee_position_id: posId }),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     emp.position_id   = json.data.position_id
     emp.position_name = json.data.position_name
     emp.group_name    = json.data.group_name
@@ -2871,14 +2874,14 @@ async function changeEmployeePosition(emp, newPositionId) {
 }
 
 // ── Tab: Bookings ─────────────────────────────────────────────────────────────
-const BOOKING_STATUSES = [
-  { value: 'pending',     label: 'Очікує' },
-  { value: 'confirmed',   label: 'Підтверджено' },
-  { value: 'in_progress', label: 'Виконується' },
-  { value: 'completed',   label: 'Завершено' },
-  { value: 'cancelled',   label: 'Скасовано' },
-  { value: 'no_show',     label: 'Не з\'явився' },
-]
+const BOOKING_STATUSES = computed(() => [
+  { value: 'pending',     label: t('stoList.bookingPending') },
+  { value: 'confirmed',   label: t('stoList.bookingConfirmed') },
+  { value: 'in_progress', label: t('stoList.bookingInProgress') },
+  { value: 'completed',   label: t('stoList.bookingCompleted') },
+  { value: 'cancelled',   label: t('stoList.bookingCancelled') },
+  { value: 'no_show',     label: t('stoList.bookingNoShow') },
+])
 
 const canEditBookings = computed(() => can('bookings.edit') || can('bookings.edit.status') || can('*'))
 
@@ -2900,7 +2903,7 @@ async function loadBookings(p = 1) {
     if (bookingsFilter.value) params.set('status', bookingsFilter.value)
     const res  = await fetch(`/api/admin/sto/${modalData.value.id}/bookings?${params}`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     bookingsList.value       = json.data ?? []
     bookingsTotal.value      = json.pagination?.total ?? 0
     bookingsTotalPages.value = json.pagination?.total_pages ?? 1
@@ -2917,12 +2920,12 @@ async function changeBookingStatus(booking, newStatus) {
       body:   JSON.stringify({ status: newStatus }),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     booking.status = json.data.status
   } catch (e) { notify(e.message, { type: 'error' }) }
 }
 
-function bookingStatusLabel(s) { return BOOKING_STATUSES.find(x => x.value === s)?.label ?? s }
+function bookingStatusLabel(s) { return BOOKING_STATUSES.value.find(x => x.value === s)?.label ?? s }
 function bookingStatusBadge(s) {
   const map = { pending:'bg-secondary', confirmed:'bg-primary', in_progress:'bg-info text-dark',
                 completed:'bg-success', cancelled:'bg-danger', no_show:'bg-warning text-dark' }
@@ -2930,13 +2933,13 @@ function bookingStatusBadge(s) {
 }
 
 // ── Tab: Reviews ──────────────────────────────────────────────────────────────
-const REVIEW_STATUSES = [
-  { value: 'pending',   label: 'На розгляді' },
-  { value: 'published', label: 'Опубліковано' },
-  { value: 'rejected',  label: 'Відхилено' },
-  { value: 'hidden',    label: 'Приховано' },
-  { value: 'spam',      label: 'Спам' },
-]
+const REVIEW_STATUSES = computed(() => [
+  { value: 'pending',   label: t('stoList.reviewPending') },
+  { value: 'published', label: t('stoList.reviewPublished') },
+  { value: 'rejected',  label: t('stoList.reviewRejected') },
+  { value: 'hidden',    label: t('stoList.reviewHidden') },
+  { value: 'spam',      label: t('stoList.reviewSpam') },
+])
 
 const reviewsLoading    = ref(false)
 const reviewsLoaded     = ref(false)
@@ -2965,7 +2968,7 @@ async function loadReviews(p = 1) {
     if (reviewsFilter.value) params.set('status', reviewsFilter.value)
     const res  = await fetch(`/api/admin/sto/${modalData.value.id}/reviews?${params}`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     reviewsList.value       = json.data ?? []
     reviewsTotal.value      = json.pagination?.total ?? 0
     reviewsTotalPages.value = json.pagination?.total_pages ?? 1
@@ -2982,7 +2985,7 @@ async function changeReviewStatus(review, newStatus) {
       body:   JSON.stringify({ status: newStatus }),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка')
+    if (!res.ok) throw new Error(json.message ?? t('common.error'))
     review.status          = json.data.status
     review.published_at    = json.data.published_at
     review.rating_moderated = json.data.rating_moderated
@@ -2997,7 +3000,7 @@ async function changeReviewStatus(review, newStatus) {
   } catch (e) { notify(e.message, { type: 'error' }) }
 }
 
-function reviewStatusLabel(s) { return REVIEW_STATUSES.find(x => x.value === s)?.label ?? s }
+function reviewStatusLabel(s) { return REVIEW_STATUSES.value.find(x => x.value === s)?.label ?? s }
 function reviewStatusBadge(s) {
   const map = { pending:'bg-secondary', published:'bg-success', rejected:'bg-danger',
                 hidden:'bg-warning text-dark', spam:'bg-dark' }
@@ -3075,12 +3078,12 @@ async function saveReviews() {
     if (allOk) {
       changedReviews.value.clear()
       hasUnsavedChanges.value = false
-      notify('Відгуки збережено успішно', { type: 'success' })
+      notify(t('stoList.reviewsSaved'), { type: 'success' })
     } else {
-      throw new Error('Деякі відгуки не вдалося зберегти')
+      throw new Error(t('stoList.someReviewsFailedToSave'))
     }
   } catch (e) {
-    notify(`Помилка збереження відгуків: ${e.message}`, { type: 'error' })
+    notify(`${t('stoList.reviewsSaveError')} ${e.message}`, { type: 'error' })
   } finally {
     reviewsSaving.value = false
   }
@@ -3093,7 +3096,7 @@ async function deleteReviewMedia(reviewId, mediaId) {
   const media = review.media[index]
 
   deleteWithUndo({
-    message: 'Фото видалено',
+    message: t('stoList.photoDeleted'),
     remove: () => { review.media.splice(index, 1) },
     restore: () => { review.media.splice(index, 0, media) },
     commit: async () => {
@@ -3103,7 +3106,7 @@ async function deleteReviewMedia(reviewId, mediaId) {
       })
       if (!response.ok) {
         const data = await response.json().catch(() => ({}))
-        throw new Error(data.message || 'Помилка видалення')
+        throw new Error(data.message || t('list.deleteError'))
       }
     },
   })
@@ -3118,7 +3121,7 @@ function openResponseModal(review) {
 }
 
 function closeResponseModal() {
-  if (responseModalChanged.value && !confirm('Є незбережені зміни. Закрити без збереження?')) {
+  if (responseModalChanged.value && !confirm(t('stoRegistry.unsavedChanges'))) {
     return
   }
   responseModalOpen.value = false
@@ -3146,7 +3149,7 @@ async function saveResponseFromModal() {
 
     if (!response.ok) {
       const data = await response.json()
-      throw new Error(data.message || 'Помилка збереження')
+      throw new Error(data.message || t('list.saveError'))
     }
 
     const data = await response.json()
@@ -3165,9 +3168,9 @@ async function saveResponseFromModal() {
     // Сбрасываем флаг изменений перед закрытием
     responseModalChanged.value = false
     closeResponseModal()
-    notify('Відповідь збережено', { type: 'success' })
+    notify(t('stoList.responseSaved'), { type: 'success' })
   } catch (e) {
-    notify(`Помилка: ${e.message}`, { type: 'error' })
+    notify(`${t('common.error')}: ${e.message}`, { type: 'error' })
   } finally {
     responseModalSaving.value = false
   }
@@ -3179,7 +3182,7 @@ async function deleteReviewResponse(reviewId) {
   const savedResponse = review.response
 
   deleteWithUndo({
-    message: 'Відповідь видалено',
+    message: t('stoList.responseDeleted'),
     remove: () => { review.response = null },
     restore: () => { review.response = savedResponse },
     commit: async () => {
@@ -3189,7 +3192,7 @@ async function deleteReviewResponse(reviewId) {
       })
       if (!response.ok) {
         const data = await response.json().catch(() => ({}))
-        throw new Error(data.message || 'Помилка видалення')
+        throw new Error(data.message || t('list.deleteError'))
       }
     },
   })
@@ -3200,7 +3203,7 @@ watch(() => modalOpen.value, (newVal, oldVal) => {
   // Only check when closing (true -> false)
   if (oldVal === true && newVal === false) {
     if (hasUnsavedChanges.value) {
-      const confirmed = confirm('Є незбережені зміни. Ви впевнені, що хочете закрити вікно?')
+      const confirmed = confirm(t('stoList.confirmCloseWindow'))
       if (!confirmed) {
         // Revert closing
         nextTick(() => { modalOpen.value = true })
@@ -3294,7 +3297,7 @@ async function uploadPhotoFromUrl() {
       body:    JSON.stringify({ url }),
     })
     const json = await res.json()
-    if (json.status === 'error') throw new Error(json.message ?? 'Помилка завантаження')
+    if (json.status === 'error') throw new Error(json.message ?? t('list.loadError'))
 
     photosList.value.push(json.data)
     photoUrl.value = ''
@@ -3312,7 +3315,7 @@ async function uploadPhotoFromBase64() {
 
   // Validate base64 format
   if (!base64.startsWith('data:image/')) {
-    photosError.value = 'Невірний формат. Очікується: data:image/png;base64,...'
+    photosError.value = t('stoList.invalidBase64Format')
     return
   }
 
@@ -3328,8 +3331,8 @@ async function uploadPhotoFromBase64() {
       }),
     })
     const json = await res.json()
-    if (json.status === 'error') throw new Error(json.message ?? 'Помилка завантаження')
-    if (!json.data) throw new Error('Відповідь сервера не містить даних')
+    if (json.status === 'error') throw new Error(json.message ?? t('list.loadError'))
+    if (!json.data) throw new Error(t('stoList.noDataInResponse'))
 
     photosList.value.push(json.data)
     photoBase64.value = ''
@@ -3390,7 +3393,7 @@ async function deletePhoto(photo) {
   if (index === -1) return
 
   deleteWithUndo({
-    message: 'Фото видалено',
+    message: t('stoList.photoDeleted'),
     remove: () => { photosList.value.splice(index, 1) },
     restore: () => { photosList.value.splice(index, 0, photo) },
     commit: async () => {
@@ -3398,7 +3401,7 @@ async function deletePhoto(photo) {
         method: 'DELETE',
         headers: authHeaders(),
       })
-      if (!res.ok) throw new Error('Помилка видалення фото')
+      if (!res.ok) throw new Error(t('stoList.photoDeleteError'))
     },
   })
 }

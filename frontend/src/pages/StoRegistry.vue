@@ -430,7 +430,7 @@ async function loadPhotos() {
     const json = await res.json()
     photosList.value = json.data ?? []
   } catch (e) {
-    photosError.value = "Помилка з'єднання з сервером"
+    photosError.value = t('messages.error')
   } finally {
     photosLoading.value = false
   }
@@ -482,7 +482,7 @@ async function uploadPhotoFromUrl() {
       body: JSON.stringify({ url }),
     })
     const json = await res.json()
-    if (json.status === 'error') throw new Error(json.message ?? 'Помилка завантаження')
+    if (json.status === 'error') throw new Error(json.message ?? t('messages.error'))
 
     photosList.value.push(json.data)
     photoUrl.value = ''
@@ -647,7 +647,7 @@ async function saveTab(close) {
       body: JSON.stringify(payload),
     })
     const json = await res.json().catch(() => ({}))
-    if (!res.ok) throw new Error(json.message ?? 'Помилка збереження')
+    if (!res.ok) throw new Error(json.message ?? t('messages.error'))
 
     // Оновлюємо форму з нормалізованими даними (особливо phones в E.164)
     if (payload.phones) {

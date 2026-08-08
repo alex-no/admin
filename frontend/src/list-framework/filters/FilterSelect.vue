@@ -74,7 +74,7 @@ function translateLabel(label) {
 // field.options її бути не має, інакше React-версія покаже її двічі
 // (див. shared/page-configs/README.md, контракт фільтрів).
 const placeholderOption = computed(() => {
-  const base = props.field.placeholderOption ?? { value: '', label: props.field.label ?? 'Всі' }
+  const base = props.field.placeholderOption ?? { value: '', label: props.field.label ?? t('common.all') }
   return { ...base, label: translateLabel(base.label) }
 })
 

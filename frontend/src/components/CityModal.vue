@@ -11,14 +11,14 @@
     :max-height="900"
   >
     <template #title>
-      <h6 class="mb-0">{{ modalMode === 'create' ? 'Новий населений пункт' : 'Редагування населеного пункту' }}</h6>
+      <h6 class="mb-0">{{ modalMode === 'create' ? t('cities.newTitle') : t('cities.editTitle') }}</h6>
     </template>
 
     <div class="row g-3">
       <template v-for="mf in config.modal" :key="mf.key">
         <div :class="mf.key === 'area_region_id' ? 'col-sm-12' : `col-sm-${mf.col}`">
           <template v-if="mf.key.startsWith('_')"></template>
-          <label v-else-if="!(mf.key === 'area_region_id' && canEditInModal('area_region_id'))" class="form-label small mb-1">{{ config.fields[mf.key].label }}</label>
+          <label v-else-if="!(mf.key === 'area_region_id' && canEditInModal('area_region_id'))" class="form-label small mb-1">{{ fieldLabel(mf.key) }}</label>
 
           <!-- ID – hidden in create mode -->
           <template v-if="mf.key.startsWith('_')"><!-- spacer --></template>
@@ -29,8 +29,8 @@
 
           <template v-else-if="mf.key === 'city_type_id'">
             <select v-if="canEditInModal('city_type_id')" v-model.number="modalForm.city_type_id" class="form-select form-select-sm">
-              <option :value="null">— не вказано —</option>
-              <option v-for="t in modalCityTypesList" :key="t.id" :value="t.id">{{ t.short_name_uk }} – {{ t.long_name_uk }}</option>
+              <option :value="null">{{ t('cityTmpReview.notSpecifiedOption') }}</option>
+              <option v-for="t2 in modalCityTypesList" :key="t2.id" :value="t2.id">{{ t2.short_name_uk }} – {{ t2.long_name_uk }}</option>
             </select>
             <div v-else class="readonly-field">{{ modalData.city_type_name ?? '—' }}</div>
           </template>
@@ -45,19 +45,19 @@
           <template v-else-if="mf.key === 'area_region_id'">
             <div v-if="canEditInModal('area_region_id')" class="row g-2">
               <div class="col-sm-6">
-                <label class="form-label small mb-1">Область</label>
+                <label class="form-label small mb-1">{{ t('stoList.oblastLabel') }}</label>
                 <select v-model.number="modalFilterArea" class="form-select form-select-sm">
-                  <option :value="null">— не вказано —</option>
+                  <option :value="null">{{ t('cityTmpReview.notSpecifiedOption') }}</option>
                   <option v-for="a in modalAreasList" :key="a.id" :value="a.id">{{ a.name_uk }}</option>
                 </select>
               </div>
               <div class="col-sm-6">
-                <label class="form-label small mb-1">Район</label>
+                <label class="form-label small mb-1">{{ t('stoList.districtLabel') }}</label>
                 <select v-if="modalFilterArea" v-model.number="modalForm.area_region_id" class="form-select form-select-sm">
-                  <option :value="null">— не вказано —</option>
+                  <option :value="null">{{ t('cityTmpReview.notSpecifiedOption') }}</option>
                   <option v-for="d in modalDistrictsList" :key="d.id" :value="d.id">{{ d.name_uk }}</option>
                 </select>
-                <div v-else class="readonly-field text-muted small fst-italic">спочатку оберіть область</div>
+                <div v-else class="readonly-field text-muted small fst-italic">{{ t('cityTmpReview.selectOblastFirstHint') }}</div>
               </div>
             </div>
             <div v-else class="readonly-field">{{ modalData.area_region_name ?? '—' }}</div>
@@ -66,21 +66,21 @@
           <template v-else-if="mf.key === 'is_capital'">
             <div v-if="canEditInModal('is_capital')" class="form-check mt-1 mb-0">
               <input v-model="modalForm.is_capital" type="checkbox" class="form-check-input" :id="`modal-capital-${modalData.id}`" />
-              <label class="form-check-label" :for="`modal-capital-${modalData.id}`">Столиця країни</label>
+              <label class="form-check-label" :for="`modal-capital-${modalData.id}`">{{ t('cities.capitalCountryLabel') }}</label>
             </div>
-            <div v-else class="readonly-field">{{ modalData.is_capital ? 'Так' : 'Ні' }}</div>
+            <div v-else class="readonly-field">{{ modalData.is_capital ? t('common.yes') : t('common.no') }}</div>
           </template>
 
           <template v-else-if="mf.key === 'is_active'">
             <div v-if="canEditInModal('is_active')" class="form-check form-switch mt-1 mb-0">
               <input v-model="modalForm.is_active" type="checkbox" class="form-check-input" :id="`modal-active-${modalData.id}`" role="switch" />
               <label class="form-check-label" :for="`modal-active-${modalData.id}`">
-                {{ modalForm.is_active ? 'Активний' : 'Неактивний' }}
+                {{ modalForm.is_active ? t('common.active') : t('common.inactive') }}
               </label>
             </div>
             <div v-else>
               <span class="badge" :class="modalData.is_active ? 'bg-success' : 'bg-danger'">
-                {{ modalData.is_active ? 'Активний' : 'Неактивний' }}
+                {{ modalData.is_active ? t('common.active') : t('common.inactive') }}
               </span>
             </div>
           </template>
@@ -101,7 +101,7 @@
                     type="text"
                     class="form-control form-control-sm"
                     :class="{ 'is-invalid': getCoordHint(modalForm[mf.key], mf.key)?.error }"
-                    placeholder="50.4501 або 50°27′0.4″N"
+                    :placeholder="t('cities.coordPlaceholder')"
                   />
                   <div v-if="getCoordHint(modalForm[mf.key], mf.key)" class="coord-hint mt-1"
                        :class="getCoordHint(modalForm[mf.key], mf.key).error ? 'text-danger' : 'text-muted'">
@@ -113,7 +113,7 @@
                         class="btn btn-sm btn-outline-secondary text-nowrap"
                         :disabled="geocoding"
                         @click="fetchGeocode"
-                        title="Отримати координати з геосервісу">
+                        :title="t('cities.getCoordinatesTooltip')">
                   <span v-if="geocoding" class="spinner-border spinner-border-sm"></span>
                   <i v-else class="bi bi-geo-alt"></i>
                 </button>
@@ -146,10 +146,10 @@
     <template #footer>
       <div></div>
       <div class="d-flex gap-2">
-        <button class="btn btn-sm btn-secondary" @click="close">Скасувати</button>
+        <button class="btn btn-sm btn-secondary" @click="close">{{ t('common.cancel') }}</button>
         <button class="btn btn-sm btn-primary" :disabled="saving" @click="save">
           <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-          Зберегти
+          {{ t('common.save') }}
         </button>
       </div>
     </template>
@@ -158,12 +158,34 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import BaseModal from './BaseModal.vue'
 import config from '../pages/geography/cities.config.json'
 import { coordHint, dmsToDecimal } from '@/utils/coordinate'
 
+const { t } = useI18n({ useScope: 'global' })
 const { can, authHeaders } = useAuth()
+
+const FIELD_LABEL_KEYS = {
+  id: 'table.id',
+  city_type_id: 'filter.type',
+  country_id: 'filter.country',
+  area_region_id: 'cities.areaLabel',
+  name_uk: 'cityTmpReview.nameUaLabel',
+  name_en: 'cityTmpReview.nameEnBracketLabel',
+  name_ru: 'cityTmpReview.nameRuBracketLabel',
+  latitude: 'stoImport.fieldLatitude',
+  longitude: 'stoImport.fieldLongitude',
+  is_capital: 'cityTmpReview.capitalLabel',
+  is_active: 'filter.status',
+  created_at: 'stoList.createdLabel',
+  updated_at: 'stoList.updatedLabel',
+}
+function fieldLabel(key) {
+  const k = FIELD_LABEL_KEYS[key]
+  return k ? t(k) : config.fields[key]?.label ?? key
+}
 
 // Props
 const props = defineProps({
@@ -247,7 +269,7 @@ async function fetchGeocode() {
   try {
     const res  = await fetch(`/api/admin/geography/cities/${modalData.value.id}/geocode`, { headers: authHeaders() })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.message ?? 'Помилка геокодування')
+    if (!res.ok) throw new Error(json.message ?? t('cities.geocodeError'))
     modalForm.value.latitude  = String(json.data.latitude)
     modalForm.value.longitude = String(json.data.longitude)
     saveError.value = null
@@ -317,8 +339,8 @@ async function save() {
     const coordErrors = []
     const parsedLat = modalForm.value.latitude  !== '' ? dmsToDecimal(modalForm.value.latitude)  : null
     const parsedLon = modalForm.value.longitude !== '' ? dmsToDecimal(modalForm.value.longitude) : null
-    if (modalForm.value.latitude  !== '' && parsedLat === null) coordErrors.push('Широта: невірний формат')
-    if (modalForm.value.longitude !== '' && parsedLon === null) coordErrors.push('Довгота: невірний формат')
+    if (modalForm.value.latitude  !== '' && parsedLat === null) coordErrors.push(t('cities.latitudeInvalidFormat'))
+    if (modalForm.value.longitude !== '' && parsedLon === null) coordErrors.push(t('cities.longitudeInvalidFormat'))
     if (coordErrors.length) {
       saveError.value = coordErrors.join('; ')
       saving.value = false
@@ -349,7 +371,7 @@ async function save() {
         body: JSON.stringify(fields),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.message ?? 'Помилка')
+      if (!res.ok) throw new Error(json.message ?? t('common.error'))
       window.dispatchEvent(new CustomEvent('city-created', { detail: json.data }))
     } else {
       const res  = await fetch(`${config.apiUpdate}/${modalData.value.id}`, {
@@ -358,7 +380,7 @@ async function save() {
         body: JSON.stringify(fields),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.message ?? 'Помилка збереження')
+      if (!res.ok) throw new Error(json.message ?? t('list.saveError'))
       window.dispatchEvent(new CustomEvent('city-updated', { detail: { id: modalData.value.id, data: json.data } }))
     }
     close()

@@ -12,17 +12,17 @@
 
         <!-- Password setup redirect message -->
         <div v-if="needsPasswordSetup" class="alert alert-info">
-          <p class="mb-2"><strong>Перший вхід</strong></p>
-          <p class="small mb-3">Вам потрібно встановити пароль для адмін-панелі.</p>
+          <p class="mb-2"><strong>{{ t('auth.firstLoginTitle') }}</strong></p>
+          <p class="small mb-3">{{ t('auth.passwordSetupRequired') }}</p>
           <router-link to="/first-login" class="btn btn-primary btn-sm w-100">
-            Встановити пароль
+            {{ t('auth.setPassword') }}
           </router-link>
         </div>
 
         <!-- Normal login form -->
         <form v-else @submit.prevent="doLogin">
           <div class="mb-3">
-            <label class="form-label small">Логін</label>
+            <label class="form-label small">{{ t('auth.username') }}</label>
             <input
               v-model="username"
               type="text"
@@ -33,7 +33,7 @@
             />
           </div>
           <div class="mb-4">
-            <label class="form-label small">Пароль</label>
+            <label class="form-label small">{{ t('auth.password') }}</label>
             <input
               v-model="password"
               type="password"
@@ -45,12 +45,12 @@
           </div>
           <button type="submit" class="btn btn-primary w-100 mb-3" :disabled="loading">
             <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
-            Увійти
+            {{ t('auth.signIn') }}
           </button>
 
           <div class="text-center">
             <router-link to="/forgot-password" class="text-decoration-none small">
-              Забули пароль?
+              {{ t('auth.forgotPassword') }}
             </router-link>
           </div>
         </form>
@@ -62,8 +62,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 
+const { t } = useI18n({ useScope: 'global' })
 const router   = useRouter()
 const route    = useRoute()
 const auth     = useAuth()
@@ -97,7 +99,7 @@ async function doLogin() {
 
     await router.push('/dashboard')
   } catch (e) {
-    error.value = e.message || 'Network error'
+    error.value = e.message || t('auth.networkError')
     loading.value = false
   }
 }

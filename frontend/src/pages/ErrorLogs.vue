@@ -5,9 +5,9 @@
     <div>
       <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
         <div class="d-flex align-items-center gap-2">
-          <h5 class="mb-0">Логи помилок</h5>
+          <h5 class="mb-0">{{ t('errorLogs.title') }}</h5>
           <router-link to="/error-logs/stats" class="btn btn-sm btn-outline-primary">
-            <i class="bi bi-bar-chart"></i> Статистика
+            <i class="bi bi-bar-chart"></i> {{ t('menu.stats') }}
           </router-link>
         </div>
         <div class="d-flex gap-2 flex-wrap">
@@ -16,11 +16,11 @@
             type="text"
             class="form-control form-control-sm"
             style="width:220px"
-            placeholder="Пошук..."
+            :placeholder="t('errorLogs.searchPlaceholder')"
             @input="debounceLoad"
           />
           <select v-model="filterLevel" class="form-select form-select-sm" style="width:auto" @change="load(1)">
-            <option value="">Всі рівні</option>
+            <option value="">{{ t('errorLogs.allLevels') }}</option>
             <option value="error">Error</option>
             <option value="critical">Critical</option>
             <option value="warning">Warning</option>
@@ -42,7 +42,7 @@
             @change="load(1)"
           />
           <button class="btn btn-sm btn-outline-danger" @click="openCleanup">
-            <i class="bi bi-trash"></i> Очистити
+            <i class="bi bi-trash"></i> {{ t('errorLogs.cleanupButton') }}
           </button>
         </div>
       </div>
@@ -58,16 +58,16 @@
           <table class="table table-hover align-middle mb-0 small">
             <thead>
               <tr>
-                <th style="width:60px" class="text-end">ID</th>
+                <th style="width:60px" class="text-end">{{ t('roles.colId') }}</th>
                 <th style="width:90px" class="th-sortable" @click="toggleSort('level')">
-                  Рівень <SortIcon col="level" :sortKey :sortDir />
+                  {{ t('errorLogs.level') }} <SortIcon col="level" :sortKey :sortDir />
                 </th>
-                <th>Категорія</th>
-                <th>Повідомлення</th>
-                <th>Exception</th>
-                <th>Файл</th>
+                <th>{{ t('errorLogs.category') }}</th>
+                <th>{{ t('errorLogs.message') }}</th>
+                <th>{{ t('errorLogs.exception') }}</th>
+                <th>{{ t('errorLogs.file') }}</th>
                 <th style="width:140px" class="th-sortable" @click="toggleSort('created_at')">
-                  Дата <SortIcon col="created_at" :sortKey :sortDir />
+                  {{ t('analytics.colDate') }} <SortIcon col="created_at" :sortKey :sortDir />
                 </th>
                 <th style="width:50px"></th>
               </tr>
@@ -96,13 +96,13 @@
                   {{ formatDate(row.created_at) }}
                 </td>
                 <td>
-                  <button class="btn btn-sm btn-outline-secondary" @click="openDetail(row.id)" title="Детальна інформація">
+                  <button class="btn btn-sm btn-outline-secondary" @click="openDetail(row.id)" :title="t('errorLogs.detailTooltip')">
                     <i class="bi bi-eye"></i>
                   </button>
                 </td>
               </tr>
               <tr v-if="!items.length">
-                <td colspan="8" class="text-center text-muted py-4">Немає даних</td>
+                <td colspan="8" class="text-center text-muted py-4">{{ t('common.noData') }}</td>
               </tr>
             </tbody>
           </table>
@@ -110,7 +110,7 @@
         </div>
 
         <div class="d-flex justify-content-between align-items-center mt-3">
-          <span class="text-muted small">Всього: {{ total }}</span>
+          <span class="text-muted small">{{ t('analytics.totalCount', { value: total }) }}</span>
           <Pagination :current-page="page" :total-pages="totalPages" @change="load" />
         </div>
       </div>
@@ -120,6 +120,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { authHeaders } from '@/utils/api'
 import ListPageWrapper from '../components/ListPageWrapper.vue'
 import SortIcon from '../components/SortIcon.vue'
@@ -129,6 +130,7 @@ import ErrorLogCleanupModal from '../components/ErrorLogCleanupModal.vue'
 import { useUrlFilters } from '../composables/useUrlFilters'
 import { formatDate } from '../utils/date'
 
+const { t } = useI18n({ useScope: 'global' })
 const items = ref([])
 const loading = ref(false)
 const error = ref('')
@@ -192,7 +194,7 @@ async function load(p = 1) {
       items.value = json.data
       total.value = json.pagination.total
     } else {
-      error.value = json.message || 'Помилка завантаження'
+      error.value = json.message || t('errorLogs.loadError')
     }
   } catch (e) {
     error.value = e.message

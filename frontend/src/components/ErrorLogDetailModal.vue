@@ -11,7 +11,7 @@
     :max-height="900"
   >
     <template #title>
-      <h6 class="mb-0">Деталі помилки #{{ errorId }}</h6>
+      <h6 class="mb-0">{{ t('errorLogs.modalTitle', { id: errorId }) }}</h6>
     </template>
 
     <ErrorLogDetail
@@ -24,16 +24,19 @@
 
     <template #footer>
       <div></div>
-      <button class="btn btn-sm btn-secondary" @click="close">Закрити</button>
+      <button class="btn btn-sm btn-secondary" @click="close">{{ t('common.close') }}</button>
     </template>
   </BaseModal>
 </template>
 
 <script setup>
 import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { authHeaders } from '@/utils/api'
 import BaseModal from './BaseModal.vue'
 import ErrorLogDetail from './ErrorLogDetail.vue'
+
+const { t } = useI18n({ useScope: 'global' })
 
 // Модалка тільки завантажує дані й віддає їх у ErrorLogDetail для відображення.
 // Це патерн AnalyticsDetailsModal + AnalyticsDetailsModalContent: вміст відокремлений
@@ -68,7 +71,7 @@ async function load() {
     if (json.status === 'success') {
       data.value = json.data
     } else {
-      error.value = json.message || 'Помилка завантаження'
+      error.value = json.message || t('errorLogs.loadError')
     }
   } catch (e) {
     error.value = e.message
