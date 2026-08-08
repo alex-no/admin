@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import Pagination from '@/list-framework/components/Pagination'
 import ErrorLogDetailModal from './ErrorLogDetailModal'
 import ErrorLogCleanupModal from './ErrorLogCleanupModal'
-import { LEVEL_BADGE, rowClass, shortException, shortFile } from './errorLogLevels'
+import { LEVEL_ORDER, LEVEL_OPTION_ICON, LEVEL_BADGE, rowClass, shortException, shortFile } from './errorLogLevels'
 import { apiGet } from '@/utils/api'
 import { formatDate } from '@/utils/date'
 import {
@@ -26,7 +26,6 @@ interface ErrorLog {
 }
 
 const PER_PAGE = 50
-const LEVELS = ['error', 'critical', 'warning', 'alert', 'emergency']
 
 export default function ErrorLogs() {
   const { t } = useTranslation()
@@ -143,8 +142,8 @@ export default function ErrorLogs() {
             style={{ width: 'auto' }}
           >
             <option value="">{t('errorLogs.allLevels')}</option>
-            {LEVELS.map(l => (
-              <option key={l} value={l}>{l.charAt(0).toUpperCase() + l.slice(1)}</option>
+            {LEVEL_ORDER.map(l => (
+              <option key={l} value={l}>{LEVEL_OPTION_ICON[l]} {l.charAt(0).toUpperCase() + l.slice(1)}</option>
             ))}
           </select>
           <input

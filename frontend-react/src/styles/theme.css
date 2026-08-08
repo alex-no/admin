@@ -105,3 +105,13 @@
   background-color: var(--bs-tertiary-bg);
   color: var(--bs-body-color);
 }
+
+/* Bootstrap has no built-in "strong danger" table tier — set the same
+   CSS custom properties its own .table-danger/.table-warning use, so it
+   plays nicely with hover/striping like a native context class. */
+.row-alert {
+  --bs-table-bg: var(--bs-danger);
+  --bs-table-color: var(--bs-white);
+  --bs-table-striped-bg: var(--bs-danger);
+  --bs-table-hover-bg: var(--bs-danger);
+}

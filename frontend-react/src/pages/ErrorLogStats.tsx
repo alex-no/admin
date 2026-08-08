@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import TrendChart from '@/components/charts/TrendChart'
 import type { TrendDataset } from '@/components/charts/TrendChart'
 import { apiGet } from '@/utils/api'
-import { LEVEL_BADGE, LEVEL_COLOR, shortException } from './errorLogLevels'
+import { LEVEL_ORDER, LEVEL_BADGE, LEVEL_COLOR, shortException } from './errorLogLevels'
 
 interface Stats {
   total: number
@@ -27,7 +27,7 @@ function buildTrend(stats: Stats | null): { labels: string[]; datasets: TrendDat
   const labels = Object.keys(dateMap).sort()
   const datasets: TrendDataset[] = []
 
-  for (const level of ['error', 'critical', 'warning', 'alert', 'emergency']) {
+  for (const level of LEVEL_ORDER) {
     const data = labels.map(date => dateMap[date][level] || 0)
     if (data.reduce((s, v) => s + v, 0) > 0) {
       const fallbackColor = getComputedStyle(document.documentElement).getPropertyValue('--bs-secondary').trim() || '#6c757d'

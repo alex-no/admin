@@ -1,25 +1,44 @@
 /** Спільні для списку, картки та статистики підписи рівнів логу */
 
+/** Від найслабшого до найсерйознішого: warning < error < critical < alert < emergency */
+export const LEVEL_ORDER = ['warning', 'error', 'critical', 'alert', 'emergency']
+
 export const LEVEL_BADGE: Record<string, string> = {
-  error: 'badge bg-danger',
-  critical: 'badge bg-danger',
-  alert: 'badge bg-warning text-dark',
-  emergency: 'badge bg-dark',
-  warning: 'badge bg-warning text-dark',
+  warning: 'badge bg-warning-subtle text-warning-emphasis border border-warning-subtle',
+  error: 'badge text-bg-warning',
+  // critical/alert/emergency: row background is itself colored (pale pink/solid red/black),
+  // so the badge goes the other way — light with a colored border — to stay visible on it.
+  critical: 'badge text-bg-danger',
+  alert: 'badge bg-white text-danger border border-danger',
+  emergency: 'badge bg-white text-dark border border-dark',
 }
 
 export const LEVEL_COLOR: Record<string, string> = {
-  error: '#dc3545',
-  critical: '#721c24',
-  alert: '#ffc107',
+  warning: '#fff3cd',
+  error: '#ffc107',
+  critical: '#f8d7da',
+  alert: '#dc3545',
   emergency: '#212529',
-  warning: '#ff9800',
+}
+
+/** Native <option> background/color styling is unreliable across browsers (Chrome/Windows
+ *  ignores it entirely), so severity is shown via a colored dot prefix instead. */
+export const LEVEL_OPTION_ICON: Record<string, string> = {
+  warning: '🟡',
+  error: '🟠',
+  critical: '🔴',
+  alert: '🟤',
+  emergency: '⚫',
 }
 
 export function rowClass(level: string): string {
-  if (level === 'critical' || level === 'emergency') return 'table-danger'
-  if (level === 'error') return 'table-warning'
-  return ''
+  const map: Record<string, string> = {
+    error: 'table-warning',
+    critical: 'table-danger',
+    alert: 'row-alert',
+    emergency: 'table-dark',
+  }
+  return map[level] ?? ''
 }
 
 /** App\Domain\FooException → FooException */

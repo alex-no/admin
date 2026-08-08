@@ -21,11 +21,11 @@
           />
           <select v-model="filterLevel" class="form-select form-select-sm" style="width:auto" @change="load(1)">
             <option value="">{{ t('errorLogs.allLevels') }}</option>
-            <option value="error">Error</option>
-            <option value="critical">Critical</option>
-            <option value="warning">Warning</option>
-            <option value="alert">Alert</option>
-            <option value="emergency">Emergency</option>
+            <option value="warning">🟡 Warning</option>
+            <option value="error">🟠 Error</option>
+            <option value="critical">🔴 Critical</option>
+            <option value="alert">🟤 Alert</option>
+            <option value="emergency">⚫ Emergency</option>
           </select>
           <input
             v-model="filterDateFrom"
@@ -230,19 +230,26 @@ function openCleanup() {
 
 function levelBadge(level) {
   const map = {
-    error: 'badge bg-danger',
-    critical: 'badge bg-danger',
-    alert: 'badge bg-warning text-dark',
-    emergency: 'badge bg-dark',
-    warning: 'badge bg-warning text-dark',
+    warning: 'badge bg-warning-subtle text-warning-emphasis border border-warning-subtle',
+    error: 'badge text-bg-warning',
+    // critical/alert/emergency: заливка рядка вже сама по собі кольорова (світло-рожева/
+    // суцільна червона/чорна), тому бейдж навпаки — світлий, з кольоровою рамкою, щоб не
+    // зливатись з фоном рядка.
+    critical: 'badge text-bg-danger',
+    alert: 'badge bg-white text-danger border border-danger',
+    emergency: 'badge bg-white text-dark border border-dark',
   }
   return map[level] || 'badge bg-secondary'
 }
 
 function rowClass(level) {
-  if (level === 'critical' || level === 'emergency') return 'table-danger'
-  if (level === 'error') return 'table-warning'
-  return ''
+  const map = {
+    error: 'table-warning',
+    critical: 'table-danger',
+    alert: 'row-alert',
+    emergency: 'table-dark',
+  }
+  return map[level] || ''
 }
 
 function shortException(str) {
@@ -281,5 +288,15 @@ onMounted(() => {
 }
 .th-sortable:hover {
   background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Bootstrap has no built-in "strong danger" table tier — set the same
+   CSS custom properties its own .table-danger/.table-warning use, so it
+   plays nicely with hover/striping like a native context class. */
+.row-alert {
+  --bs-table-bg: var(--bs-danger);
+  --bs-table-color: var(--bs-white);
+  --bs-table-striped-bg: var(--bs-danger);
+  --bs-table-hover-bg: var(--bs-danger);
 }
 </style>
