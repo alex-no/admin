@@ -12,7 +12,7 @@
   >
     <template #title>
       <h5 class="mb-0">
-        Детальна інформація про візит <span class="text-muted fw-normal fs-6">#{{ pageviewId }}</span>
+        {{ t('analytics.detailsTitle') }} <span class="text-muted fw-normal fs-6">#{{ pageviewId }}</span>
       </h5>
     </template>
 
@@ -20,17 +20,17 @@
       <ul class="nav nav-tabs border-0">
         <li class="nav-item">
           <button class="nav-link py-2 px-2 small text-nowrap" :class="{ active: activeTab === 'info' }" @click="activeTab = 'info'">
-            <i class="bi bi-info-circle me-1"></i>Інформація
+            <i class="bi bi-info-circle me-1"></i>{{ t('analytics.tabInfo') }}
           </button>
         </li>
         <li class="nav-item">
           <button class="nav-link py-2 px-2 small text-nowrap" :class="{ active: activeTab === 'network' }" @click="activeTab = 'network'">
-            <i class="bi bi-hdd-network me-1"></i>Мережа
+            <i class="bi bi-hdd-network me-1"></i>{{ t('analytics.tabNetwork') }}
           </button>
         </li>
         <li class="nav-item">
           <button class="nav-link py-2 px-2 small text-nowrap" :class="{ active: activeTab === 'tools' }" @click="activeTab = 'tools'">
-            <i class="bi bi-tools me-1"></i>Діагностика
+            <i class="bi bi-tools me-1"></i>{{ t('analytics.tabTools') }}
           </button>
         </li>
       </ul>
@@ -63,18 +63,20 @@
 
     <template #footer>
       <div class="text-muted small">IP: {{ data?.ip || '—' }}</div>
-      <button type="button" class="btn btn-sm btn-secondary" @click="close">Закрити</button>
+      <button type="button" class="btn btn-sm btn-secondary" @click="close">{{ t('common.close') }}</button>
     </template>
   </BaseModal>
 </template>
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { authHeaders } from '@/utils/api'
 import BaseModal from './BaseModal.vue'
 import ModalContent from './AnalyticsDetailsModalContent.vue'
 import { useNotify } from '@/composables/useNotify'
 
+const { t } = useI18n({ useScope: 'global' })
 const { notify } = useNotify()
 
 // Тут лишилась тільки бізнес-логіка цієї картки (завантаження даних, мережеві
@@ -121,7 +123,7 @@ async function loadPageview() {
       data.value = json.data
       if (json.data.ip) loadIpInfo(json.data.ip)
     } else {
-      error.value = json.message || 'Помилка'
+      error.value = json.message || t('common.error')
     }
   } catch (e) {
     error.value = e.message
@@ -157,7 +159,7 @@ async function loadIpInfo(ip) {
   if (isPrivateIP(ip)) {
     ipInfo.value = {
       error: true,
-      message: 'Приватний IP (локальна мережа)'
+      message: t('analytics.privateIp')
     }
     loadingIpInfo.value = false
     return
@@ -187,7 +189,7 @@ async function runPing() {
   try {
     const res = await fetch(`/api/admin/network-tools/ping/${data.value.ip}`, { headers: authHeaders() })
     const json = await res.json()
-    pingResult.value = json.data?.output || json.message || 'Помилка'
+    pingResult.value = json.data?.output || json.message || t('common.error')
   } finally {
     loadingPing.value = false
   }
@@ -199,7 +201,7 @@ async function runTraceroute() {
   try {
     const res = await fetch(`/api/admin/network-tools/traceroute/${data.value.ip}`, { headers: authHeaders() })
     const json = await res.json()
-    tracerouteResult.value = json.data?.output || json.message || 'Помилка'
+    tracerouteResult.value = json.data?.output || json.message || t('common.error')
   } finally {
     loadingTraceroute.value = false
   }
@@ -232,7 +234,7 @@ async function runBlacklistCheck() {
     if (json.status === 'success') {
       blacklistResult.value = json.data
     } else {
-      notify(json.message || 'Помилка перевірки blacklist', { type: 'error' })
+      notify(json.message || t('analytics.blacklistCheckError'), { type: 'error' })
     }
   } finally {
     loadingBlacklist.value = false
@@ -252,7 +254,7 @@ async function runHttpHeaders() {
       // Показуємо помилку як об'єкт з повідомленням
       httpHeadersResult.value = {
         error: true,
-        message: json.message || 'Помилка отримання HTTP headers',
+        message: json.message || t('analytics.httpHeadersFetchError'),
         ip: data.value.ip
       }
     }

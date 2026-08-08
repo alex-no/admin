@@ -1,4 +1,5 @@
 /** Бейджі HTTP-методів і статусів — спільні для списку та картки деталей */
+import i18n from '../i18n'
 
 export function methodBadge(method: string): string {
   return {
@@ -26,33 +27,33 @@ export function rowClass(statusCode: number): string {
 /** Тип клієнта + пристрій/ім'я бота одним підписом */
 export function smartClientLabel(row: any): string {
   if (row.client_type === 'human') {
-    if (row.device_type === 'desktop') return '👤 🖥️ Desktop'
-    if (row.device_type === 'mobile') return '👤 📱 Mobile'
-    if (row.device_type === 'tablet') return '👤 📲 Tablet'
-    return '👤 Людина'
+    if (row.device_type === 'desktop') return i18n.t('analytics.smart.humanDesktop')
+    if (row.device_type === 'mobile') return i18n.t('analytics.smart.humanMobile')
+    if (row.device_type === 'tablet') return i18n.t('analytics.smart.humanTablet')
+    return i18n.t('analytics.clientType.human')
   }
 
   if (row.client_type === 'bot') {
     if (row.bot_category === 'search_engine') {
       const name: string = row.bot_name ?? ''
-      if (name.includes('Google')) return '🔍 Google'
-      if (name.includes('Yandex')) return '🔍 Yandex'
-      if (name.includes('bing')) return '🔍 Bing'
-      if (name.includes('DuckDuck')) return '🔍 DuckDuckGo'
-      if (name.includes('Baidu')) return '🔍 Baidu'
-      if (name.includes('facebook')) return '🔍 Facebook'
-      return '🔍 ' + (row.bot_name || 'Пошукова система')
+      if (name.includes('Google')) return i18n.t('analytics.smart.google')
+      if (name.includes('Yandex')) return i18n.t('analytics.smart.yandex')
+      if (name.includes('bing')) return i18n.t('analytics.smart.bing')
+      if (name.includes('DuckDuck')) return i18n.t('analytics.smart.duckduckgo')
+      if (name.includes('Baidu')) return i18n.t('analytics.smart.baidu')
+      if (name.includes('facebook')) return i18n.t('analytics.smart.facebook')
+      return '🔍 ' + (row.bot_name || i18n.t('analytics.smart.searchEngineFallback'))
     }
     if (row.bot_category === 'seo_tool') return '📊 ' + (row.bot_name || 'SEO')
-    if (row.bot_category === 'monitoring') return '🔔 ' + (row.bot_name || 'Моніторинг')
-    if (row.bot_category === 'scraper') return '🤖 Scraper'
+    if (row.bot_category === 'monitoring') return '🔔 ' + (row.bot_name || i18n.t('analytics.smart.monitoringFallback'))
+    if (row.bot_category === 'scraper') return i18n.t('analytics.smart.scraper')
     if (row.bot_category === 'malicious') return '🚫 ' + (row.bot_name || 'Malicious')
-    return '🤖 Бот'
+    return i18n.t('analytics.clientType.bot')
   }
 
-  if (row.client_type === 'suspicious') return '⚠️ Підозрілий'
-  if (row.client_type === 'unknown') return '❓ Невідомий'
-  return '⏳ Не класифіковано'
+  if (row.client_type === 'suspicious') return i18n.t('analytics.clientType.suspicious')
+  if (row.client_type === 'unknown') return i18n.t('analytics.clientType.unknown')
+  return i18n.t('analytics.clientType.unclassified')
 }
 
 /** Повний referer → лише домен */

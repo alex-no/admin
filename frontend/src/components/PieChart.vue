@@ -18,12 +18,15 @@
         <span class="small">{{ slice.label }}: <strong>{{ slice.value }}</strong></span>
       </div>
     </div>
-    <div v-if="!slices.length" class="text-center text-muted py-3">Немає даних</div>
+    <div v-if="!slices.length" class="text-center text-muted py-3">{{ t('common.noData') }}</div>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n({ useScope: 'global' })
 
 const props = defineProps({
   data: { type: Array, default: () => [] },

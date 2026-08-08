@@ -3,21 +3,21 @@
     <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
       <div class="d-flex align-items-center gap-2">
         <router-link to="/analytics" class="btn btn-sm btn-outline-secondary">
-          <i class="bi bi-arrow-left"></i> Назад
+          <i class="bi bi-arrow-left"></i> {{ t('analytics.back') }}
         </router-link>
-        <h5 class="mb-0">Графіки та візуалізації</h5>
+        <h5 class="mb-0">{{ t('analytics.chartsTitle') }}</h5>
       </div>
       <div class="d-flex gap-2">
         <select v-model="section" class="form-select form-select-sm" style="width:auto" @change="load">
-          <option value="">Всі розділи</option>
-          <option value="frontend">Frontend</option>
-          <option value="admin">Адмінка</option>
+          <option value="">{{ t('analytics.filters.allSections') }}</option>
+          <option value="frontend">{{ t('analytics.filters.sectionFrontend') }}</option>
+          <option value="admin">{{ t('analytics.filters.sectionAdmin') }}</option>
         </select>
         <select v-model="days" class="form-select form-select-sm" style="width:auto" @change="load">
-          <option :value="1">24 години</option>
-          <option :value="7">7 днів</option>
-          <option :value="14">14 днів</option>
-          <option :value="30">30 днів</option>
+          <option :value="1">{{ t('analytics.period24h') }}</option>
+          <option :value="7">{{ t('analytics.periodDays', { days: 7 }) }}</option>
+          <option :value="14">{{ t('analytics.periodDays', { days: 14 }) }}</option>
+          <option :value="30">{{ t('analytics.periodDays', { days: 30 }) }}</option>
         </select>
       </div>
     </div>
@@ -32,7 +32,7 @@
       <div class="col-12">
         <div class="card shadow-sm">
           <div class="card-header bg-light">
-            <strong>Динаміка відвідувань по днях</strong>
+            <strong>{{ t('analytics.trendTitle') }}</strong>
           </div>
           <div class="card-body">
             <TrendChart
@@ -41,7 +41,7 @@
               :datasets="trendData.datasets"
               :height="300"
             />
-            <div v-else class="text-center text-muted py-5">Немає даних</div>
+            <div v-else class="text-center text-muted py-5">{{ t('common.noData') }}</div>
           </div>
         </div>
       </div>
@@ -50,7 +50,7 @@
       <div v-if="days === 1 && stats.hourly?.length" class="col-md-6">
         <div class="card shadow-sm">
           <div class="card-header bg-light">
-            <strong>Розподіл по годинах (24h)</strong>
+            <strong>{{ t('analytics.hourlyTitle') }}</strong>
           </div>
           <div class="card-body">
             <HourlyChart :data="stats.hourly" />
@@ -62,7 +62,7 @@
       <div class="col-md-6">
         <div class="card shadow-sm">
           <div class="card-header bg-light">
-            <strong>По типах пристроїв</strong>
+            <strong>{{ t('analytics.byDeviceTitle') }}</strong>
           </div>
           <div class="card-body">
             <PieChart :data="stats.by_device" label-key="device_type" value-key="count" />
@@ -74,10 +74,10 @@
       <div class="col-md-6">
         <div class="card shadow-sm">
           <div class="card-header bg-light">
-            <strong>По браузерах</strong>
+            <strong>{{ t('analytics.byBrowserTitle') }}</strong>
           </div>
           <div class="card-body">
-            <BarChart :data="stats.by_browser" label-key="browser" value-key="count" title="Браузери" />
+            <BarChart :data="stats.by_browser" label-key="browser" value-key="count" :title="t('analytics.byBrowserTitle')" />
           </div>
         </div>
       </div>
@@ -86,10 +86,10 @@
       <div class="col-md-6">
         <div class="card shadow-sm">
           <div class="card-header bg-light">
-            <strong>По операційних системах</strong>
+            <strong>{{ t('analytics.byOsTitle') }}</strong>
           </div>
           <div class="card-body">
-            <BarChart :data="stats.by_os" label-key="os" value-key="count" title="ОС" />
+            <BarChart :data="stats.by_os" label-key="os" value-key="count" :title="t('analytics.byOsTitle')" />
           </div>
         </div>
       </div>
@@ -98,7 +98,7 @@
       <div class="col-md-6">
         <div class="card shadow-sm">
           <div class="card-header bg-light">
-            <strong>Типи клієнтів</strong>
+            <strong>{{ t('analytics.byClientTypeTitle') }}</strong>
           </div>
           <div class="card-body">
             <PieChart :data="clientTypesForChart" label-key="label" value-key="count" />
@@ -110,7 +110,7 @@
       <div class="col-md-6">
         <div class="card shadow-sm">
           <div class="card-header bg-light">
-            <strong>Категорії ботів</strong>
+            <strong>{{ t('analytics.byBotCategoryTitle') }}</strong>
           </div>
           <div class="card-body">
             <PieChart :data="botCategoriesForChart" label-key="label" value-key="count" />
@@ -123,6 +123,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { authHeaders } from '@/utils/api'
 import BaseLayout from '../layouts/BaseLayout.vue'
 import TrendChart from '../components/TrendChart.vue'
@@ -130,6 +131,7 @@ import PieChart from '../components/PieChart.vue'
 import BarChart from '../components/BarChart.vue'
 import HourlyChart from '../components/HourlyChart.vue'
 
+const { t } = useI18n({ useScope: 'global' })
 const stats = ref(null)
 const loading = ref(false)
 const error = ref('')
@@ -151,12 +153,12 @@ const trendData = computed(() => {
   const labels = Object.keys(dateMap).sort()
   const datasets = [
     {
-      label: 'Користувачі',
+      label: t('analytics.legendUsers'),
       data: labels.map(date => dateMap[date].real),
       color: 'var(--bs-primary)',
     },
     {
-      label: 'Боти',
+      label: t('analytics.legendBots'),
       data: labels.map(date => dateMap[date].bots),
       color: 'var(--bs-secondary-color)',
     },
@@ -169,10 +171,10 @@ const clientTypesForChart = computed(() => {
   if (!stats.value?.by_client_type) return []
 
   const labels = {
-    human: '👤 Люди',
-    bot: '🤖 Боти',
-    suspicious: '⚠️ Підозрілі',
-    unknown: '❓ Невідомі',
+    human: t('analytics.clientTypePlural.human'),
+    bot: t('analytics.clientTypePlural.bot'),
+    suspicious: t('analytics.clientTypePlural.suspicious'),
+    unknown: t('analytics.clientTypePlural.unknown'),
   }
 
   return stats.value.by_client_type.map(item => ({
@@ -185,11 +187,11 @@ const botCategoriesForChart = computed(() => {
   if (!stats.value?.bot_categories) return []
 
   const labels = {
-    search_engine: '🔍 Пошукові системи',
-    seo_tool: '📊 SEO інструменти',
-    monitoring: '🔔 Моніторинг',
-    scraper: '🤖 Scrapers',
-    malicious: '🚫 Шкідливі',
+    search_engine: t('analytics.filters.groupSearchEngines'),
+    seo_tool: t('analytics.filters.groupSeoTools'),
+    monitoring: t('analytics.filters.groupMonitoring'),
+    scraper: t('analytics.filters.scrapers'),
+    malicious: t('analytics.botCategoryMalicious'),
   }
 
   return stats.value.bot_categories.map(item => ({
@@ -213,7 +215,7 @@ async function load() {
     if (json.status === 'success') {
       stats.value = json.data
     } else {
-      error.value = json.message || 'Помилка завантаження'
+      error.value = json.message || t('analytics.loadError')
     }
   } catch (e) {
     error.value = e.message

@@ -1,10 +1,11 @@
 /** Спільні підписи/кольори аналітики — для списку, статистики та графіків */
+import i18n from '../i18n'
 
 export const CLIENT_TYPE_LABELS: Record<string, string> = {
-  human: '👤 Люди',
-  bot: '🤖 Боти',
-  suspicious: '⚠️ Підозрілі',
-  unknown: '❓ Невідомі',
+  get human() { return i18n.t('analytics.clientTypePlural.human') },
+  get bot() { return i18n.t('analytics.clientTypePlural.bot') },
+  get suspicious() { return i18n.t('analytics.clientTypePlural.suspicious') },
+  get unknown() { return i18n.t('analytics.clientTypePlural.unknown') },
 }
 
 export const CLIENT_TYPE_BADGE: Record<string, string> = {
@@ -22,11 +23,11 @@ export const CLIENT_TYPE_PROGRESS: Record<string, string> = {
 }
 
 export const BOT_CATEGORY_LABELS: Record<string, string> = {
-  search_engine: '🔍 Пошукові системи',
-  seo_tool: '📊 SEO інструменти',
-  monitoring: '🔔 Моніторинг',
-  scraper: '🤖 Scrapers',
-  malicious: '🚫 Шкідливі',
+  get search_engine() { return i18n.t('analytics.filters.groupSearchEngines') },
+  get seo_tool() { return i18n.t('analytics.filters.groupSeoTools') },
+  get monitoring() { return i18n.t('analytics.filters.groupMonitoring') },
+  get scraper() { return i18n.t('analytics.filters.scrapers') },
+  get malicious() { return i18n.t('analytics.botCategoryMalicious') },
 }
 
 export const BOT_CATEGORY_BADGE: Record<string, string> = {
@@ -58,7 +59,7 @@ export const DEVICE_NAME: Record<string, string> = {
 }
 
 export function clientTypeLabel(type: string): string {
-  return CLIENT_TYPE_LABELS[type] ?? '⏳ Не класифіковано'
+  return CLIENT_TYPE_LABELS[type] ?? i18n.t('analytics.clientType.unclassified')
 }
 
 export function responseTimeClass(time?: number | null): string {
@@ -93,8 +94,8 @@ export function buildTrafficTrend(trend?: Array<{ date: string; is_bot: number; 
   return {
     labels,
     datasets: [
-      { label: 'Користувачі', data: labels.map(d => dateMap[d].real), color: '#0d6efd' },
-      { label: 'Боти', data: labels.map(d => dateMap[d].bots), color: '#6c757d' },
+      { label: i18n.t('analytics.legendUsers'), data: labels.map(d => dateMap[d].real), color: '#0d6efd' },
+      { label: i18n.t('analytics.legendBots'), data: labels.map(d => dateMap[d].bots), color: '#6c757d' },
     ],
   }
 }

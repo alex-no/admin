@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import TrendChart from '@/components/charts/TrendChart'
 import PieChart from '@/components/charts/PieChart'
@@ -8,6 +9,7 @@ import { apiGet } from '@/utils/api'
 import { CLIENT_TYPE_LABELS, BOT_CATEGORY_LABELS, buildTrafficTrend } from './analyticsLabels'
 
 export default function AnalyticsCharts() {
+  const { t } = useTranslation()
   const [stats, setStats] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -25,11 +27,11 @@ export default function AnalyticsCharts() {
       const res = await apiGet(`/admin/analytics/stats?${params}`)
       setStats(res.data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Помилка завантаження')
+      setError(err instanceof Error ? err.message : t('analytics.loadError'))
     } finally {
       setLoading(false)
     }
-  }, [days, section])
+  }, [days, section, t])
 
   useEffect(() => { load() }, [load])
 
@@ -50,9 +52,9 @@ export default function AnalyticsCharts() {
       <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
         <div className="d-flex align-items-center gap-2">
           <Link to="/analytics" className="btn btn-sm btn-outline-secondary">
-            <i className="bi bi-arrow-left" /> Назад
+            <i className="bi bi-arrow-left" /> {t('analytics.back')}
           </Link>
-          <h5 className="mb-0">Графіки та візуалізації</h5>
+          <h5 className="mb-0">{t('analytics.chartsTitle')}</h5>
         </div>
         <div className="d-flex gap-2">
           <select
@@ -61,9 +63,9 @@ export default function AnalyticsCharts() {
             className="form-select form-select-sm"
             style={{ width: 'auto' }}
           >
-            <option value="">Всі розділи</option>
-            <option value="frontend">Frontend</option>
-            <option value="admin">Адмінка</option>
+            <option value="">{t('analytics.filters.allSections')}</option>
+            <option value="frontend">{t('analytics.filters.sectionFrontend')}</option>
+            <option value="admin">{t('analytics.filters.sectionAdmin')}</option>
           </select>
           <select
             value={days}
@@ -71,10 +73,10 @@ export default function AnalyticsCharts() {
             className="form-select form-select-sm"
             style={{ width: 'auto' }}
           >
-            <option value={1}>24 години</option>
-            <option value={7}>7 днів</option>
-            <option value={14}>14 днів</option>
-            <option value={30}>30 днів</option>
+            <option value={1}>{t('analytics.period24h')}</option>
+            <option value={7}>{t('analytics.periodDays', { days: 7 })}</option>
+            <option value={14}>{t('analytics.periodDays', { days: 14 })}</option>
+            <option value={30}>{t('analytics.periodDays', { days: 30 })}</option>
           </select>
         </div>
       </div>
@@ -92,11 +94,11 @@ export default function AnalyticsCharts() {
           {/* Динаміка */}
           <div className="col-12">
             <div className="card shadow-sm">
-              <div className="card-header bg-light"><strong>Динаміка відвідувань по днях</strong></div>
+              <div className="card-header bg-light"><strong>{t('analytics.trendTitle')}</strong></div>
               <div className="card-body">
                 {trend.labels.length > 0
                   ? <TrendChart labels={trend.labels} datasets={trend.datasets} />
-                  : <div className="text-center text-muted py-5">Немає даних</div>}
+                  : <div className="text-center text-muted py-5">{t('common.noData')}</div>}
               </div>
             </div>
           </div>
@@ -105,7 +107,7 @@ export default function AnalyticsCharts() {
           {days === 1 && stats.hourly?.length > 0 && (
             <div className="col-md-6">
               <div className="card shadow-sm">
-                <div className="card-header bg-light"><strong>Розподіл по годинах (24h)</strong></div>
+                <div className="card-header bg-light"><strong>{t('analytics.hourlyTitle')}</strong></div>
                 <div className="card-body">
                   <HourlyChart data={stats.hourly} />
                 </div>
@@ -115,7 +117,7 @@ export default function AnalyticsCharts() {
 
           <div className="col-md-6">
             <div className="card shadow-sm">
-              <div className="card-header bg-light"><strong>По типах пристроїв</strong></div>
+              <div className="card-header bg-light"><strong>{t('analytics.byDeviceTitle')}</strong></div>
               <div className="card-body">
                 <PieChart data={stats.by_device} labelKey="device_type" valueKey="count" />
               </div>
@@ -124,7 +126,7 @@ export default function AnalyticsCharts() {
 
           <div className="col-md-6">
             <div className="card shadow-sm">
-              <div className="card-header bg-light"><strong>По браузерах</strong></div>
+              <div className="card-header bg-light"><strong>{t('analytics.byBrowserTitle')}</strong></div>
               <div className="card-body">
                 <BarChart data={stats.by_browser} labelKey="browser" valueKey="count" />
               </div>
@@ -133,7 +135,7 @@ export default function AnalyticsCharts() {
 
           <div className="col-md-6">
             <div className="card shadow-sm">
-              <div className="card-header bg-light"><strong>По операційних системах</strong></div>
+              <div className="card-header bg-light"><strong>{t('analytics.byOsTitle')}</strong></div>
               <div className="card-body">
                 <BarChart data={stats.by_os} labelKey="os" valueKey="count" />
               </div>
@@ -142,7 +144,7 @@ export default function AnalyticsCharts() {
 
           <div className="col-md-6">
             <div className="card shadow-sm">
-              <div className="card-header bg-light"><strong>Типи клієнтів</strong></div>
+              <div className="card-header bg-light"><strong>{t('analytics.byClientTypeTitle')}</strong></div>
               <div className="card-body">
                 <PieChart data={clientTypes} labelKey="label" valueKey="count" />
               </div>
@@ -151,7 +153,7 @@ export default function AnalyticsCharts() {
 
           <div className="col-md-6">
             <div className="card shadow-sm">
-              <div className="card-header bg-light"><strong>Категорії ботів</strong></div>
+              <div className="card-header bg-light"><strong>{t('analytics.byBotCategoryTitle')}</strong></div>
               <div className="card-body">
                 <PieChart data={botCategories} labelKey="label" valueKey="count" />
               </div>

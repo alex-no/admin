@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { Link } from 'react-router-dom'
 import Pagination from '@/list-framework/components/Pagination'
 import AnalyticsDetailsModal from './AnalyticsDetailsModal'
@@ -17,79 +19,86 @@ import { methodBadge, rowClass, shortReferer, smartClientLabel, statusBadge } fr
 
 const PER_PAGE = 100
 
-const CLIENT_TYPE_GROUPS = [
-  {
-    label: '👤 Люди',
-    options: [
-      { value: 'human', label: 'Всі люди' },
-      { value: 'human_desktop', label: '🖥️ Desktop' },
-      { value: 'human_mobile', label: '📱 Mobile' },
-      { value: 'human_tablet', label: '📲 Tablet' },
-      { value: 'human_unknown', label: '❓ Невідомі' },
-    ],
-  },
-  {
-    label: '🔍 Пошукові системи',
-    options: [
-      { value: 'bot_search_engine', label: 'Всі пошукові системи' },
-      { value: 'bot_search_google', label: 'Google' },
-      { value: 'bot_search_yandex', label: 'Yandex' },
-      { value: 'bot_search_bing', label: 'Bing' },
-      { value: 'bot_search_other', label: 'Інші' },
-      { value: 'bot_search_unknown', label: '❓ Невідомі' },
-    ],
-  },
-  {
-    label: '📊 SEO інструменти',
-    options: [
-      { value: 'bot_seo_tool', label: 'Всі SEO інструменти' },
-      { value: 'bot_seo_unknown', label: '❓ Невідомі' },
-    ],
-  },
-  {
-    label: '🔔 Моніторинг',
-    options: [
-      { value: 'bot_monitoring', label: 'Всі моніторинг-сервіси' },
-      { value: 'bot_monitoring_unknown', label: '❓ Невідомі' },
-    ],
-  },
-  {
-    label: '🚫 Погані боти',
-    options: [
-      { value: 'bot_scraper', label: '🤖 Scrapers' },
-      { value: 'bot_malicious', label: '⚠️ Malicious (сканери)' },
-      { value: 'bot_bad_unknown', label: '❓ Невідомі' },
-    ],
-  },
-  {
-    label: 'Інше',
-    options: [
-      { value: 'suspicious', label: '⚠️ Підозрілі' },
-      { value: 'unknown', label: '❓ Невідомі' },
-      { value: 'unclassified', label: '⏳ Не проаналізовані' },
-    ],
-  },
-]
+function getClientTypeGroups(t: TFunction) {
+  return [
+    {
+      label: t('analytics.filters.groupHumans'),
+      options: [
+        { value: 'human', label: t('analytics.filters.allHumans') },
+        { value: 'human_desktop', label: t('analytics.filters.desktop') },
+        { value: 'human_mobile', label: t('analytics.filters.mobile') },
+        { value: 'human_tablet', label: t('analytics.filters.tablet') },
+        { value: 'human_unknown', label: t('analytics.filters.unknownPlural') },
+      ],
+    },
+    {
+      label: t('analytics.filters.groupSearchEngines'),
+      options: [
+        { value: 'bot_search_engine', label: t('analytics.filters.allSearchEngines') },
+        { value: 'bot_search_google', label: 'Google' },
+        { value: 'bot_search_yandex', label: 'Yandex' },
+        { value: 'bot_search_bing', label: 'Bing' },
+        { value: 'bot_search_other', label: t('analytics.filters.otherSearchEngines') },
+        { value: 'bot_search_unknown', label: t('analytics.filters.unknownPlural') },
+      ],
+    },
+    {
+      label: t('analytics.filters.groupSeoTools'),
+      options: [
+        { value: 'bot_seo_tool', label: t('analytics.filters.allSeoTools') },
+        { value: 'bot_seo_unknown', label: t('analytics.filters.unknownPlural') },
+      ],
+    },
+    {
+      label: t('analytics.filters.groupMonitoring'),
+      options: [
+        { value: 'bot_monitoring', label: t('analytics.filters.allMonitoring') },
+        { value: 'bot_monitoring_unknown', label: t('analytics.filters.unknownPlural') },
+      ],
+    },
+    {
+      label: t('analytics.filters.groupBadBots'),
+      options: [
+        { value: 'bot_scraper', label: t('analytics.filters.scrapers') },
+        { value: 'bot_malicious', label: t('analytics.filters.malicious') },
+        { value: 'bot_bad_unknown', label: t('analytics.filters.unknownPlural') },
+      ],
+    },
+    {
+      label: t('analytics.filters.groupOther'),
+      options: [
+        { value: 'suspicious', label: t('analytics.filters.suspiciousPlural') },
+        { value: 'unknown', label: t('analytics.filters.unknownPlural') },
+        { value: 'unclassified', label: t('analytics.filters.unclassified') },
+      ],
+    },
+  ]
+}
 
 const STATUS_OPTIONS = ['200 OK', '201 Created', '204 No Content', '301 Moved', '302 Found',
   '400 Bad Request', '401 Unauthorized', '403 Forbidden', '404 Not Found',
   '422 Unprocessable', '500 Server Error', '503 Unavailable']
 
-const SORT_COLUMNS: Array<{ key: string; label: string; width?: string; align?: string }> = [
-  { key: 'id', label: 'ID', width: '60px', align: 'text-end' },
-  { key: 'path', label: 'URL' },
-  { key: 'method', label: 'Method', width: '60px' },
-  { key: 'status_code', label: 'Status', width: '70px' },
-  { key: 'ip', label: 'IP', width: '130px' },
-  { key: 'referer', label: 'Referer' },
-  { key: 'client_type', label: 'Тип / Device', width: '140px' },
-  { key: 'browser', label: 'Browser' },
-  { key: 'user_id', label: 'User' },
-  { key: 'response_time', label: 'Time', width: '90px', align: 'text-end' },
-  { key: 'created_at', label: 'Дата', width: '140px' },
-]
+function getSortColumns(t: TFunction): Array<{ key: string; label: string; width?: string; align?: string }> {
+  return [
+    { key: 'id', label: 'ID', width: '60px', align: 'text-end' },
+    { key: 'path', label: 'URL' },
+    { key: 'method', label: 'Method', width: '60px' },
+    { key: 'status_code', label: 'Status', width: '70px' },
+    { key: 'ip', label: 'IP', width: '130px' },
+    { key: 'referer', label: 'Referer' },
+    { key: 'client_type', label: t('analytics.colClientType'), width: '140px' },
+    { key: 'browser', label: 'Browser' },
+    { key: 'user_id', label: 'User' },
+    { key: 'response_time', label: 'Time', width: '90px', align: 'text-end' },
+    { key: 'created_at', label: t('analytics.colDate'), width: '140px' },
+  ]
+}
 
 export default function Analytics() {
+  const { t } = useTranslation()
+  const CLIENT_TYPE_GROUPS = getClientTypeGroups(t)
+  const SORT_COLUMNS = getSortColumns(t)
   // Початковий стан — з URL (client_type за замовчуванням 'human', як у Vue)
   const urlFilters = readFiltersFromUrl({
     search: '',
@@ -179,12 +188,12 @@ export default function Analytics() {
       setItems(res.data ?? [])
       setTotal(res.pagination?.total ?? 0)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Помилка завантаження')
+      setError(err instanceof Error ? err.message : t('analytics.loadError'))
     } finally {
       setLoading(false)
     }
   }, [page, sortKey, sortDir, searchDebounced, clientTypeFilter, deviceFilter,
-      statusFilter, methodFilter, dateFrom, dateTo, ipFilterDebounced])
+      statusFilter, methodFilter, dateFrom, dateTo, ipFilterDebounced, t])
 
   useEffect(() => { load() }, [load])
 
@@ -214,7 +223,7 @@ export default function Analytics() {
       clearSelection()
       load()
     } catch (err) {
-      notify(`Помилка: ${err instanceof Error ? err.message : 'невідома'}`, { type: 'error' })
+      notify(`${t('common.error')}: ${err instanceof Error ? err.message : t('analytics.unknownError')}`, { type: 'error' })
     }
   }
 
@@ -225,7 +234,7 @@ export default function Analytics() {
       setChangeType(null)
       load()
     } catch (err) {
-      notify(`Помилка: ${err instanceof Error ? err.message : 'невідома'}`, { type: 'error' })
+      notify(`${t('common.error')}: ${err instanceof Error ? err.message : t('analytics.unknownError')}`, { type: 'error' })
     }
   }
 
@@ -234,17 +243,16 @@ export default function Analytics() {
       const res = await apiGet('/admin/network-tools/my-ip')
       const ip = res.data?.ip
       if (!ip) {
-        notify('Не вдалося отримати IP', { type: 'error' })
+        notify(t('analytics.myIpFailed'), { type: 'error' })
         return
       }
       const subnet = ip.split('.').slice(0, 3).join('.') + '.*'
       notify(
-        `Ваш IP: ${ip}\n\nДодати до виключень в .env:\nANALYTICS_EXCLUDED_IPS=${ip}\n` +
-        `Або всю підмережу: ${subnet}`,
-        { type: 'info', duration: 10000, action: { label: 'У фільтр', onClick: () => setIpFilter(ip) } }
+        t('analytics.myIpMessageShort', { ip, subnet }),
+        { type: 'info', duration: 10000, action: { label: t('analytics.myIpAction'), onClick: () => setIpFilter(ip) } }
       )
     } catch (err) {
-      notify(`Помилка: ${err instanceof Error ? err.message : 'невідома'}`, { type: 'error' })
+      notify(`${t('common.error')}: ${err instanceof Error ? err.message : t('analytics.unknownError')}`, { type: 'error' })
     }
   }
 
@@ -252,12 +260,12 @@ export default function Analytics() {
     <div>
       <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
         <div className="d-flex align-items-center gap-2">
-          <h5 className="mb-0">Аналітика відвідувань</h5>
+          <h5 className="mb-0">{t('analytics.title')}</h5>
           <Link to="/analytics/stats" className="btn btn-sm btn-outline-primary">
-            <i className="bi bi-bar-chart" /> Статистика
+            <i className="bi bi-bar-chart" /> {t('analytics.statsLink')}
           </Link>
           <Link to="/analytics/charts" className="btn btn-sm btn-outline-primary">
-            <i className="bi bi-graph-up-arrow" /> Графіки
+            <i className="bi bi-graph-up-arrow" /> {t('analytics.chartsLink')}
           </Link>
         </div>
 
@@ -268,7 +276,7 @@ export default function Analytics() {
             type="text"
             className="form-control form-control-sm"
             style={{ width: '200px' }}
-            placeholder="Пошук..."
+            placeholder={t('analytics.searchPlaceholder')}
           />
           <select
             value={clientTypeFilter}
@@ -276,7 +284,7 @@ export default function Analytics() {
             className="form-select form-select-sm"
             style={{ width: '220px' }}
           >
-            <option value="">Всі типи клієнтів</option>
+            <option value="">{t('analytics.filters.allClientTypes')}</option>
             {CLIENT_TYPE_GROUPS.map(group => (
               <optgroup key={group.label} label={group.label}>
                 {group.options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -289,7 +297,7 @@ export default function Analytics() {
             className="form-select form-select-sm"
             style={{ width: 'auto' }}
           >
-            <option value="">Всі пристрої</option>
+            <option value="">{t('analytics.filters.allDevices')}</option>
             <option value="desktop">Desktop</option>
             <option value="mobile">Mobile</option>
             <option value="tablet">Tablet</option>
@@ -300,12 +308,12 @@ export default function Analytics() {
             className="form-select form-select-sm"
             style={{ width: 'auto' }}
           >
-            <option value="">Всі статуси</option>
+            <option value="">{t('analytics.filters.allStatuses')}</option>
             {STATUS_OPTIONS.map(s => {
               const code = s.split(' ')[0]
               return <option key={code} value={code}>{s}</option>
             })}
-            <option value="other">Інші статуси</option>
+            <option value="other">{t('analytics.filters.otherStatuses')}</option>
           </select>
           <select
             value={methodFilter}
@@ -313,9 +321,9 @@ export default function Analytics() {
             className="form-select form-select-sm"
             style={{ width: 'auto' }}
           >
-            <option value="">Всі методи</option>
+            <option value="">{t('analytics.filters.allMethods')}</option>
             {['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].map(m => <option key={m} value={m}>{m}</option>)}
-            <option value="other">Інші методи</option>
+            <option value="other">{t('analytics.filters.otherMethods')}</option>
           </select>
           <input
             value={dateFrom}
@@ -338,12 +346,12 @@ export default function Analytics() {
               type="text"
               className="form-control form-control-sm"
               style={{ width: '150px' }}
-              placeholder="IP адреса..."
+              placeholder={t('analytics.ipPlaceholder')}
             />
             <button
               className="btn btn-sm btn-outline-secondary"
               type="button"
-              title="Показати мій IP"
+              title={t('analytics.myIpTooltip')}
               onClick={showMyIp}
             >
               <i className="bi bi-hdd-network" />
@@ -355,23 +363,23 @@ export default function Analytics() {
       {/* Масові дії */}
       {selected.length > 0 && (
         <div className="alert alert-info d-flex align-items-center gap-2 mb-3">
-          <span><strong>{selected.length}</strong> обрано</span>
+          <span><strong>{selected.length}</strong> {t('analytics.bulk.selected')}</span>
           <select
             value={bulkClientType}
             onChange={(e) => setBulkClientType(e.target.value)}
             className="form-select form-select-sm"
             style={{ width: 'auto' }}
           >
-            <option value="">Змінити тип на...</option>
-            <option value="human">👤 Людина</option>
-            <option value="bot">🤖 Бот</option>
-            <option value="suspicious">⚠️ Підозрілий</option>
-            <option value="unknown">❓ Невідомий</option>
+            <option value="">{t('analytics.bulk.changeTypeTo')}</option>
+            <option value="human">{t('analytics.clientType.human')}</option>
+            <option value="bot">{t('analytics.clientType.bot')}</option>
+            <option value="suspicious">{t('analytics.clientType.suspicious')}</option>
+            <option value="unknown">{t('analytics.clientType.unknown')}</option>
           </select>
           <button className="btn btn-sm btn-primary" disabled={!bulkClientType} onClick={applyBulkChange}>
-            Застосувати
+            {t('dataList.apply')}
           </button>
-          <button className="btn btn-sm btn-outline-secondary" onClick={clearSelection}>Скасувати</button>
+          <button className="btn btn-sm btn-outline-secondary" onClick={clearSelection}>{t('common.cancel')}</button>
         </div>
       )}
 
@@ -391,7 +399,7 @@ export default function Analytics() {
                         className="form-check-input"
                         checked={isAllSelected}
                         onChange={() => setSelected(isAllSelected ? [] : items.map(r => r.id))}
-                        title="Вибрати всі"
+                        title={t('analytics.selectAllTooltip')}
                       />
                     </th>
                     {SORT_COLUMNS.map(col => (
@@ -432,7 +440,7 @@ export default function Analytics() {
                         <a
                           href="#"
                           className="text-decoration-none"
-                          title={`Фільтрувати за IP: ${row.ip}`}
+                          title={t('analytics.filterByIpTooltip', { ip: row.ip })}
                           onClick={(e) => { e.preventDefault(); setIpFilter(row.ip) }}
                         >
                           <i className="bi bi-filter-circle" /> {row.ip}
@@ -447,7 +455,7 @@ export default function Analytics() {
                         <span
                           className={CLIENT_TYPE_BADGE[row.client_type] ?? 'badge bg-light text-dark'}
                           style={{ cursor: 'pointer' }}
-                          title={`Клік щоб змінити тип. Метод: ${row.detection_method || 'не вказано'}`}
+                          title={t('analytics.changeTypeTooltip', { method: row.detection_method || t('analytics.notSpecified') })}
                           onClick={() => setChangeType({ id: row.id, currentType: row.client_type })}
                         >
                           {smartClientLabel(row)}
@@ -468,7 +476,7 @@ export default function Analytics() {
                       <td className="text-center">
                         <button
                           className="btn btn-sm btn-outline-primary"
-                          title="Детальна інформація"
+                          title={t('analytics.detailsTooltip')}
                           onClick={() => setDetailId(row.id)}
                         >
                           <i className="bi bi-info-circle" />
@@ -477,7 +485,7 @@ export default function Analytics() {
                     </tr>
                   ))}
                   {items.length === 0 && (
-                    <tr><td colSpan={14} className="text-center text-muted py-4">Немає даних</td></tr>
+                    <tr><td colSpan={14} className="text-center text-muted py-4">{t('common.noData')}</td></tr>
                   )}
                 </tbody>
               </table>
@@ -485,7 +493,7 @@ export default function Analytics() {
           </div>
 
           <div className="d-flex justify-content-between align-items-center mt-3">
-            <span className="text-muted small">Всього: {total}</span>
+            <span className="text-muted small">{t('analytics.totalCount', { value: total })}</span>
             {totalPages > 1 && (
               <Pagination currentPage={page} totalPages={totalPages} onChange={setPage} />
             )}

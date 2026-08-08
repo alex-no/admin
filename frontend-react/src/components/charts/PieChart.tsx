@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 function getCSSColor(varName: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(varName).trim() || '#000'
 }
@@ -21,6 +23,7 @@ interface PieChartProps {
 }
 
 export default function PieChart({ data = [], labelKey, valueKey, size = 250 }: PieChartProps) {
+  const { t } = useTranslation()
   const total = data.reduce((sum, item) => sum + (item[valueKey] || 0), 0)
   const COLORS = getColors()
   const strokeColor = getCSSColor('--bs-body-bg')
@@ -82,7 +85,7 @@ export default function PieChart({ data = [], labelKey, valueKey, size = 250 }: 
         ))}
       </div>
 
-      {slices.length === 0 && <div className="text-center text-muted py-3">Немає даних</div>}
+      {slices.length === 0 && <div className="text-center text-muted py-3">{t('common.noData')}</div>}
     </div>
   )
 }

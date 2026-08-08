@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import TrendChart from '@/components/charts/TrendChart'
 import { apiGet } from '@/utils/api'
@@ -17,6 +18,7 @@ import {
 } from './analyticsLabels'
 
 export default function AnalyticsStats() {
+  const { t } = useTranslation()
   const [stats, setStats] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -34,11 +36,11 @@ export default function AnalyticsStats() {
       const res = await apiGet(`/admin/analytics/stats?${params}`)
       setStats(res.data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Помилка завантаження')
+      setError(err instanceof Error ? err.message : t('analytics.loadError'))
     } finally {
       setLoading(false)
     }
-  }, [days, section])
+  }, [days, section, t])
 
   useEffect(() => { load() }, [load])
 
@@ -54,9 +56,9 @@ export default function AnalyticsStats() {
       <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
         <div className="d-flex align-items-center gap-2">
           <Link to="/analytics" className="btn btn-sm btn-outline-secondary">
-            <i className="bi bi-arrow-left" /> Назад
+            <i className="bi bi-arrow-left" /> {t('analytics.back')}
           </Link>
-          <h5 className="mb-0">Статистика відвідувань</h5>
+          <h5 className="mb-0">{t('analytics.statsTitle')}</h5>
         </div>
         <div className="d-flex gap-2">
           <select
@@ -65,9 +67,9 @@ export default function AnalyticsStats() {
             className="form-select form-select-sm"
             style={{ width: 'auto' }}
           >
-            <option value="">Всі розділи</option>
-            <option value="frontend">Frontend</option>
-            <option value="admin">Адмінка</option>
+            <option value="">{t('analytics.filters.allSections')}</option>
+            <option value="frontend">{t('analytics.filters.sectionFrontend')}</option>
+            <option value="admin">{t('analytics.filters.sectionAdmin')}</option>
           </select>
           <select
             value={days}
@@ -75,8 +77,8 @@ export default function AnalyticsStats() {
             className="form-select form-select-sm"
             style={{ width: 'auto' }}
           >
-            <option value={1}>За 24 години</option>
-            {[7, 14, 30, 60, 90].map(d => <option key={d} value={d}>За {d} днів</option>)}
+            <option value={1}>{t('analytics.period24hFull')}</option>
+            {[7, 14, 30, 60, 90].map(d => <option key={d} value={d}>{t('analytics.periodDaysFull', { days: d })}</option>)}
           </select>
         </div>
       </div>
@@ -95,9 +97,9 @@ export default function AnalyticsStats() {
           <div className="col-md-3">
             <div className="card text-center shadow-sm">
               <div className="card-body">
-                <h6 className="text-muted mb-2">Всього переглядів</h6>
+                <h6 className="text-muted mb-2">{t('analytics.totalViews')}</h6>
                 <h2 className="mb-0">{stats.total}</h2>
-                <small className="text-muted">за {stats.period_days} днів</small>
+                <small className="text-muted">{t('analytics.periodDaysSuffix', { days: stats.period_days })}</small>
               </div>
             </div>
           </div>
@@ -105,9 +107,9 @@ export default function AnalyticsStats() {
           <div className="col-md-3">
             <div className="card text-center shadow-sm">
               <div className="card-body">
-                <h6 className="text-muted mb-2">Унікальні відвідувачі</h6>
+                <h6 className="text-muted mb-2">{t('analytics.uniqueVisitors')}</h6>
                 <h2 className="mb-0">{stats.unique_visitors}</h2>
-                <small className="text-muted">по IP (без ботів)</small>
+                <small className="text-muted">{t('analytics.byIpNoBots')}</small>
               </div>
             </div>
           </div>
@@ -115,11 +117,11 @@ export default function AnalyticsStats() {
           <div className="col-md-3">
             <div className="card text-center shadow-sm">
               <div className="card-body">
-                <h6 className="text-muted mb-2">Середній час відповіді</h6>
+                <h6 className="text-muted mb-2">{t('analytics.avgResponseTime')}</h6>
                 <h2 className={`mb-0 ${responseTimeClass(stats.response_time?.avg_time)}`}>
                   {Math.round(stats.response_time?.avg_time || 0)}ms
                 </h2>
-                <small className="text-muted">макс: {stats.response_time?.max_time}ms</small>
+                <small className="text-muted">{t('analytics.maxTime', { value: stats.response_time?.max_time })}</small>
               </div>
             </div>
           </div>
@@ -127,9 +129,9 @@ export default function AnalyticsStats() {
           <div className="col-md-3">
             <div className="card text-center shadow-sm">
               <div className="card-body">
-                <h6 className="text-muted mb-2">Боти</h6>
+                <h6 className="text-muted mb-2">{t('analytics.bots')}</h6>
                 <h2 className="mb-0">{botsCount}</h2>
-                <small className="text-muted">{botsPercent}% трафіку</small>
+                <small className="text-muted">{t('analytics.botsTraffic', { percent: botsPercent })}</small>
               </div>
             </div>
           </div>
@@ -137,10 +139,10 @@ export default function AnalyticsStats() {
           {/* Топ сторінок */}
           <div className="col-md-6">
             <div className="card shadow-sm">
-              <div className="card-header bg-light"><strong>Топ-10 сторінок</strong></div>
+              <div className="card-header bg-light"><strong>{t('analytics.topPages')}</strong></div>
               <div className="card-body">
                 <table className="table table-sm table-hover mb-0">
-                  <thead><tr><th>URL</th><th className="text-end">Перегляди</th></tr></thead>
+                  <thead><tr><th>URL</th><th className="text-end">{t('analytics.views')}</th></tr></thead>
                   <tbody>
                     {(stats.top_pages ?? []).map((item: any) => (
                       <tr key={item.path}>
@@ -149,7 +151,7 @@ export default function AnalyticsStats() {
                       </tr>
                     ))}
                     {!stats.top_pages?.length && (
-                      <tr><td colSpan={2} className="text-center text-muted py-3">Немає даних</td></tr>
+                      <tr><td colSpan={2} className="text-center text-muted py-3">{t('common.noData')}</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -160,10 +162,10 @@ export default function AnalyticsStats() {
           {/* Топ джерел */}
           <div className="col-md-6">
             <div className="card shadow-sm">
-              <div className="card-header bg-light"><strong>Топ-10 джерел</strong></div>
+              <div className="card-header bg-light"><strong>{t('analytics.topReferers')}</strong></div>
               <div className="card-body">
                 <table className="table table-sm table-hover mb-0">
-                  <thead><tr><th>Referer</th><th className="text-end">К-сть</th></tr></thead>
+                  <thead><tr><th>Referer</th><th className="text-end">{t('analytics.countLabel')}</th></tr></thead>
                   <tbody>
                     {(stats.top_referers ?? []).map((item: any) => (
                       <tr key={item.referer}>
@@ -172,7 +174,7 @@ export default function AnalyticsStats() {
                       </tr>
                     ))}
                     {!stats.top_referers?.length && (
-                      <tr><td colSpan={2} className="text-center text-muted py-3">Немає даних</td></tr>
+                      <tr><td colSpan={2} className="text-center text-muted py-3">{t('common.noData')}</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -183,7 +185,7 @@ export default function AnalyticsStats() {
           {/* Пристрої */}
           <div className="col-md-4">
             <div className="card shadow-sm">
-              <div className="card-header bg-light"><strong>По пристроях</strong></div>
+              <div className="card-header bg-light"><strong>{t('analytics.byDevice')}</strong></div>
               <div className="card-body">
                 {(stats.by_device ?? []).map((item: any) => (
                   <div key={item.device_type} className="d-flex justify-content-between align-items-center mb-2">
@@ -194,7 +196,7 @@ export default function AnalyticsStats() {
                     <strong>{item.count}</strong>
                   </div>
                 ))}
-                {!stats.by_device?.length && <div className="text-center text-muted py-3">Немає даних</div>}
+                {!stats.by_device?.length && <div className="text-center text-muted py-3">{t('common.noData')}</div>}
               </div>
             </div>
           </div>
@@ -202,7 +204,7 @@ export default function AnalyticsStats() {
           {/* Браузери */}
           <div className="col-md-4">
             <div className="card shadow-sm">
-              <div className="card-header bg-light"><strong>По браузерах</strong></div>
+              <div className="card-header bg-light"><strong>{t('analytics.byBrowser')}</strong></div>
               <div className="card-body">
                 {(stats.by_browser ?? []).map((item: any) => (
                   <div key={item.browser} className="d-flex justify-content-between align-items-center mb-2">
@@ -210,7 +212,7 @@ export default function AnalyticsStats() {
                     <strong>{item.count}</strong>
                   </div>
                 ))}
-                {!stats.by_browser?.length && <div className="text-center text-muted py-3">Немає даних</div>}
+                {!stats.by_browser?.length && <div className="text-center text-muted py-3">{t('common.noData')}</div>}
               </div>
             </div>
           </div>
@@ -218,7 +220,7 @@ export default function AnalyticsStats() {
           {/* ОС */}
           <div className="col-md-4">
             <div className="card shadow-sm">
-              <div className="card-header bg-light"><strong>По ОС</strong></div>
+              <div className="card-header bg-light"><strong>{t('analytics.byOs')}</strong></div>
               <div className="card-body">
                 {(stats.by_os ?? []).map((item: any) => (
                   <div key={item.os} className="d-flex justify-content-between align-items-center mb-2">
@@ -226,7 +228,7 @@ export default function AnalyticsStats() {
                     <strong>{item.count}</strong>
                   </div>
                 ))}
-                {!stats.by_os?.length && <div className="text-center text-muted py-3">Немає даних</div>}
+                {!stats.by_os?.length && <div className="text-center text-muted py-3">{t('common.noData')}</div>}
               </div>
             </div>
           </div>
@@ -234,7 +236,7 @@ export default function AnalyticsStats() {
           {/* Типи клієнтів */}
           <div className="col-md-6">
             <div className="card shadow-sm">
-              <div className="card-header bg-light"><strong>По типах клієнтів</strong></div>
+              <div className="card-header bg-light"><strong>{t('analytics.byClientType')}</strong></div>
               <div className="card-body">
                 {(stats.by_client_type ?? []).map((item: any) => (
                   <div key={item.client_type} className="d-flex justify-content-between align-items-center mb-2">
@@ -257,7 +259,7 @@ export default function AnalyticsStats() {
                     <strong style={{ minWidth: '60px', textAlign: 'right' }}>{item.count}</strong>
                   </div>
                 ))}
-                {!stats.by_client_type?.length && <div className="text-center text-muted py-3">Немає даних</div>}
+                {!stats.by_client_type?.length && <div className="text-center text-muted py-3">{t('common.noData')}</div>}
               </div>
             </div>
           </div>
@@ -265,7 +267,7 @@ export default function AnalyticsStats() {
           {/* Категорії ботів */}
           <div className="col-md-6">
             <div className="card shadow-sm">
-              <div className="card-header bg-light"><strong>Категорії ботів</strong></div>
+              <div className="card-header bg-light"><strong>{t('analytics.byBotCategoryTitle')}</strong></div>
               <div className="card-body">
                 {(stats.bot_categories ?? []).map((item: any) => (
                   <div key={item.bot_category} className="d-flex justify-content-between align-items-center mb-2">
@@ -288,7 +290,7 @@ export default function AnalyticsStats() {
                     <strong style={{ minWidth: '60px', textAlign: 'right' }}>{item.count}</strong>
                   </div>
                 ))}
-                {!stats.bot_categories?.length && <div className="text-center text-muted py-3">Немає даних</div>}
+                {!stats.bot_categories?.length && <div className="text-center text-muted py-3">{t('common.noData')}</div>}
               </div>
             </div>
           </div>
@@ -296,10 +298,10 @@ export default function AnalyticsStats() {
           {/* Топ ботів */}
           <div className="col-md-6">
             <div className="card shadow-sm">
-              <div className="card-header bg-light"><strong>Топ-10 ботів</strong></div>
+              <div className="card-header bg-light"><strong>{t('analytics.topBots')}</strong></div>
               <div className="card-body">
                 <table className="table table-sm table-hover mb-0">
-                  <thead><tr><th>Бот</th><th className="text-end">Запитів</th></tr></thead>
+                  <thead><tr><th>{t('analytics.clientTypePlain.bot')}</th><th className="text-end">{t('analytics.requests')}</th></tr></thead>
                   <tbody>
                     {(stats.top_bots ?? []).map((item: any) => (
                       <tr key={item.bot_name}>
@@ -308,7 +310,7 @@ export default function AnalyticsStats() {
                       </tr>
                     ))}
                     {!stats.top_bots?.length && (
-                      <tr><td colSpan={2} className="text-center text-muted py-3">Немає даних</td></tr>
+                      <tr><td colSpan={2} className="text-center text-muted py-3">{t('common.noData')}</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -319,14 +321,14 @@ export default function AnalyticsStats() {
           {/* Динаміка */}
           <div className="col-md-6">
             <div className="card shadow-sm">
-              <div className="card-header bg-light"><strong>Динаміка по днях</strong></div>
+              <div className="card-header bg-light"><strong>{t('analytics.trendByDays')}</strong></div>
               <div className="card-body">
                 {trend.labels.length > 0 ? (
                   <div style={{ maxHeight: '300px', overflowX: 'auto' }}>
                     <TrendChart labels={trend.labels} datasets={trend.datasets} />
                   </div>
                 ) : (
-                  <div className="text-center text-muted py-5">Немає даних</div>
+                  <div className="text-center text-muted py-5">{t('common.noData')}</div>
                 )}
               </div>
             </div>

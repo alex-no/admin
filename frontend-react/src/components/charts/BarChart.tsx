@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 interface BarChartProps {
   data?: any[]
   labelKey: string
@@ -20,8 +22,9 @@ export default function BarChart({
   color,
   width = 400,
 }: BarChartProps) {
+  const { t } = useTranslation()
   if (!data.length) {
-    return <div className="text-center text-muted py-3">Немає даних</div>
+    return <div className="text-center text-muted py-3">{t('common.noData')}</div>
   }
 
   const barColor = color || getCSSColor('--bs-primary')

@@ -1,11 +1,5 @@
+import { useTranslation } from 'react-i18next'
 import BaseModal from '@/components/BaseModal'
-
-const TYPES = [
-  { value: 'human', icon: '👤', label: 'Людина' },
-  { value: 'bot', icon: '🤖', label: 'Бот' },
-  { value: 'suspicious', icon: '⚠️', label: 'Підозрілий' },
-  { value: 'unknown', icon: '❓', label: 'Невідомий' },
-]
 
 interface ChangeClientTypeModalProps {
   currentType: string | null
@@ -18,15 +12,22 @@ export default function ChangeClientTypeModal({
   onSelect,
   onClose,
 }: ChangeClientTypeModalProps) {
+  const { t } = useTranslation()
+  const TYPES = [
+    { value: 'human', icon: '👤', label: t('analytics.clientTypePlain.human') },
+    { value: 'bot', icon: '🤖', label: t('analytics.clientTypePlain.bot') },
+    { value: 'suspicious', icon: '⚠️', label: t('analytics.clientTypePlain.suspicious') },
+    { value: 'unknown', icon: '❓', label: t('analytics.clientTypePlain.unknown') },
+  ]
   return (
     <BaseModal
       visible={true}
       onClose={onClose}
-      title={<h6 className="mb-0">Змінити тип клієнта</h6>}
+      title={<h6 className="mb-0">{t('analytics.changeTypeModalTitle')}</h6>}
       footer={
         <>
           <div />
-          <button className="btn btn-sm btn-outline-secondary" onClick={onClose}>Скасувати</button>
+          <button className="btn btn-sm btn-outline-secondary" onClick={onClose}>{t('common.cancel')}</button>
         </>
       }
       storageKey="change-client-type-modal"
@@ -49,7 +50,7 @@ export default function ChangeClientTypeModal({
             <span style={{ fontSize: '1.2em' }}>{type.icon}</span>
             <span>{type.label}</span>
             {type.value === currentType && (
-              <span className="ms-auto badge bg-light text-dark">поточний</span>
+              <span className="ms-auto badge bg-light text-dark">{t('analytics.current')}</span>
             )}
           </button>
         ))}

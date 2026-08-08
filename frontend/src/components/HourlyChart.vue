@@ -34,12 +34,15 @@
         </text>
       </g>
     </svg>
-    <div v-else class="text-center text-muted py-3">Немає даних</div>
+    <div v-else class="text-center text-muted py-3">{{ t('common.noData') }}</div>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n({ useScope: 'global' })
 
 const props = defineProps({
   data: { type: Array, default: () => [] },

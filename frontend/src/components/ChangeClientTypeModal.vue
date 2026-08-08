@@ -12,7 +12,7 @@
     :max-height="600"
   >
     <template #title>
-      <h6 class="mb-0">Змінити тип клієнта</h6>
+      <h6 class="mb-0">{{ t('analytics.changeTypeModalTitle') }}</h6>
     </template>
 
     <div class="d-grid gap-2">
@@ -25,20 +25,23 @@
       >
         <span style="font-size: 1.2em">{{ type.icon }}</span>
         <span>{{ type.label }}</span>
-        <span v-if="type.value === currentType" class="ms-auto badge bg-light text-dark">поточний</span>
+        <span v-if="type.value === currentType" class="ms-auto badge bg-light text-dark">{{ t('analytics.current') }}</span>
       </button>
     </div>
 
     <template #footer>
       <div></div>
-      <button class="btn btn-sm btn-outline-secondary" @click="close">Скасувати</button>
+      <button class="btn btn-sm btn-outline-secondary" @click="close">{{ t('common.cancel') }}</button>
     </template>
   </BaseModal>
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import BaseModal from './BaseModal.vue'
+
+const { t } = useI18n({ useScope: 'global' })
 
 // Component state
 const isOpen = ref(false)
@@ -59,12 +62,12 @@ watch(isOpen, (val, wasOpen) => {
   }
 })
 
-const types = [
-  { value: 'human', icon: '👤', label: 'Людина' },
-  { value: 'bot', icon: '🤖', label: 'Бот' },
-  { value: 'suspicious', icon: '⚠️', label: 'Підозрілий' },
-  { value: 'unknown', icon: '❓', label: 'Невідомий' },
-]
+const types = computed(() => [
+  { value: 'human', icon: '👤', label: t('analytics.clientTypePlain.human') },
+  { value: 'bot', icon: '🤖', label: t('analytics.clientTypePlain.bot') },
+  { value: 'suspicious', icon: '⚠️', label: t('analytics.clientTypePlain.suspicious') },
+  { value: 'unknown', icon: '❓', label: t('analytics.clientTypePlain.unknown') },
+])
 
 function open(id, current) {
   recordId.value = id

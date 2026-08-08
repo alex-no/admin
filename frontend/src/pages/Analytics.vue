@@ -5,12 +5,12 @@
     <div>
     <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
       <div class="d-flex align-items-center gap-2">
-        <h5 class="mb-0">Аналітика відвідувань</h5>
+        <h5 class="mb-0">{{ t('analytics.title') }}</h5>
         <router-link to="/analytics/stats" class="btn btn-sm btn-outline-primary">
-          <i class="bi bi-bar-chart"></i> Статистика
+          <i class="bi bi-bar-chart"></i> {{ t('analytics.statsLink') }}
         </router-link>
         <router-link to="/analytics/charts" class="btn btn-sm btn-outline-primary">
-          <i class="bi bi-graph-up-arrow"></i> Графіки
+          <i class="bi bi-graph-up-arrow"></i> {{ t('analytics.chartsLink') }}
         </router-link>
       </div>
       <div class="d-flex gap-2 flex-wrap">
@@ -19,59 +19,59 @@
           type="text"
           class="form-control form-control-sm"
           style="width:200px"
-          placeholder="Пошук..."
+          :placeholder="t('analytics.searchPlaceholder')"
           @input="debounceLoad"
         />
         <select v-model="clientTypeFilter" class="form-select form-select-sm" style="width:220px" @change="load(1)">
-          <option value="">Всі типи клієнтів</option>
+          <option value="">{{ t('analytics.filters.allClientTypes') }}</option>
 
-          <optgroup label="👤 Люди">
-            <option value="human">Всі люди</option>
-            <option value="human_desktop">🖥️ Desktop</option>
-            <option value="human_mobile">📱 Mobile</option>
-            <option value="human_tablet">📲 Tablet</option>
-            <option value="human_unknown">❓ Невідомі</option>
+          <optgroup :label="t('analytics.filters.groupHumans')">
+            <option value="human">{{ t('analytics.filters.allHumans') }}</option>
+            <option value="human_desktop">{{ t('analytics.filters.desktop') }}</option>
+            <option value="human_mobile">{{ t('analytics.filters.mobile') }}</option>
+            <option value="human_tablet">{{ t('analytics.filters.tablet') }}</option>
+            <option value="human_unknown">{{ t('analytics.filters.unknownPlural') }}</option>
           </optgroup>
 
-          <optgroup label="🔍 Пошукові системи">
-            <option value="bot_search_engine">Всі пошукові системи</option>
+          <optgroup :label="t('analytics.filters.groupSearchEngines')">
+            <option value="bot_search_engine">{{ t('analytics.filters.allSearchEngines') }}</option>
             <option value="bot_search_google">Google</option>
             <option value="bot_search_yandex">Yandex</option>
             <option value="bot_search_bing">Bing</option>
-            <option value="bot_search_other">Інші</option>
-            <option value="bot_search_unknown">❓ Невідомі</option>
+            <option value="bot_search_other">{{ t('analytics.filters.otherSearchEngines') }}</option>
+            <option value="bot_search_unknown">{{ t('analytics.filters.unknownPlural') }}</option>
           </optgroup>
 
-          <optgroup label="📊 SEO інструменти">
-            <option value="bot_seo_tool">Всі SEO інструменти</option>
-            <option value="bot_seo_unknown">❓ Невідомі</option>
+          <optgroup :label="t('analytics.filters.groupSeoTools')">
+            <option value="bot_seo_tool">{{ t('analytics.filters.allSeoTools') }}</option>
+            <option value="bot_seo_unknown">{{ t('analytics.filters.unknownPlural') }}</option>
           </optgroup>
 
-          <optgroup label="🔔 Моніторинг">
-            <option value="bot_monitoring">Всі моніторинг-сервіси</option>
-            <option value="bot_monitoring_unknown">❓ Невідомі</option>
+          <optgroup :label="t('analytics.filters.groupMonitoring')">
+            <option value="bot_monitoring">{{ t('analytics.filters.allMonitoring') }}</option>
+            <option value="bot_monitoring_unknown">{{ t('analytics.filters.unknownPlural') }}</option>
           </optgroup>
 
-          <optgroup label="🚫 Погані боти">
-            <option value="bot_scraper">🤖 Scrapers</option>
-            <option value="bot_malicious">⚠️ Malicious (сканери)</option>
-            <option value="bot_bad_unknown">❓ Невідомі</option>
+          <optgroup :label="t('analytics.filters.groupBadBots')">
+            <option value="bot_scraper">{{ t('analytics.filters.scrapers') }}</option>
+            <option value="bot_malicious">{{ t('analytics.filters.malicious') }}</option>
+            <option value="bot_bad_unknown">{{ t('analytics.filters.unknownPlural') }}</option>
           </optgroup>
 
-          <optgroup label="Інше">
-            <option value="suspicious">⚠️ Підозрілі</option>
-            <option value="unknown">❓ Невідомі</option>
-            <option value="unclassified">⏳ Не проаналізовані</option>
+          <optgroup :label="t('analytics.filters.groupOther')">
+            <option value="suspicious">{{ t('analytics.filters.suspiciousPlural') }}</option>
+            <option value="unknown">{{ t('analytics.filters.unknownPlural') }}</option>
+            <option value="unclassified">{{ t('analytics.filters.unclassified') }}</option>
           </optgroup>
         </select>
         <select v-model="deviceFilter" class="form-select form-select-sm" style="width:auto" @change="load(1)">
-          <option value="">Всі пристрої</option>
+          <option value="">{{ t('analytics.filters.allDevices') }}</option>
           <option value="desktop">Desktop</option>
           <option value="mobile">Mobile</option>
           <option value="tablet">Tablet</option>
         </select>
         <select v-model="statusFilter" class="form-select form-select-sm" style="width:auto" @change="load(1)">
-          <option value="">Всі статуси</option>
+          <option value="">{{ t('analytics.filters.allStatuses') }}</option>
           <option value="200">200 OK</option>
           <option value="201">201 Created</option>
           <option value="204">204 No Content</option>
@@ -84,16 +84,16 @@
           <option value="422">422 Unprocessable</option>
           <option value="500">500 Server Error</option>
           <option value="503">503 Unavailable</option>
-          <option value="other">Інші статуси</option>
+          <option value="other">{{ t('analytics.filters.otherStatuses') }}</option>
         </select>
         <select v-model="methodFilter" class="form-select form-select-sm" style="width:auto" @change="load(1)">
-          <option value="">Всі методи</option>
+          <option value="">{{ t('analytics.filters.allMethods') }}</option>
           <option value="GET">GET</option>
           <option value="POST">POST</option>
           <option value="PUT">PUT</option>
           <option value="PATCH">PATCH</option>
           <option value="DELETE">DELETE</option>
-          <option value="other">Інші методи</option>
+          <option value="other">{{ t('analytics.filters.otherMethods') }}</option>
         </select>
         <input
           v-model="filterDateFrom"
@@ -115,13 +115,13 @@
             type="text"
             class="form-control form-control-sm"
             style="width:150px"
-            placeholder="IP адреса..."
+            :placeholder="t('analytics.ipPlaceholder')"
             @input="debounceLoad"
           />
           <button
             class="btn btn-sm btn-outline-secondary"
             type="button"
-            title="Показати мій IP"
+            :title="t('analytics.myIpTooltip')"
             @click="showMyIp"
           >
             <i class="bi bi-hdd-network"></i>
@@ -132,22 +132,22 @@
 
     <!-- Bulk actions panel -->
     <div v-if="selected.length > 0" class="alert alert-info d-flex align-items-center gap-2 mb-3">
-      <span><strong>{{ selected.length }}</strong> обрано</span>
+      <span><strong>{{ selected.length }}</strong> {{ t('analytics.bulk.selected') }}</span>
       <select v-model="bulkClientType" class="form-select form-select-sm" style="width:auto">
-        <option value="">Змінити тип на...</option>
-        <option value="human">👤 Людина</option>
-        <option value="bot">🤖 Бот</option>
-        <option value="suspicious">⚠️ Підозрілий</option>
-        <option value="unknown">❓ Невідомий</option>
+        <option value="">{{ t('analytics.bulk.changeTypeTo') }}</option>
+        <option value="human">{{ t('analytics.clientType.human') }}</option>
+        <option value="bot">{{ t('analytics.clientType.bot') }}</option>
+        <option value="suspicious">{{ t('analytics.clientType.suspicious') }}</option>
+        <option value="unknown">{{ t('analytics.clientType.unknown') }}</option>
       </select>
       <button
         class="btn btn-sm btn-primary"
         :disabled="!bulkClientType"
         @click="applyBulkChange"
       >
-        Застосувати
+        {{ t('dataList.apply') }}
       </button>
-      <button class="btn btn-sm btn-outline-secondary" @click="clearSelection">Скасувати</button>
+      <button class="btn btn-sm btn-outline-secondary" @click="clearSelection">{{ t('common.cancel') }}</button>
     </div>
 
     <div v-if="loading" class="text-center py-5">
@@ -167,7 +167,7 @@
                     class="form-check-input"
                     :checked="isAllSelected"
                     @change="toggleSelectAll"
-                    title="Вибрати всі"
+                    :title="t('analytics.selectAllTooltip')"
                   />
                 </th>
                 <th style="width:60px" class="text-end th-sortable" @click="toggleSort('id')">
@@ -189,7 +189,7 @@
                   Referer <SortIcon col="referer" :sortKey :sortDir />
                 </th>
                 <th style="width:140px" class="th-sortable" @click="toggleSort('client_type')">
-                  Тип / Device <SortIcon col="client_type" :sortKey :sortDir />
+                  {{ t('analytics.colClientType') }} <SortIcon col="client_type" :sortKey :sortDir />
                 </th>
                 <th class="th-sortable" @click="toggleSort('browser')">
                   Browser <SortIcon col="browser" :sortKey :sortDir />
@@ -201,7 +201,7 @@
                   Time <SortIcon col="response_time" :sortKey :sortDir />
                 </th>
                 <th style="width:140px" class="th-sortable" @click="toggleSort('created_at')">
-                  Дата <SortIcon col="created_at" :sortKey :sortDir />
+                  {{ t('analytics.colDate') }} <SortIcon col="created_at" :sortKey :sortDir />
                 </th>
                 <th style="width:80px"></th>
               </tr>
@@ -228,7 +228,7 @@
                   <a
                     href="#"
                     class="text-decoration-none"
-                    :title="`Фільтрувати за IP: ${row.ip}`"
+                    :title="t('analytics.filterByIpTooltip', { ip: row.ip })"
                     @click.prevent="filterByIp(row.ip)"
                   >
                     <i class="bi bi-filter-circle"></i> {{ row.ip }}
@@ -243,7 +243,7 @@
                   <span
                     :class="clientTypeBadge(row.client_type)"
                     style="cursor: pointer"
-                    :title="`Клік щоб змінити тип. Метод: ${row.detection_method || 'не вказано'}`"
+                    :title="t('analytics.changeTypeTooltip', { method: row.detection_method || t('analytics.notSpecified') })"
                     @click="changeClientType(row.id, row.client_type)"
                   >
                     {{ smartClientLabel(row) }}
@@ -266,14 +266,14 @@
                   <button
                     class="btn btn-sm btn-outline-primary"
                     @click="showDetails(row.id)"
-                    title="Детальна інформація"
+                    :title="t('analytics.detailsTooltip')"
                   >
                     <i class="bi bi-info-circle"></i>
                   </button>
                 </td>
               </tr>
               <tr v-if="!items.length">
-                <td colspan="14" class="text-center text-muted py-4">Немає даних</td>
+                <td colspan="14" class="text-center text-muted py-4">{{ t('common.noData') }}</td>
               </tr>
             </tbody>
           </table>
@@ -281,7 +281,7 @@
       </div>
 
       <div class="d-flex justify-content-between align-items-center mt-3">
-        <span class="text-muted small">Всього: {{ total }}</span>
+        <span class="text-muted small">{{ t('analytics.totalCount', { value: total }) }}</span>
         <Pagination :current-page="page" :total-pages="totalPages" @change="load" />
       </div>
     </div>
@@ -291,6 +291,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { authHeaders } from '@/utils/api'
 import { useNotify } from '../composables/useNotify'
 import { useUrlFilters } from '../composables/useUrlFilters'
@@ -301,6 +302,7 @@ import Pagination from '../components/Pagination.vue'
 import AnalyticsDetailsModal from '../components/AnalyticsDetailsModal.vue'
 import ChangeClientTypeModal from '../components/ChangeClientTypeModal.vue'
 
+const { t } = useI18n({ useScope: 'global' })
 const { notify } = useNotify()
 
 // Page layout для управления отступами при docked модальных окнах
@@ -386,7 +388,7 @@ async function load(p = 1) {
       items.value = json.data
       total.value = json.pagination.total
     } else {
-      error.value = json.message || 'Помилка завантаження'
+      error.value = json.message || t('analytics.loadError')
     }
   } catch (e) {
     error.value = e.message
@@ -474,35 +476,35 @@ function showDetails(id) {
 
 function clientTypeLabel(type) {
   const labels = {
-    human: '👤 Людина',
-    bot: '🤖 Бот',
-    suspicious: '⚠️ Підозрілий',
-    unknown: '❓ Невідомий',
+    human: t('analytics.clientType.human'),
+    bot: t('analytics.clientType.bot'),
+    suspicious: t('analytics.clientType.suspicious'),
+    unknown: t('analytics.clientType.unknown'),
   }
-  return labels[type] || '⏳ Не класифіковано'
+  return labels[type] || t('analytics.clientType.unclassified')
 }
 
 // Smart label: combines client type + device/bot name
 function smartClientLabel(row) {
   // Humans - show device
   if (row.client_type === 'human') {
-    if (row.device_type === 'desktop') return '👤 🖥️ Desktop'
-    if (row.device_type === 'mobile') return '👤 📱 Mobile'
-    if (row.device_type === 'tablet') return '👤 📲 Tablet'
-    return '👤 Людина'
+    if (row.device_type === 'desktop') return t('analytics.smart.humanDesktop')
+    if (row.device_type === 'mobile') return t('analytics.smart.humanMobile')
+    if (row.device_type === 'tablet') return t('analytics.smart.humanTablet')
+    return t('analytics.clientType.human')
   }
 
   // Bots - show search engine name or category
   if (row.client_type === 'bot') {
     // Search engines
     if (row.bot_category === 'search_engine') {
-      if (row.bot_name?.includes('Google')) return '🔍 Google'
-      if (row.bot_name?.includes('Yandex')) return '🔍 Yandex'
-      if (row.bot_name?.includes('bing')) return '🔍 Bing'
-      if (row.bot_name?.includes('DuckDuck')) return '🔍 DuckDuckGo'
-      if (row.bot_name?.includes('Baidu')) return '🔍 Baidu'
-      if (row.bot_name?.includes('facebook')) return '🔍 Facebook'
-      return '🔍 ' + (row.bot_name || 'Пошукова система')
+      if (row.bot_name?.includes('Google')) return t('analytics.smart.google')
+      if (row.bot_name?.includes('Yandex')) return t('analytics.smart.yandex')
+      if (row.bot_name?.includes('bing')) return t('analytics.smart.bing')
+      if (row.bot_name?.includes('DuckDuck')) return t('analytics.smart.duckduckgo')
+      if (row.bot_name?.includes('Baidu')) return t('analytics.smart.baidu')
+      if (row.bot_name?.includes('facebook')) return t('analytics.smart.facebook')
+      return '🔍 ' + (row.bot_name || t('analytics.smart.searchEngineFallback'))
     }
 
     // SEO tools
@@ -512,32 +514,32 @@ function smartClientLabel(row) {
 
     // Monitoring
     if (row.bot_category === 'monitoring') {
-      return '🔔 ' + (row.bot_name || 'Моніторинг')
+      return '🔔 ' + (row.bot_name || t('analytics.smart.monitoringFallback'))
     }
 
     // Bad bots
     if (row.bot_category === 'scraper') {
-      return '🤖 Scraper'
+      return t('analytics.smart.scraper')
     }
 
     if (row.bot_category === 'malicious') {
       return '🚫 ' + (row.bot_name || 'Malicious')
     }
 
-    return '🤖 Бот'
+    return t('analytics.clientType.bot')
   }
 
   // Suspicious
   if (row.client_type === 'suspicious') {
-    return '⚠️ Підозрілий'
+    return t('analytics.clientType.suspicious')
   }
 
   // Unknown
   if (row.client_type === 'unknown') {
-    return '❓ Невідомий'
+    return t('analytics.clientType.unknown')
   }
 
-  return '⏳ Не класифіковано'
+  return t('analytics.clientType.unclassified')
 }
 
 function clientTypeBadge(type) {
@@ -583,7 +585,7 @@ function clearSelection() {
 async function applyBulkChange() {
   if (!bulkClientType.value || selected.value.length === 0) return
 
-  if (!confirm(`Змінити тип для ${selected.value.length} записів на "${clientTypeLabel(bulkClientType.value)}"?`)) return
+  if (!confirm(t('analytics.bulk.confirm', { count: selected.value.length, label: clientTypeLabel(bulkClientType.value) }))) return
 
   try {
     const res = await fetch('/api/admin/analytics/bulk-update-client-type', {
@@ -602,10 +604,10 @@ async function applyBulkChange() {
       clearSelection()
       load(page.value)
     } else {
-      notify('Помилка: ' + (json.message || 'Невідома помилка'), { type: 'error' })
+      notify(`${t('common.error')}: ` + (json.message || t('analytics.unknownError')), { type: 'error' })
     }
   } catch (e) {
-    notify('Помилка: ' + e.message, { type: 'error' })
+    notify(`${t('common.error')}: ` + e.message, { type: 'error' })
   }
 }
 
@@ -618,19 +620,16 @@ async function showMyIp() {
       const ip = json.data.ip
       const ipParts = ip.split('.')
       const subnet = ipParts.slice(0, 3).join('.') + '.*'
-      const message = `Ваш IP: ${ip}\n\nДодати до виключень в .env:\n` +
-        `ANALYTICS_EXCLUDED_IPS=${ip}\n\n` +
-        `Або всю підмережу:\nANALYTICS_EXCLUDED_IPS=${subnet}\n\n` +
-        `Підтримуються wildcard: 192.168.8.*, 10.0.*.*`
-      if (confirm(message + '\n\nСкопіювати IP у фільтр?')) {
+      const message = t('analytics.myIpMessage', { ip, subnet })
+      if (confirm(message + '\n\n' + t('analytics.myIpConfirmCopy'))) {
         ipFilter.value = ip
         load(1)
       }
     } else {
-      notify('Не вдалося отримати IP: ' + (json.message || 'Невідома помилка'), { type: 'error' })
+      notify(`${t('analytics.myIpFailed')}: ` + (json.message || t('analytics.unknownError')), { type: 'error' })
     }
   } catch (e) {
-    notify('Помилка: ' + e.message, { type: 'error' })
+    notify(`${t('common.error')}: ` + e.message, { type: 'error' })
   }
 }
 
@@ -666,12 +665,12 @@ onMounted(() => {
       const json = await res.json()
 
       if (json.status === 'success') {
-        load(page.value) // Перезагрузить текущую страницу
+        load(page.value)
       } else {
-        notify('Помилка: ' + (json.message || 'Невідома помилка'), { type: 'error' })
+        notify(`${t('common.error')}: ` + (json.message || t('analytics.unknownError')), { type: 'error' })
       }
     } catch (err) {
-      notify('Помилка: ' + err.message, { type: 'error' })
+      notify(`${t('common.error')}: ` + err.message, { type: 'error' })
     }
   })
 })

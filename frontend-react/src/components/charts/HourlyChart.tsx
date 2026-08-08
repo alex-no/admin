@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 function getCSSColor(varName: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(varName).trim() || '#000'
 }
@@ -11,8 +13,9 @@ interface HourlyChartProps {
 const PADDING = 40
 
 export default function HourlyChart({ data = [], width = 600, height = 200 }: HourlyChartProps) {
+  const { t } = useTranslation()
   if (!data.length) {
-    return <div className="text-center text-muted py-3">Немає даних</div>
+    return <div className="text-center text-muted py-3">{t('common.noData')}</div>
   }
 
   const chartWidth = width - PADDING * 2
