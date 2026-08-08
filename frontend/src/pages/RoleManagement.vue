@@ -4,9 +4,9 @@
     <div :style="pageMargin" class="page-content-wrapper">
     <div class="container-fluid py-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="mb-0">Управління ролями</h4>
+        <h4 class="mb-0">{{ t('roles.title') }}</h4>
         <button @click="openCreateModal" class="btn btn-primary btn-sm">
-          <i class="bi bi-plus-lg me-1"></i>Створити роль
+          <i class="bi bi-plus-lg me-1"></i>{{ t('roles.createButton') }}
         </button>
       </div>
 
@@ -21,13 +21,13 @@
           <table class="table table-hover mb-0">
             <thead>
               <tr>
-                <th style="width: 60px">ID</th>
-                <th>Роль</th>
-                <th>Slug</th>
-                <th>Права доступу</th>
-                <th>Батьківські ролі</th>
-                <th style="width: 100px">Системна</th>
-                <th style="width: 100px" class="text-end">Дії</th>
+                <th style="width: 60px">{{ t('roles.colId') }}</th>
+                <th>{{ t('roles.colName') }}</th>
+                <th>{{ t('roles.colSlug') }}</th>
+                <th>{{ t('roles.permissions') }}</th>
+                <th>{{ t('roles.colParentRoles') }}</th>
+                <th style="width: 100px">{{ t('roles.colSystem') }}</th>
+                <th style="width: 100px" class="text-end">{{ t('common.actions') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -45,12 +45,12 @@
                       :key="perm.id"
                       :class="perm.effect === 'deny' ? 'badge bg-danger me-1 small' : 'badge bg-info me-1 small'"
                       style="font-size: 0.75rem"
-                      :title="perm.effect === 'deny' ? 'Deny' : 'Allow'"
+                      :title="perm.effect === 'deny' ? t('roles.deny') : t('roles.allow')"
                     >
                       {{ perm.effect === 'deny' ? '⊘ ' : '' }}{{ perm.slug }}
                     </span>
                     <span v-if="role.permissions.length > 3" class="text-muted small">
-                      +{{ role.permissions.length - 3 }} ще
+                      {{ t('roles.morePermissions', { count: role.permissions.length - 3 }) }}
                     </span>
                   </div>
                   <span v-else class="text-muted small">—</span>
@@ -68,7 +68,7 @@
                   <span v-else class="text-muted small">—</span>
                 </td>
                 <td class="text-center">
-                  <span v-if="role.is_system" class="text-success" title="Системна роль">
+                  <span v-if="role.is_system" class="text-success" :title="t('roles.systemRoleTitle')">
                     <i class="bi bi-shield-lock-fill"></i>
                   </span>
                   <span v-else class="text-muted">—</span>
@@ -88,7 +88,7 @@
                     v-else
                     class="text-muted small"
                     style="display: inline-block; width: 36px; text-align: center;"
-                    title="Системна роль - захищена від видалення"
+                    :title="t('roles.systemRoleProtected')"
                   >
                     <i class="bi bi-lock-fill"></i>
                   </span>
@@ -113,7 +113,7 @@
       :max-height="800"
     >
       <template #title>
-        <h5 class="mb-0">{{ modalMode === 'create' ? 'Нова роль' : 'Редагувати роль' }}</h5>
+        <h5 class="mb-0">{{ modalMode === 'create' ? t('roles.createTitle') : t('roles.editTitle') }}</h5>
       </template>
 
       <template #subheader>
@@ -124,7 +124,7 @@
               :class="{ active: activeTab === 'general' }"
               @click="activeTab = 'general'"
             >
-              <i class="bi bi-info-circle me-1"></i>Загальна інформація
+              <i class="bi bi-info-circle me-1"></i>{{ t('roles.generalInfo') }}
             </button>
           </li>
           <li class="nav-item">
@@ -133,7 +133,7 @@
               :class="{ active: activeTab === 'permissions' }"
               @click="activeTab = 'permissions'"
             >
-              <i class="bi bi-shield-check me-1"></i>Права доступу
+              <i class="bi bi-shield-check me-1"></i>{{ t('roles.permissions') }}
             </button>
           </li>
           <li class="nav-item">
@@ -142,7 +142,7 @@
               :class="{ active: activeTab === 'hierarchy' }"
               @click="activeTab = 'hierarchy'"
             >
-              <i class="bi bi-diagram-3 me-1"></i>Ієрархія
+              <i class="bi bi-diagram-3 me-1"></i>{{ t('roles.hierarchy') }}
             </button>
           </li>
         </ul>
@@ -154,40 +154,40 @@
         <!-- General info -->
         <template v-if="activeTab === 'general'">
           <div class="mb-3">
-            <label class="form-label small mb-1">Slug (унікальний код)</label>
+            <label class="form-label small mb-1">{{ t('roles.slugLabel') }}</label>
             <input
               v-model="formData.slug"
               type="text"
               class="form-control form-control-sm"
               :readonly="modalMode === 'edit' && selectedRole.is_system"
-              placeholder="moderator"
+              :placeholder="t('roles.slugPlaceholder')"
             />
-            <div class="form-text small">Латиниця, підкреслення. Приклад: content_manager</div>
+            <div class="form-text small">{{ t('roles.slugHint') }}</div>
           </div>
 
           <div class="mb-3">
-            <label class="form-label small mb-1">Назва</label>
+            <label class="form-label small mb-1">{{ t('roles.nameLabel') }}</label>
             <input
               v-model="formData.name"
               type="text"
               class="form-control form-control-sm"
-              placeholder="Content Manager"
+              :placeholder="t('roles.namePlaceholder')"
             />
           </div>
 
           <div class="mb-3">
-            <label class="form-label small mb-1">Опис</label>
+            <label class="form-label small mb-1">{{ t('common.description') }}</label>
             <textarea
               v-model="formData.description"
               class="form-control form-control-sm"
               rows="3"
-              placeholder="Може керувати контентом та модерувати відгуки"
+              :placeholder="t('roles.descriptionPlaceholder')"
             ></textarea>
           </div>
 
           <div v-if="selectedRole.is_system" class="alert alert-warning small">
             <i class="bi bi-exclamation-triangle me-1"></i>
-            Системна роль — можна редагувати тільки назву та опис
+            {{ t('roles.systemEditWarning') }}
           </div>
         </template>
 
@@ -195,7 +195,7 @@
         <template v-else-if="activeTab === 'permissions'">
           <div class="alert alert-info small mb-3">
             <i class="bi bi-info-circle me-1"></i>
-            Виберіть права доступу для цієї ролі та встановіть effect (allow/deny)
+            {{ t('roles.permissionsHint') }}
           </div>
 
           <div v-if="permissionsLoading" class="text-center py-5">
@@ -236,7 +236,7 @@
                       @change="setPermissionEffect(perm.id, 'allow')"
                     />
                     <label class="form-check-label small text-success" :for="'allow-' + perm.id">
-                      Allow
+                      {{ t('roles.allow') }}
                     </label>
                   </div>
                   <div class="form-check form-check-inline">
@@ -250,7 +250,7 @@
                       @change="setPermissionEffect(perm.id, 'deny')"
                     />
                     <label class="form-check-label small text-danger" :for="'deny-' + perm.id">
-                      Deny
+                      {{ t('roles.deny') }}
                     </label>
                   </div>
                 </div>
@@ -263,7 +263,7 @@
         <template v-else-if="activeTab === 'hierarchy'">
           <div class="alert alert-info small mb-3">
             <i class="bi bi-info-circle me-1"></i>
-            Ця роль успадковує права від батьківських ролей
+            {{ t('roles.hierarchyHint') }}
           </div>
 
           <div v-for="role in otherRoles" :key="role.id" class="form-check mb-2">
@@ -282,7 +282,7 @@
           </div>
 
           <div v-if="otherRoles.length === 0" class="text-muted small">
-            Немає інших ролей для вибору
+            {{ t('roles.noOtherRoles') }}
           </div>
         </template>
       </template>
@@ -291,11 +291,11 @@
         <div></div>
         <div class="d-flex gap-2">
           <button @click="closeModal" class="btn btn-secondary btn-sm">
-            Скасувати
+            {{ t('common.cancel') }}
           </button>
           <button @click="saveRole" class="btn btn-primary btn-sm" :disabled="saving">
             <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-            Зберегти
+            {{ t('common.save') }}
           </button>
         </div>
       </template>
@@ -305,12 +305,14 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useAuth } from '@/composables/useAuth';
 import { useUndoableDelete } from '@/composables/useUndoableDelete';
 import { usePageLayout } from '@/composables/usePageLayout';
 import BaseLayout from '@/layouts/BaseLayout.vue';
 import BaseModal from '@/components/BaseModal.vue';
 
+const { t } = useI18n({ useScope: 'global' });
 const auth = useAuth();
 const { deleteWithUndo } = useUndoableDelete();
 const { contentMargin: pageMargin } = usePageLayout();
@@ -375,10 +377,10 @@ async function loadRoles() {
     if (json.status === 'success') {
       roles.value = json.roles;
     } else {
-      error.value = json.message || 'Помилка завантаження ролей';
+      error.value = json.message || t('roles.loadError');
     }
   } catch (e) {
-    error.value = "Помилка з'єднання з сервером";
+    error.value = t('roles.connectionError');
   } finally {
     loading.value = false;
   }
@@ -488,7 +490,7 @@ async function saveRole() {
       const createJson = await createRes.json();
 
       if (!createRes.ok) {
-        throw new Error(createJson.message || 'Помилка створення ролі');
+        throw new Error(createJson.message || t('roles.createError'));
       }
 
       roleId = createJson.role.id;
@@ -504,7 +506,7 @@ async function saveRole() {
       const updateJson = await updateRes.json();
 
       if (!updateRes.ok) {
-        throw new Error(updateJson.message || 'Помилка оновлення ролі');
+        throw new Error(updateJson.message || t('roles.updateError'));
       }
     }
 
@@ -520,7 +522,7 @@ async function saveRole() {
 
     if (!permsRes.ok) {
       const permsJson = await permsRes.json();
-      throw new Error(permsJson.message || 'Помилка збереження прав');
+      throw new Error(permsJson.message || t('roles.permissionsSaveError'));
     }
 
     // Step 3: Save hierarchy
@@ -535,7 +537,7 @@ async function saveRole() {
 
     if (!hierRes.ok) {
       const hierJson = await hierRes.json();
-      throw new Error(hierJson.message || 'Помилка збереження ієрархії');
+      throw new Error(hierJson.message || t('roles.hierarchySaveError'));
     }
 
     // Reload and close
@@ -553,7 +555,7 @@ function deleteRole(role) {
   if (index === -1) return;
 
   deleteWithUndo({
-    message: `Роль "${role.name}" видалено`,
+    message: t('roles.deleteConfirm', { name: role.name }),
     remove: () => { roles.value.splice(index, 1); },
     restore: () => { roles.value.splice(index, 0, role); },
     commit: async () => {
@@ -562,7 +564,7 @@ function deleteRole(role) {
         headers: auth.authHeaders(),
       });
       const json = await response.json().catch(() => ({}));
-      if (json.status !== 'success') throw new Error(json.message || 'Помилка видалення');
+      if (json.status !== 'success') throw new Error(json.message || t('roles.deleteError'));
     },
     onCommitError: () => loadRoles(),
   });

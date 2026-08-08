@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import BaseModal from '@/components/BaseModal'
 import { apiGet, apiPost, apiPut, apiDelete } from '@/utils/api'
 import { deleteWithUndo } from '@/hooks/useUndoableDelete'
@@ -33,6 +34,7 @@ interface SelectedPermission {
 }
 
 export default function RoleManagement() {
+  const { t } = useTranslation()
   const [roles, setRoles] = useState<Role[]>([])
   const [permissions, setPermissions] = useState<Permission[]>([])
   const [loading, setLoading] = useState(true)
@@ -56,11 +58,11 @@ export default function RoleManagement() {
       const res = await apiGet('/admin/roles')
       setRoles(res.roles ?? [])
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Помилка з'єднання з сервером")
+      setError(err instanceof Error ? err.message : t('roles.connectionError'))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => { loadRoles() }, [loadRoles])
 
@@ -157,7 +159,7 @@ export default function RoleManagement() {
       await loadRoles()
       closeModal()
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Помилка збереження')
+      setSaveError(err instanceof Error ? err.message : t('roles.saveError'))
     } finally {
       setSaving(false)
     }
@@ -168,7 +170,7 @@ export default function RoleManagement() {
     if (index === -1) return
 
     deleteWithUndo({
-      message: `Роль "${role.name}" видалено`,
+      message: t('roles.deleteConfirm', { name: role.name }),
       remove: () => setRoles(list => list.filter(r => r.id !== role.id)),
       restore: () => setRoles(list => {
         const restored = [...list]
@@ -181,18 +183,18 @@ export default function RoleManagement() {
   }
 
   const tabs = [
-    { key: 'general', label: 'Загальна інформація', icon: 'bi-info-circle' },
-    { key: 'permissions', label: 'Права доступу', icon: 'bi-shield-check' },
-    { key: 'hierarchy', label: 'Ієрархія', icon: 'bi-diagram-3' },
+    { key: 'general', label: t('roles.generalInfo'), icon: 'bi-info-circle' },
+    { key: 'permissions', label: t('roles.permissions'), icon: 'bi-shield-check' },
+    { key: 'hierarchy', label: t('roles.hierarchy'), icon: 'bi-diagram-3' },
   ]
 
   return (
     <>
       <div className="container-fluid py-4">
         <div className="d-flex justify-content-between align-items-center mb-4">
-          <h4 className="mb-0">Управління ролями</h4>
+          <h4 className="mb-0">{t('roles.title')}</h4>
           <button onClick={openCreateModal} className="btn btn-primary btn-sm">
-            <i className="bi bi-plus-lg me-1" />Створити роль
+            <i className="bi bi-plus-lg me-1" />{t('roles.createButton')}
           </button>
         </div>
 
@@ -210,13 +212,13 @@ export default function RoleManagement() {
               <table className="table table-hover mb-0">
                 <thead className="table-light">
                   <tr>
-                    <th style={{ width: '60px' }}>ID</th>
-                    <th>Роль</th>
-                    <th>Slug</th>
-                    <th>Права доступу</th>
-                    <th>Батьківські ролі</th>
-                    <th style={{ width: '100px' }}>Системна</th>
-                    <th style={{ width: '100px' }} className="text-end">Дії</th>
+                    <th style={{ width: '60px' }}>{t('roles.colId')}</th>
+                    <th>{t('roles.colName')}</th>
+                    <th>{t('roles.colSlug')}</th>
+                    <th>{t('roles.permissions')}</th>
+                    <th>{t('roles.colParentRoles')}</th>
+                    <th style={{ width: '100px' }}>{t('roles.colSystem')}</th>
+                    <th style={{ width: '100px' }} className="text-end">{t('common.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -236,13 +238,13 @@ export default function RoleManagement() {
                                 key={perm.id}
                                 className={`badge me-1 small ${perm.effect === 'deny' ? 'bg-danger' : 'bg-info'}`}
                                 style={{ fontSize: '0.75rem' }}
-                                title={perm.effect === 'deny' ? 'Deny' : 'Allow'}
+                                title={perm.effect === 'deny' ? t('roles.deny') : t('roles.allow')}
                               >
                                 {perm.effect === 'deny' ? '⊘ ' : ''}{perm.slug}
                               </span>
                             ))}
                             {role.permissions.length > 3 && (
-                              <span className="text-muted small">+{role.permissions.length - 3} ще</span>
+                              <span className="text-muted small">{t('roles.morePermissions', { count: role.permissions.length - 3 })}</span>
                             )}
                           </>
                         ) : (
@@ -260,7 +262,7 @@ export default function RoleManagement() {
                       </td>
                       <td className="text-center">
                         {role.is_system
-                          ? <span className="text-success" title="Системна роль"><i className="bi bi-shield-lock-fill" /></span>
+                          ? <span className="text-success" title={t('roles.systemRoleTitle')}><i className="bi bi-shield-lock-fill" /></span>
                           : <span className="text-muted">—</span>}
                       </td>
                       <td className="text-end">
@@ -271,7 +273,7 @@ export default function RoleManagement() {
                           <span
                             className="text-muted small"
                             style={{ display: 'inline-block', width: '36px', textAlign: 'center' }}
-                            title="Системна роль - захищена від видалення"
+                            title={t('roles.systemRoleProtected')}
                           >
                             <i className="bi bi-lock-fill" />
                           </span>
@@ -294,7 +296,7 @@ export default function RoleManagement() {
         <BaseModal
           visible={modalVisible}
           onClose={closeModal}
-          title={<h5 className="mb-0">{modalMode === 'create' ? 'Нова роль' : 'Редагувати роль'}</h5>}
+          title={<h5 className="mb-0">{modalMode === 'create' ? t('roles.createTitle') : t('roles.editTitle')}</h5>}
           subheader={
             <ul className="nav nav-tabs border-0">
               {tabs.map(tab => (
@@ -313,10 +315,10 @@ export default function RoleManagement() {
             <>
               <div />
               <div className="d-flex gap-2">
-                <button onClick={closeModal} className="btn btn-secondary btn-sm">Скасувати</button>
+                <button onClick={closeModal} className="btn btn-secondary btn-sm">{t('common.cancel')}</button>
                 <button onClick={saveRole} className="btn btn-primary btn-sm" disabled={saving}>
                   {saving && <span className="spinner-border spinner-border-sm me-1" />}
-                  Зберегти
+                  {t('common.save')}
                 </button>
               </div>
             </>
@@ -335,44 +337,44 @@ export default function RoleManagement() {
           {activeTab === 'general' && (
             <>
               <div className="mb-3">
-                <label className="form-label small mb-1">Slug (унікальний код)</label>
+                <label className="form-label small mb-1">{t('roles.slugLabel')}</label>
                 <input
                   value={formData.slug}
                   onChange={(e) => setFormData(f => ({ ...f, slug: e.target.value }))}
                   type="text"
                   className="form-control form-control-sm"
                   readOnly={modalMode === 'edit' && selectedRole.is_system}
-                  placeholder="moderator"
+                  placeholder={t('roles.slugPlaceholder')}
                 />
-                <div className="form-text small">Латиниця, підкреслення. Приклад: content_manager</div>
+                <div className="form-text small">{t('roles.slugHint')}</div>
               </div>
 
               <div className="mb-3">
-                <label className="form-label small mb-1">Назва</label>
+                <label className="form-label small mb-1">{t('roles.nameLabel')}</label>
                 <input
                   value={formData.name}
                   onChange={(e) => setFormData(f => ({ ...f, name: e.target.value }))}
                   type="text"
                   className="form-control form-control-sm"
-                  placeholder="Content Manager"
+                  placeholder={t('roles.namePlaceholder')}
                 />
               </div>
 
               <div className="mb-3">
-                <label className="form-label small mb-1">Опис</label>
+                <label className="form-label small mb-1">{t('common.description')}</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData(f => ({ ...f, description: e.target.value }))}
                   className="form-control form-control-sm"
                   rows={3}
-                  placeholder="Може керувати контентом та модерувати відгуки"
+                  placeholder={t('roles.descriptionPlaceholder')}
                 />
               </div>
 
               {selectedRole.is_system && (
                 <div className="alert alert-warning small">
                   <i className="bi bi-exclamation-triangle me-1" />
-                  Системна роль — можна редагувати тільки назву та опис
+                  {t('roles.systemEditWarning')}
                 </div>
               )}
             </>
@@ -383,7 +385,7 @@ export default function RoleManagement() {
             <>
               <div className="alert alert-info small mb-3">
                 <i className="bi bi-info-circle me-1" />
-                Виберіть права доступу для цієї ролі та встановіть effect (allow/deny)
+                {t('roles.permissionsHint')}
               </div>
 
               {permissionsLoading ? (
@@ -426,7 +428,7 @@ export default function RoleManagement() {
                                 onChange={() => setPermissionEffect(perm.id, 'allow')}
                               />
                               <label className="form-check-label small text-success" htmlFor={`allow-${perm.id}`}>
-                                Allow
+                                {t('roles.allow')}
                               </label>
                             </div>
                             <div className="form-check form-check-inline">
@@ -439,7 +441,7 @@ export default function RoleManagement() {
                                 onChange={() => setPermissionEffect(perm.id, 'deny')}
                               />
                               <label className="form-check-label small text-danger" htmlFor={`deny-${perm.id}`}>
-                                Deny
+                                {t('roles.deny')}
                               </label>
                             </div>
                           </div>
@@ -457,7 +459,7 @@ export default function RoleManagement() {
             <>
               <div className="alert alert-info small mb-3">
                 <i className="bi bi-info-circle me-1" />
-                Ця роль успадковує права від батьківських ролей
+                {t('roles.hierarchyHint')}
               </div>
 
               {otherRoles.map(role => (
@@ -480,7 +482,7 @@ export default function RoleManagement() {
               ))}
 
               {otherRoles.length === 0 && (
-                <div className="text-muted small">Немає інших ролей для вибору</div>
+                <div className="text-muted small">{t('roles.noOtherRoles')}</div>
               )}
             </>
           )}

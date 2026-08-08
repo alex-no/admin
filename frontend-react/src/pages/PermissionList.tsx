@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { apiGet, apiPut } from '@/utils/api'
 import { notify } from '@/hooks/useNotify'
 
@@ -12,6 +13,7 @@ interface Permission {
 }
 
 export default function PermissionList() {
+  const { t } = useTranslation()
   const [permissions, setPermissions] = useState<Permission[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -23,9 +25,9 @@ export default function PermissionList() {
   useEffect(() => {
     apiGet('/admin/permissions')
       .then(res => setPermissions(res.permissions ?? []))
-      .catch(err => setError(err instanceof Error ? err.message : "Помилка з'єднання з сервером"))
+      .catch(err => setError(err instanceof Error ? err.message : t('roles.connectionError')))
       .finally(() => setLoading(false))
-  }, [])
+  }, [t])
 
   useEffect(() => {
     if (editingId !== null) textareaRef.current?.focus()
@@ -50,7 +52,7 @@ export default function PermissionList() {
       )
       cancelEdit()
     } catch (err) {
-      notify(err instanceof Error ? err.message : 'Помилка збереження', { type: 'error' })
+      notify(err instanceof Error ? err.message : t('roles.saveError'), { type: 'error' })
     } finally {
       setSaving(false)
     }
@@ -59,7 +61,7 @@ export default function PermissionList() {
   return (
     <div className="container-fluid py-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="mb-0">Права доступу (Permissions)</h4>
+        <h4 className="mb-0">{t('permissionList.title')}</h4>
       </div>
 
       {loading && (
@@ -77,12 +79,12 @@ export default function PermissionList() {
               <table className="table table-hover mb-0">
                 <thead className="table-light">
                   <tr>
-                    <th style={{ width: '60px' }}>ID</th>
-                    <th style={{ width: '200px' }}>Slug</th>
-                    <th style={{ width: '250px' }}>Назва</th>
-                    <th style={{ width: '120px' }}>Модуль</th>
-                    <th>Опис</th>
-                    <th style={{ width: '80px' }} className="text-center">Системний</th>
+                    <th style={{ width: '60px' }}>{t('roles.colId')}</th>
+                    <th style={{ width: '200px' }}>{t('roles.colSlug')}</th>
+                    <th style={{ width: '250px' }}>{t('roles.nameLabel')}</th>
+                    <th style={{ width: '120px' }}>{t('permissionList.colModule')}</th>
+                    <th>{t('common.description')}</th>
+                    <th style={{ width: '80px' }} className="text-center">{t('permissionList.colSystem')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -111,12 +113,12 @@ export default function PermissionList() {
                               <button
                                 className="btn btn-sm btn-success"
                                 disabled={saving}
-                                title="Зберегти"
+                                title={t('common.save')}
                                 onClick={() => saveDescription(perm)}
                               >
                                 <i className="bi bi-check-lg" />
                               </button>
-                              <button className="btn btn-sm btn-secondary" title="Скасувати" onClick={cancelEdit}>
+                              <button className="btn btn-sm btn-secondary" title={t('common.cancel')} onClick={cancelEdit}>
                                 <i className="bi bi-x-lg" />
                               </button>
                             </div>
@@ -125,7 +127,7 @@ export default function PermissionList() {
                           <div
                             className="text-muted small"
                             style={{ cursor: 'pointer', whiteSpace: 'pre-wrap' }}
-                            title="Подвійний клік для редагування"
+                            title={t('permissionList.editHint')}
                             onDoubleClick={() => startEdit(perm)}
                           >
                             {perm.description || '—'}
@@ -134,7 +136,7 @@ export default function PermissionList() {
                       </td>
                       <td className="text-center">
                         {perm.is_system
-                          ? <span className="text-success" title="Системний запис"><i className="bi bi-shield-lock-fill" /></span>
+                          ? <span className="text-success" title={t('permissionList.systemRecordTitle')}><i className="bi bi-shield-lock-fill" /></span>
                           : <span className="text-muted">—</span>}
                       </td>
                     </tr>
@@ -146,7 +148,7 @@ export default function PermissionList() {
 
           <div className="mt-3 text-muted small">
             <i className="bi bi-info-circle me-1" />
-            Всього записів: {permissions.length}. Подвійний клік по опису для редагування.
+            {t('permissionList.totalRecords', { count: permissions.length })}
           </div>
         </>
       )}

@@ -2,7 +2,7 @@
   <BaseLayout>
     <div class="container-fluid py-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="mb-0">Права доступу (Permissions)</h4>
+        <h4 class="mb-0">{{ t('permissionList.title') }}</h4>
       </div>
 
       <div v-if="loading" class="text-center py-5">
@@ -16,12 +16,12 @@
           <table class="table table-hover mb-0">
             <thead>
               <tr>
-                <th style="width: 60px">ID</th>
-                <th style="width: 200px">Slug</th>
-                <th style="width: 250px">Назва</th>
-                <th style="width: 120px">Модуль</th>
-                <th>Опис</th>
-                <th style="width: 80px" class="text-center">Системний</th>
+                <th style="width: 60px">{{ t('roles.colId') }}</th>
+                <th style="width: 200px">{{ t('roles.colSlug') }}</th>
+                <th style="width: 250px">{{ t('roles.nameLabel') }}</th>
+                <th style="width: 120px">{{ t('permissionList.colModule') }}</th>
+                <th>{{ t('common.description') }}</th>
+                <th style="width: 80px" class="text-center">{{ t('permissionList.colSystem') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -47,14 +47,14 @@
                         @click="saveDescription(perm)"
                         class="btn btn-sm btn-success"
                         :disabled="saving"
-                        title="Зберегти"
+                        :title="t('common.save')"
                       >
                         <i class="bi bi-check-lg"></i>
                       </button>
                       <button
                         @click="cancelEdit"
                         class="btn btn-sm btn-secondary"
-                        title="Скасувати"
+                        :title="t('common.cancel')"
                       >
                         <i class="bi bi-x-lg"></i>
                       </button>
@@ -65,13 +65,13 @@
                     class="text-muted small"
                     @dblclick="startEdit(perm)"
                     style="cursor: pointer; white-space: pre-wrap;"
-                    :title="'Подвійний клік для редагування'"
+                    :title="t('permissionList.editHint')"
                   >
                     {{ perm.description || '—' }}
                   </div>
                 </td>
                 <td class="text-center">
-                  <span v-if="perm.is_system" class="text-success" title="Системний запис">
+                  <span v-if="perm.is_system" class="text-success" :title="t('permissionList.systemRecordTitle')">
                     <i class="bi bi-shield-lock-fill"></i>
                   </span>
                   <span v-else class="text-muted">—</span>
@@ -84,7 +84,7 @@
 
       <div v-if="!loading && !error" class="mt-3 text-muted small">
         <i class="bi bi-info-circle me-1"></i>
-        Всього записів: {{ permissions.length }}. Подвійний клік по опису для редагування.
+        {{ t('permissionList.totalRecords', { count: permissions.length }) }}
       </div>
     </div>
   </BaseLayout>
@@ -92,10 +92,12 @@
 
 <script setup>
 import { ref, onMounted, nextTick } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useAuth } from '@/composables/useAuth';
 import { useNotify } from '@/composables/useNotify';
 import BaseLayout from '@/layouts/BaseLayout.vue';
 
+const { t } = useI18n({ useScope: 'global' });
 const auth = useAuth();
 const { notify } = useNotify();
 
@@ -124,10 +126,10 @@ async function loadPermissions() {
     if (json.status === 'success') {
       permissions.value = json.permissions;
     } else {
-      error.value = json.message || 'Помилка завантаження прав доступу';
+      error.value = json.message || t('permissionList.loadError');
     }
   } catch (e) {
-    error.value = "Помилка з'єднання з сервером";
+    error.value = t('roles.connectionError');
   } finally {
     loading.value = false;
   }
@@ -165,10 +167,10 @@ async function saveDescription(perm) {
       perm.description = editingDescription.value;
       cancelEdit();
     } else {
-      notify(json.message || 'Помилка збереження', { type: 'error' });
+      notify(json.message || t('roles.saveError'), { type: 'error' });
     }
   } catch (e) {
-    notify("Помилка з'єднання з сервером", { type: 'error' });
+    notify(t('roles.connectionError'), { type: 'error' });
   } finally {
     saving.value = false;
   }
