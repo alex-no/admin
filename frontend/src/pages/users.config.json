@@ -1,7 +1,0 @@
-{
-  "viewPermission":   "users.view",
-  "editPermission":   "users.edit",
-  "apiList":   "/api/admin/users",
-  "apiView":   "/api/admin/users",
-  "apiUpdate": "/api/admin/users"
-}
