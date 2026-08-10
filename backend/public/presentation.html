@@ -196,7 +196,7 @@
           <div class="stat"><b>2</b><span>фронтенди · Vue 3 і React</span></div>
           <div class="stat"><b>5</b><span>розділів меню</span></div>
           <div class="stat"><b>3</b><span>режими вікна деталей</span></div>
-          <div class="stat"><b>9</b><span>типів колонок <span style="opacity:.7">(+3 фільтра)</span></span></div>
+          <div class="stat"><b>9</b><span>типів колонок <span style="opacity:.7">(+4 фільтра)</span></span></div>
         </div>
       </div>
       <div class="shot-wrap">
@@ -217,7 +217,7 @@
           <li><b>Inline-редагування</b> прямо в таблиці для полів <code class="inline">editable:true</code></li>
           <li><b>Пейджинг</b> із вибором 5–250 рядків на сторінці</li>
           <li><b>Синхронізація з URL</b> — фільтри, сортування й відкрита картка переживають перезавантаження й діляться посиланням</li>
-          <li><b>Готові UX-деталі з коробки:</b> вибір видимих колонок, розкривні рядки, skeleton замість спінера, навігація «попередній/наступний запис», клонування, порожній стан з CTA</li>
+          <li><b>Готові UX-деталі з коробки:</b> вибір видимих колонок, розкривні рядки, skeleton замість спінера, навігація «попередній/наступний запис», клонування, CSV-імпорт майстром із перевіркою по рядках, порожній стан з CTA</li>
           <li><b>Дві реалізації, одна поведінка:</b> <code class="inline">DataListPage.vue</code> у Vue та <code class="inline">DataTable.tsx</code> + хук <code class="inline">useTableState</code> у React</li>
         </ul>
       </div>
@@ -433,7 +433,7 @@ docker compose restart backend</pre>
       </div>
       <div class="card">
         <h3><span class="ico">◆</span> Повний набір фіч</h3>
-        <p>Усі сторінки: реєстр, аналітика зі SVG-графіками, ролі, права, логи. Масові операції, експорт у CSV, мульти-сортування, інлайн-редагування, undo-видалення, тости, мережева діагностика, багатомовність (i18n: uk/en/ru).</p>
+        <p>Усі сторінки: реєстр, аналітика зі SVG-графіками, ролі, права, логи. Масові операції, імпорт і експорт CSV, мульти-сортування, інлайн-редагування, undo-видалення, тости, мережева діагностика, багатомовність (i18n: uk/en/ru).</p>
       </div>
       <div class="card">
         <h3><span class="ico">◆</span> Де розійшлося навмисно</h3>
@@ -472,7 +472,7 @@ docker compose restart backend</pre>
       <div class="card"><h3><span class="ico">◆</span> Backend (демо)</h3><p>Yii3 на PSR (DI/router/middleware), SQLite через PDO без ORM, сідинг із CSV. Тулінг: Codeception, Psalm, PHP CS Fixer, Rector. Лише приклад — підійде будь-який REST API.</p></div>
       <div class="card"><h3><span class="ico">◆</span> API & Docs</h3><p>REST + Swagger (zircote/swagger-php), єдиний контракт відповідей, атрибути <code class="inline">#[OA\...]</code> — спільні для обох фронтендів.</p></div>
       <div class="card"><h3><span class="ico">◆</span> DevOps</h3><p>Docker Compose (dev і prod), обидва фронтенди в одному prod-контейнері під двома vhost'ами, деплой за reverse-proxy (Apache + Let's Encrypt).</p></div>
-      <div class="card"><h3><span class="ico">◆</span> UX-фішки</h3><p>Стан у URL, мульти-сортування, три режими вікна, масові операції, undo-видалення, реальна мережева діагностика, темна тема, breadcrumbs, сайдбар фільтрів-лічильників, live-оновлення списку — однаково в обох версіях.</p></div>
+      <div class="card"><h3><span class="ico">◆</span> UX-фішки</h3><p>Стан у URL, мульти-сортування, три режими вікна, масові операції, CSV-імпорт/експорт, undo-видалення, реальна мережева діагностика, темна тема, breadcrumbs, сайдбар фільтрів-лічильників, live-оновлення списку — однаково в обох версіях.</p></div>
     </div>
   </section>
 

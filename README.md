@@ -146,7 +146,7 @@ reverse-proxy (у проді — хостовий Apache з Let's Encrypt).
 
 **І Vue, і React однаково залежать від `shared/core/`** (`hooks/useModalWindow.ts` →
 `@core/modalWindow`, `contexts/AuthContext.tsx` → `@core/permissions` і так далі,
-по 17 файлів з обох боків) — крок 2 нижче про копіювання
+по 18 файлів з обох боків) — крок 2 нижче про копіювання
 `shared/core/` стосується обох однаково, це не Vue-специфіка.
 
 ### Крок 0: оберіть один фронтенд
@@ -159,7 +159,7 @@ reverse-proxy (у проді — хостовий Apache з Let's Encrypt).
 | | `frontend/` (Vue 3) | `frontend-react/` (React 18) |
 |---|---|---|
 | Прод-залежності | `vue`, `vue-router`, `vue-i18n`, `bootstrap` | `react`, `react-dom`, `react-router-dom`, `react-i18next`, `i18next`, `bootstrap-icons` |
-| Файлів у `src/` | 96 | 92 |
+| Файлів у `src/` | 97 | 93 |
 
 Якщо не впевнені — гляньте `dependencies` у `package.json` цільового проекту:
 є `vue` — берете `frontend/`, є `react` — `frontend-react/`. Якщо фронтенду в
@@ -350,7 +350,9 @@ AI добре справляється саме з цим видом робот�
    `AdminStoController::sortExpr()` для колонки `sto_type`.
 
 2. **Фільтр** — `my-entity.filter.json`, аналогічно, типи — з `filterTypes.js`
-   (`text`, `select`, `checkbox`). Для випадаючого списку, що наповнюється з бекенда:
+   (`text`, `select`, `checkbox`, `date` — одна межа діапазону; дві межі (напр. "з"/"по")
+   це два фільтри з різними `key`, бо в запит вони йдуть окремими параметрами).
+   Для випадаючого списку, що наповнюється з бекенда:
    ```json
    { "key": "country_id", "type": "select", "label": "Країна", "optionsUrl": "/api/admin/geography/countries", "optionsValueKey": "id", "optionsLabelKey": "name_uk" }
    ```
