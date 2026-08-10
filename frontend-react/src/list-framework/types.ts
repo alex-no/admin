@@ -218,6 +218,12 @@ export interface DataTableProps {
    */
   createFields?: string[]
   /**
+   * CSV-імпорт (кнопка поруч з "Додати"): переносить createFields пачкою.
+   * Без apiImport кнопки немає — окремого importFields нема навмисно, мапляться
+   * ті самі поля, що дозволені для створення одного запису.
+   */
+  apiImport?: string
+  /**
    * Іменовані масові дії: bulk-роут приймає { ids, action }. Без apiBulk кнопок
    * немає — видалення пачкою працює окремо, через apiDelete з undo.
    */

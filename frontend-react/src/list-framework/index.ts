@@ -1,5 +1,6 @@
 export { default as DataTable } from './components/DataTable'
 export { default as ColumnSelector } from './components/ColumnSelector'
+export { default as CsvImportModal } from './components/CsvImportModal'
 export { default as RecordNavigator } from './components/RecordNavigator'
 export { default as Pagination } from './components/Pagination'
 export { default as SortIcon } from './components/SortIcon'

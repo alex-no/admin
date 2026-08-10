@@ -186,6 +186,7 @@
     "saveCurrentFilter": "Сохранить текущий фильтр",
     "deleteFilter": "Удалить сохраненный фильтр",
     "exportCsv": "Экспорт в CSV",
+    "importCsv": "Импорт CSV",
     "autoRefreshOn": "Автообновление включено",
     "autoRefreshOff": "Автообновление выключено",
     "add": "Добавить",
@@ -195,6 +196,25 @@
     "selected": "Выбрано",
     "clearSelection": "Очистить выделение",
     "apply": "Применить"
+  },
+  "import": {
+    "title": "Импорт CSV",
+    "uploadHint": "Выберите CSV-файл со строкой заголовков (выгрузка из Excel или другой системы).",
+    "emptyFile": "В файле нет строк с данными",
+    "parseError": "Не удалось прочитать файл",
+    "mapHint": "Сопоставьте каждую колонку CSV с полем. Найдено строк: {count}.",
+    "csvColumn": "Колонка CSV",
+    "targetField": "Поле",
+    "ignoreColumn": "— не импортировать —",
+    "previewHint": "Готово к импорту: {count} строк",
+    "startImport": "Импортировать",
+    "resultSummary": "Создано {created} из {total} записей",
+    "error": "Ошибка",
+    "downloadFailed": "Скачать строки с ошибками (CSV)",
+    "importAnother": "Импортировать другой файл",
+    "importError": "Ошибка импорта",
+    "back": "Назад",
+    "next": "Далее"
   },
   "filter": {
     "search": "Поиск",

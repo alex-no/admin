@@ -186,6 +186,7 @@
     "saveCurrentFilter": "Зберегти поточний фільтр",
     "deleteFilter": "Видалити збережений фільтр",
     "exportCsv": "Експорт у CSV",
+    "importCsv": "Імпорт CSV",
     "autoRefreshOn": "Автооновлення увімкнено",
     "autoRefreshOff": "Автооновлення вимкнено",
     "add": "Додати",
@@ -195,6 +196,25 @@
     "selected": "Обрано",
     "clearSelection": "Очистити виділення",
     "apply": "Застосувати"
+  },
+  "import": {
+    "title": "Імпорт CSV",
+    "uploadHint": "Оберіть CSV-файл із рядком заголовків (вигрузка з Excel чи іншої системи).",
+    "emptyFile": "У файлі немає рядків з даними",
+    "parseError": "Не вдалося прочитати файл",
+    "mapHint": "Зіставте кожну колонку CSV із полем. Знайдено рядків: {count}.",
+    "csvColumn": "Колонка CSV",
+    "targetField": "Поле",
+    "ignoreColumn": "— не імпортувати —",
+    "previewHint": "Готово до імпорту: {count} рядків",
+    "startImport": "Імпортувати",
+    "resultSummary": "Створено {created} з {total} записів",
+    "error": "Помилка",
+    "downloadFailed": "Завантажити рядки з помилками (CSV)",
+    "importAnother": "Імпортувати інший файл",
+    "importError": "Помилка імпорту",
+    "back": "Назад",
+    "next": "Далі"
   },
   "filter": {
     "search": "Пошук",

@@ -13,6 +13,7 @@ import EmptyState from '@/components/EmptyState'
 import TableSkeleton from '@/components/TableSkeleton'
 import { resolveCellType } from '../cellTypes'
 import ColumnSelector from './ColumnSelector'
+import CsvImportModal from './CsvImportModal'
 import Pagination from './Pagination'
 import SortIcon from './SortIcon'
 import SearchFilter from '../filters/SearchFilter'
@@ -28,6 +29,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
   apiCreate,
   createPermission,
   createFields = [],
+  apiImport,
   apiBulk,
   bulkActions = [],
   bulkEditableFields = [],
@@ -207,6 +209,11 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
   // Форма збирається з конфіга: поля — createFields, контроли — з реєстру
   // cellTypes (той самий, що малює комірки таблиці). Дзеркало Vue-версії.
   const canCreate = Boolean(apiCreate) && (!createPermission || can(createPermission))
+
+  // Той самий permission, що й на створення одного запису — імпорт це і є
+  // створення, лише пачкою; apiCreate не потрібен окремо. Дзеркало Vue: canImport.
+  const canImport = Boolean(apiImport) && (!createPermission || can(createPermission))
+  const [importOpen, setImportOpen] = useState(false)
 
   /**
    * Чи звузив користувач вибірку. Фільтри з `required`/`defaultFirstOption`
@@ -501,6 +508,17 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
             CSV
           </button>
 
+          {canImport && (
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-secondary"
+              title={t('dataList.importCsv')}
+              onClick={() => setImportOpen(true)}
+            >
+              <i className="bi bi-upload me-1" />{t('dataList.importCsv')}
+            </button>
+          )}
+
           <button
             type="button"
             className={`btn btn-sm ${enablePolling ? 'btn-outline-success' : 'btn-outline-secondary'}`}
@@ -588,6 +606,18 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
             })}
           </div>
         </BaseModal>
+      )}
+
+      {/* CSV-імпорт: те саме createColumns, що й форма створення вище — той самий
+          allow-list полів, лише пачкою. Без apiImport кнопки немає взагалі. */}
+      {canImport && importOpen && (
+        <CsvImportModal
+          visible={importOpen}
+          onClose={() => setImportOpen(false)}
+          apiImport={apiImport!}
+          columns={createColumns}
+          onImported={() => reload()}
+        />
       )}
 
       {showSaveInput && (

@@ -3,6 +3,7 @@
   "apiUpdate": "/api/admin/sto",
   "apiDelete": "/api/admin/sto",
   "apiCreate": "/api/admin/sto",
+  "apiImport": "/api/admin/sto/import",
   "apiBulk": "/api/admin/sto/bulk",
   "viewPermission": "sto.view",
   "createPermission": "sto.create",

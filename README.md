@@ -120,6 +120,7 @@ reverse-proxy (у проді — хостовий Apache з Let's Encrypt).
 | Порожній список із CTA | `frontend/src/components/EmptyState.vue` | Два стани замість одного сірого «Немає даних»: записів немає (→ кнопка «Створити», якщо є право) і фільтр нічого не знайшов (→ «Скинути фільтри») |
 | Навігація «попередній/наступний запис» | `frontend/src/composables/useRecordNav.js` + `components/RecordNavigator.vue` | Стрілки й позиція «N / total» у заголовку картки деталей; перехід через межу поточної сторінки списку сам довантажує сусідню |
 | Клонування запису | кнопка «Створити копію» в `DataListPage.vue` | Відкриває форму створення, попередньо заповнену значеннями вихідного запису — той самий `apiCreate`, що й для «Додати» |
+| CSV-імпорт | `components/CsvImportModal.vue` + `@core/csv` (`parseCsv`/`autoMapImportColumns`/`buildImportRows`) | Майстер upload → зіставлення колонок → перегляд → результат; перевикористовує `createFields` форми «Додати», один запит `POST {apiImport}`, часткова валідація по рядках (не all-or-nothing), завантаження рядків з помилками окремим CSV |
 | Розкривні рядки (row expand) | `frontend/src/composables/useRowExpand.js` | Стрілка розкриває додатковий рядок під основним із довільним вмістом (slot); кілька рядків розкриваються одночасно, скидається при зміні сторінки/фільтра |
 | Skeleton замість спінера | `frontend/src/components/TableSkeleton.vue` | Рядки-заглушки на час завантаження замість повноекранного спінера — верстка не «стрибає» |
 | Виділення всіх записів за фільтром | `frontend/src/composables/useRowSelection.js` | «Виділити всі N за фільтром» (не лише на сторінці) — масові дії йдуть як `{all:true, filters}`; бекенд рахує `COUNT(*)` і обмежує лімітом (`BULK_ALL_LIMIT`) |
@@ -379,6 +380,23 @@ AI добре справляється саме з цим видом робот�
    зі списку `createFields`, решта значень рядка в копію не переноситься. Реальний
    приклад усіх трьох полів — `shared/page-configs/sto-registry.config.json`.
 
+   **CSV-імпорт** — кнопка «Імпорт CSV» поруч з «Додати», `apiImport` у
+   `config.json`. Без нього кнопки немає взагалі. Окремого `importFields` нема
+   навмисно: майстер (Vue — `components/CsvImportModal.vue`, React —
+   `list-framework/components/CsvImportModal.tsx`) перевикористовує той самий
+   `createFields` — які поля дозволено заповнювати при створенні одного запису,
+   ті самі дозволено заповнювати й при імпорті пачкою (той самий allow-list,
+   ті самі `editPermissions`). Майстер сам парсить файл і зіставляє колонки на
+   фронтенді (`@core/csv`: `parseCsv` — і кома, і крапка з комою як роздільник,
+   для Excel з укр./рос. локаллю; `autoMapImportColumns` — початкове зіставлення
+   за ключем колонки; `coerceImportValue` — те саме приведення типу, що вже
+   роблять inline-комірки), а на бекенд іде вже готовий масив рядків одним
+   запитом `POST {apiImport}`. Валідація — рядок за рядком на бекенді, і вона
+   **не** all-or-nothing: невалідний рядок не зриває решту файлу, відповідь
+   містить `created` і `failed: [{ row, errors }]`, майстер показує адміну
+   рядки з помилками з номером у вихідному файлі й дає завантажити їх окремим
+   CSV для виправлення. Контракт запиту/відповіді — `shared/page-configs/README.md`.
+
 4. **Пейджинг, масові операції, селектор колонок і live-оновлення працюють без
    додаткового конфігу** — вони не описуються в JSON, `DataListPage.vue` вмикає їх завжди:
    - **Кількість рядків на сторінці** — випадаючий список (5 / 10 / 20 / 50 / 100 / 250,
@@ -634,6 +652,7 @@ Claude сам розпізнає, що це саме `admin-audit-log`/`admin-op
 | Реєстр типів комірок | `cellTypes.js` + `cells/*.vue` | `cellTypes.ts` + `cells/*.tsx` |
 | Вікно деталей (3 режими, drag/resize) | `BaseModal.vue` + `useModalWindow.js` | `BaseModal.tsx` + `useModalWindow.ts` |
 | Клонування запису | кнопка в `DataListPage.vue` | кнопка в `DataTable.tsx` |
+| CSV-імпорт | `components/CsvImportModal.vue` | `list-framework/components/CsvImportModal.tsx` |
 | Стан у URL | `useUrlFilters.js` | `useUrlFilters.ts` |
 | Тости замість `alert()` | `useNotify.js` + `ToastContainer.vue` | `useNotify.ts` + `ToastContainer.tsx` |
 | Видалення з «Скасувати» (5 с) | `useUndoableDelete.js` | `useUndoableDelete.ts` |

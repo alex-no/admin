@@ -152,6 +152,7 @@ export default function DataRegistry() {
         apiCreate={cfg.apiCreate}
         createPermission={cfg.createPermission}
         createFields={cfg.createFields}
+        apiImport={cfg.apiImport}
         apiBulk={cfg.apiBulk}
         bulkActions={cfg.bulkActions as BulkActionConfig[]}
         bulkEditableFields={cfg.bulkEditableFields}

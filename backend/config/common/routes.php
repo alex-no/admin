@@ -33,6 +33,8 @@ return [
                 ->action([AdminStoController::class, 'list']),
             Route::post('/api/admin/sto')
                 ->action([AdminStoController::class, 'create']),
+            Route::post('/api/admin/sto/import')
+                ->action([AdminStoController::class, 'import']),
             Route::post('/api/admin/sto/bulk')
                 ->action([AdminStoController::class, 'bulk']),
             Route::get('/api/admin/sto/{id:\d+}')

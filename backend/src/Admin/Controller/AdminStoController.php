@@ -67,6 +67,9 @@ final readonly class AdminStoController
     /** Ліміт для bulk all: true — захист від "застосувати до всієї таблиці" без фільтра */
     private const BULK_ALL_LIMIT = 5000;
 
+    /** Стеля кількості рядків в одному CSV-імпорті (майстер на фронтенді шле все одним запитом) */
+    private const IMPORT_MAX_ROWS = 500;
+
     // Ті самі підписи, що і в options списку "sto_type" на фронтенді
     // (sto-registry.columns.json) — sto_type зберігається кодом (service/tire/wash),
     // але сортувати треба за словом, яке користувач бачить у таблиці, а не за кодом.
@@ -373,6 +376,146 @@ final readonly class AdminStoController
         $row = $this->fetchRow((int) $this->pdo->lastInsertId());
 
         return $this->json(['status' => 'success', 'data' => $this->format($row)], 201);
+    }
+
+    #[OA\Post(
+        path: '/api/admin/sto/import',
+        summary: 'Bulk-import STOs from parsed CSV rows',
+        description: 'Майстер CSV-імпорту на фронтенді сам парсить файл і зіставляє колонки — сюди приходять уже готові рядки {поле: значення}, той самий allow-list і права, що й у create().',
+        security: [['BearerAuth' => []]],
+        tags: ['Admin - STO'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(
+                        property: 'rows',
+                        type: 'array',
+                        items: new OA\Items(type: 'object', example: ['name_uk' => 'СТО «Приклад»', 'sto_type' => 'service'])
+                    ),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Done; created = кількість вставлених рядків, failed = помилки по рядках, що не пройшли валідацію'),
+            new OA\Response(response: 400, description: 'Немає рядків / забагато рядків за раз'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 403, description: 'Forbidden — заборонене поле присутнє хоч в одному рядку'),
+        ]
+    )]
+    public function import(ServerRequestInterface $request): ResponseInterface
+    {
+        // Той самий дозвіл, що й на створення одного запису — імпорт це і є
+        // створення, лише пачкою.
+        if ($err = $this->auth->guard($request, 'sto.create')) {
+            return $this->json(['status' => 'error', 'message' => $err['message']], $err['status']);
+        }
+
+        $data = json_decode((string) $request->getBody(), true) ?? [];
+        $rows = (array) ($data['rows'] ?? []);
+
+        if ($rows === []) {
+            return $this->json(['status' => 'error', 'message' => 'Немає рядків для імпорту'], 400);
+        }
+        if (count($rows) > self::IMPORT_MAX_ROWS) {
+            return $this->json([
+                'status'  => 'error',
+                'message' => 'Забагато рядків за раз: максимум ' . self::IMPORT_MAX_ROWS,
+            ], 400);
+        }
+
+        // Мапінг колонок один на весь імпорт — тож права на поле перевіряються
+        // по всьому набору стовпців одразу (чи присутнє поле хоч в одному рядку),
+        // а не по кожному рядку окремо: часткове застосування тут безглузде, той
+        // самий стовпець або дозволений для всього імпорту, або ні.
+        $user = $this->auth->userFromRequest($request);
+        $forbidden = [];
+        foreach (self::EDITABLE as $field) {
+            $required = self::FIELD_PERMISSIONS[$field] ?? null;
+            if ($required === null) {
+                continue;
+            }
+            $present = false;
+            foreach ($rows as $row) {
+                if (is_array($row) && array_key_exists($field, $row)) {
+                    $present = true;
+                    break;
+                }
+            }
+            if ($present && ($user === null || !$this->auth->can($user, $required))) {
+                $forbidden[] = $field;
+            }
+        }
+        if ($forbidden !== []) {
+            return $this->json([
+                'status'  => 'error',
+                'message' => 'Немає права заповнювати поле: ' . implode(', ', $forbidden),
+                'fields'  => $forbidden,
+            ], 403);
+        }
+
+        // Один рядок, що не пройшов валідацію, не має зривати весь файл — майстер
+        // показує адміну саме ці рядки, решта вставляється. Тому не all-or-nothing:
+        // транзакція лише для того, щоб вставка N валідних рядків була атомарною.
+        $created = 0;
+        $failed  = [];
+
+        $this->pdo->beginTransaction();
+        try {
+            foreach (array_values($rows) as $i => $row) {
+                if (!is_array($row)) {
+                    $failed[] = ['row' => $i, 'errors' => ['_row' => 'Рядок має бути обʼєктом полів']];
+                    continue;
+                }
+
+                // Той самий allow-list і ті самі обовʼязкові поля, що й у create()
+                // (див. схему в seed.php: NOT NULL на name_uk, sto_type).
+                $errors = [];
+                $name = trim((string) ($row['name_uk'] ?? ''));
+                if ($name === '') {
+                    $errors['name_uk'] = 'Назва обов\'язкова';
+                }
+                $type = (string) ($row['sto_type'] ?? '');
+                if (!in_array($type, self::TYPES, true)) {
+                    $errors['sto_type'] = 'Тип обов\'язковий: ' . implode(' | ', self::TYPES);
+                }
+                if ($errors !== []) {
+                    $failed[] = ['row' => $i, 'errors' => $errors];
+                    continue;
+                }
+
+                $columns = [];
+                $params  = [];
+                foreach (self::EDITABLE as $field) {
+                    if (!array_key_exists($field, $row)) {
+                        continue;
+                    }
+                    $columns[] = $field;
+                    $params[$field] = match ($field) {
+                        'is_active' => (int) (bool) $row[$field],
+                        'phones'    => implode(';', array_filter(array_map('trim', (array) $row[$field]), static fn ($p) => $p !== '')),
+                        default     => $row[$field],
+                    };
+                }
+
+                $placeholders = array_map(static fn ($c) => ":$c", $columns);
+                $stmt = $this->pdo->prepare(
+                    'INSERT INTO sto (' . implode(', ', $columns) . ') VALUES (' . implode(', ', $placeholders) . ')'
+                );
+                $stmt->execute($params);
+                $created++;
+            }
+            $this->pdo->commit();
+        } catch (\Throwable $e) {
+            $this->pdo->rollBack();
+            return $this->json(['status' => 'error', 'message' => 'Помилка імпорту: ' . $e->getMessage()], 500);
+        }
+
+        return $this->json([
+            'status'  => 'success',
+            'created' => $created,
+            'failed'  => $failed,
+        ]);
     }
 
     #[OA\Post(

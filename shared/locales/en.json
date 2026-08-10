@@ -186,6 +186,7 @@
     "saveCurrentFilter": "Save current filter",
     "deleteFilter": "Delete saved filter",
     "exportCsv": "Export to CSV",
+    "importCsv": "Import CSV",
     "autoRefreshOn": "Auto-refresh enabled",
     "autoRefreshOff": "Auto-refresh disabled",
     "add": "Add",
@@ -195,6 +196,25 @@
     "selected": "Selected",
     "clearSelection": "Clear selection",
     "apply": "Apply"
+  },
+  "import": {
+    "title": "CSV Import",
+    "uploadHint": "Choose a CSV file with a header row (exported from Excel or another system).",
+    "emptyFile": "The file has no data rows",
+    "parseError": "Could not read the file",
+    "mapHint": "Match each CSV column to a field. {count} row(s) found.",
+    "csvColumn": "CSV column",
+    "targetField": "Field",
+    "ignoreColumn": "— don't import —",
+    "previewHint": "{count} row(s) ready to import",
+    "startImport": "Import",
+    "resultSummary": "Created {created} of {total} record(s)",
+    "error": "Error",
+    "downloadFailed": "Download failed rows (CSV)",
+    "importAnother": "Import another file",
+    "importError": "Import error",
+    "back": "Back",
+    "next": "Next"
   },
   "filter": {
     "search": "Search",

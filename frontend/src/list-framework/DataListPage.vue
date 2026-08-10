@@ -54,6 +54,16 @@
         </button>
 
         <button
+          v-if="canImport"
+          type="button"
+          class="btn btn-sm btn-outline-secondary"
+          :title="t('dataList.importCsv')"
+          @click="importOpen = true"
+        >
+          <i class="bi bi-upload me-1"></i>{{ t('dataList.importCsv') }}
+        </button>
+
+        <button
           type="button"
           class="btn btn-sm"
           :class="enablePolling ? 'btn-outline-success' : 'btn-outline-secondary'"
@@ -358,6 +368,16 @@
         </button>
       </template>
     </BaseModal>
+
+    <!-- CSV-імпорт: те саме createColumns, що й форма створення вище — той самий
+         allow-list полів, лише пачкою. Без apiImport кнопки немає взагалі. -->
+    <CsvImportModal
+      v-if="canImport"
+      v-model:visible="importOpen"
+      :api-import="apiImport"
+      :columns="createColumns"
+      @imported="handleImported"
+    />
   </div>
 </template>
 
@@ -380,6 +400,7 @@ import { normalizePhoneE164 } from '@/utils/phone'
 import Pagination from '@/components/Pagination.vue'
 import ColumnSelector from '@/components/ColumnSelector.vue'
 import BaseModal from '@/components/BaseModal.vue'
+import CsvImportModal from '@/components/CsvImportModal.vue'
 import SortIcon from '@/components/SortIcon.vue'
 import { resolveFilterType } from './filterTypes'
 import { resolveCellType } from './cellTypes'
@@ -404,6 +425,10 @@ const props = defineProps({
   // Ключі колонок, які показувати у формі створення (порядок = порядок полів).
   // Поле, якого тут немає, бере значення за замовчуванням із схеми БД.
   createFields: { type: Array, default: () => [] },
+  // CSV-імпорт (кнопка поруч з "Додати"): переносить createFields пачкою.
+  // Без apiImport кнопки немає взагалі — окремого importFields нема навмисно,
+  // мапляться ті самі поля, що дозволені для створення одного запису.
+  apiImport: { type: String, default: null },
   // Іменовані масові дії: bulk-роут приймає { ids, action }. Без apiBulk
   // кнопок немає — видалення пачкою працює окремо, через apiDelete з undo.
   apiBulk: { type: String, default: null },
@@ -704,6 +729,16 @@ const createColumns = computed(() =>
     .map((key) => props.columnsConfig.find((c) => c.key === key))
     .filter(Boolean)
 )
+
+// Той самий permission, що й на створення одного запису — імпорт це і є
+// створення, лише пачкою; apiCreate не потрібен окремо.
+const canImport = computed(
+  () => !!props.apiImport && (!props.createPermission || auth.can(props.createPermission))
+)
+const importOpen = ref(false)
+function handleImported() {
+  load(1)
+}
 
 const createOpen   = ref(false)
 const creating     = ref(false)
