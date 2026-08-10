@@ -200,6 +200,10 @@
   "import": {
     "title": "Імпорт CSV",
     "uploadHint": "Оберіть CSV-файл із рядком заголовків (вигрузка з Excel чи іншої системи).",
+    "allowedHeadersTitle": "Дозволені заголовки CSV",
+    "downloadTemplate": "Завантажити шаблон CSV",
+    "requiredBadge": "Обов'язкове",
+    "optionalBadge": "Необов'язкове",
     "emptyFile": "У файлі немає рядків з даними",
     "parseError": "Не вдалося прочитати файл",
     "mapHint": "Зіставте кожну колонку CSV із полем. Знайдено рядків: {count}.",

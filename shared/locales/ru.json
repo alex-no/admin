@@ -200,6 +200,10 @@
   "import": {
     "title": "Импорт CSV",
     "uploadHint": "Выберите CSV-файл со строкой заголовков (выгрузка из Excel или другой системы).",
+    "allowedHeadersTitle": "Разрешённые заголовки CSV",
+    "downloadTemplate": "Скачать шаблон CSV",
+    "requiredBadge": "Обязательное",
+    "optionalBadge": "Необязательное",
     "emptyFile": "В файле нет строк с данными",
     "parseError": "Не удалось прочитать файл",
     "mapHint": "Сопоставьте каждую колонку CSV с полем. Найдено строк: {count}.",

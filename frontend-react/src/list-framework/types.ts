@@ -224,6 +224,12 @@ export interface DataTableProps {
    */
   apiImport?: string
   /**
+   * Підмножина createFields, обов'язкова для рядка — для довідкової таблиці
+   * на першому кроці майстра CSV-імпорту (CsvImportModal). Валідацію все одно
+   * виконує бекенд, тут воно суто інформативне.
+   */
+  requiredFields?: string[]
+  /**
    * Іменовані масові дії: bulk-роут приймає { ids, action }. Без apiBulk кнопок
    * немає — видалення пачкою працює окремо, через apiDelete з undo.
    */

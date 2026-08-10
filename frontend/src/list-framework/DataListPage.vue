@@ -376,6 +376,7 @@
       v-model:visible="importOpen"
       :api-import="apiImport"
       :columns="createColumns"
+      :required-fields="requiredFields"
       @imported="handleImported"
     />
   </div>
@@ -429,6 +430,10 @@ const props = defineProps({
   // Без apiImport кнопки немає взагалі — окремого importFields нема навмисно,
   // мапляться ті самі поля, що дозволені для створення одного запису.
   apiImport: { type: String, default: null },
+  // Підмножина createFields, обов'язкова для рядка — для довідкової таблиці
+  // на першому кроці майстра CSV-імпорту (CsvImportModal). Валідацію все одно
+  // виконує бекенд, тут воно суто інформативне.
+  requiredFields: { type: Array, default: () => [] },
   // Іменовані масові дії: bulk-роут приймає { ids, action }. Без apiBulk
   // кнопок немає — видалення пачкою працює окремо, через apiDelete з undo.
   apiBulk: { type: String, default: null },

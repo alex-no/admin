@@ -11,6 +11,7 @@
       :create-permission="cfg.createPermission"
       :create-fields="cfg.createFields"
       :api-import="cfg.apiImport"
+      :required-fields="cfg.requiredFields"
       :api-bulk="cfg.apiBulk"
       :bulk-actions="cfg.bulkActions"
       :bulk-editable-fields="cfg.bulkEditableFields"

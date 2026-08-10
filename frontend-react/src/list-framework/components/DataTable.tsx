@@ -30,6 +30,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
   createPermission,
   createFields = [],
   apiImport,
+  requiredFields = [],
   apiBulk,
   bulkActions = [],
   bulkEditableFields = [],
@@ -616,6 +617,7 @@ const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable
           onClose={() => setImportOpen(false)}
           apiImport={apiImport!}
           columns={createColumns}
+          requiredFields={requiredFields}
           onImported={() => reload()}
         />
       )}

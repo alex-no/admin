@@ -200,6 +200,10 @@
   "import": {
     "title": "CSV Import",
     "uploadHint": "Choose a CSV file with a header row (exported from Excel or another system).",
+    "allowedHeadersTitle": "Allowed CSV headers",
+    "downloadTemplate": "Download CSV template",
+    "requiredBadge": "Required",
+    "optionalBadge": "Optional",
     "emptyFile": "The file has no data rows",
     "parseError": "Could not read the file",
     "mapHint": "Match each CSV column to a field. {count} row(s) found.",

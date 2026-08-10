@@ -25,6 +25,29 @@
       <p class="text-muted small">{{ t('import.uploadHint') }}</p>
       <input type="file" accept=".csv,text/csv" class="form-control" @change="handleFileSelected" />
       <div v-if="parseError" class="alert alert-danger mt-3 mb-0">{{ parseError }}</div>
+
+      <div class="mt-3">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <div class="small text-muted">{{ t('import.allowedHeadersTitle') }}</div>
+          <button type="button" class="btn btn-sm btn-outline-secondary" @click="downloadTemplate">
+            <i class="bi bi-download me-1"></i>{{ t('import.downloadTemplate') }}
+          </button>
+        </div>
+        <div class="table-responsive" style="max-height:260px">
+          <table class="table table-sm align-middle mb-0">
+            <tbody>
+              <tr v-for="col in columns" :key="col.key">
+                <td>{{ translateLabel(col.label) }}</td>
+                <td><code class="text-muted">{{ col.key }}</code></td>
+                <td class="text-end">
+                  <span v-if="isRequired(col)" class="badge bg-danger">{{ t('import.requiredBadge') }}</span>
+                  <span v-else class="badge bg-secondary">{{ t('import.optionalBadge') }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <div v-else-if="step === 'map'">
@@ -139,6 +162,9 @@ const props = defineProps({
   apiImport: { type: String, required: true },
   // Той самий набір полів, що й у формі "Додати" (createColumns у DataListPage.vue).
   columns: { type: Array, required: true },
+  // Підмножина ключів columns, обов'язкова для рядка (config: requiredFields) —
+  // суто для довідкової таблиці на кроці "upload", саму валідацію робить бекенд.
+  requiredFields: { type: Array, default: () => [] },
 })
 
 const emit = defineEmits(['update:visible', 'imported'])
@@ -157,6 +183,18 @@ const isVisible = computed({
 watch(isVisible, (val, wasVisible) => {
   if (wasVisible && !val) reset()
 })
+
+function isRequired(col) {
+  return props.requiredFields.includes(col.key)
+}
+
+// Порожній шаблон: лише рядок заголовків (перекладені label, як і решта
+// CSV-довідкових файлів тут — див. downloadFailedRows нижче), без рядків
+// даних — адмін заповнює сам.
+function downloadTemplate() {
+  const headers = props.columns.map((c) => translateLabel(c.label))
+  downloadCsv('import-template.csv', rowsToCsv(headers, []))
+}
 
 function translateLabel(label) {
   if (!label) return ''

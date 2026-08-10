@@ -22,6 +22,9 @@ interface CsvImportModalProps {
   apiImport: string
   /** Той самий набір полів, що й у формі "Додати" (createColumns у DataTable.tsx) */
   columns: ColumnConfig[]
+  /** Підмножина columns, обов'язкова для рядка (config: requiredFields) — суто
+   * для довідкової таблиці на кроці "upload", саму валідацію робить бекенд. */
+  requiredFields?: string[]
   onImported: (result: ImportResult) => void
 }
 
@@ -32,7 +35,7 @@ type Step = 'upload' | 'map' | 'preview' | 'result'
  * frontend/src/components/CsvImportModal.vue — парсинг/зіставлення/приведення
  * типів спільні (@core/csv), бекенд той самий ендпоінт.
  */
-export default function CsvImportModal({ visible, onClose, apiImport, columns, onImported }: CsvImportModalProps) {
+export default function CsvImportModal({ visible, onClose, apiImport, columns, requiredFields = [], onImported }: CsvImportModalProps) {
   const { t } = useTranslation()
 
   const translateLabel = (label?: string): string => {
@@ -88,6 +91,14 @@ export default function CsvImportModal({ visible, onClose, apiImport, columns, o
     } catch (err) {
       setParseError(err instanceof Error ? err.message : t('import.parseError'))
     }
+  }
+
+  // Порожній шаблон: лише рядок заголовків (перекладені label, як і решта
+  // CSV-довідкових файлів тут — див. downloadFailedRows нижче), без рядків
+  // даних — адмін заповнює сам.
+  const downloadTemplate = () => {
+    const headers = columns.map((c) => translateLabel(c.label))
+    downloadCsv('import-template.csv', rowsToCsv(headers, []))
   }
 
   const hasMapping = Object.values(mapping).some((v) => v !== null)
@@ -203,6 +214,34 @@ export default function CsvImportModal({ visible, onClose, apiImport, columns, o
           <p className="text-muted small">{t('import.uploadHint')}</p>
           <input type="file" accept=".csv,text/csv" className="form-control" onChange={handleFileSelected} />
           {parseError && <div className="alert alert-danger mt-3 mb-0">{parseError}</div>}
+
+          <div className="mt-3">
+            <div className="d-flex justify-content-between align-items-center mb-1">
+              <div className="small text-muted">{t('import.allowedHeadersTitle')}</div>
+              <button type="button" className="btn btn-sm btn-outline-secondary" onClick={downloadTemplate}>
+                <i className="bi bi-download me-1" />{t('import.downloadTemplate')}
+              </button>
+            </div>
+            <div className="table-responsive" style={{ maxHeight: 260 }}>
+              <table className="table table-sm align-middle mb-0">
+                <tbody>
+                  {columns.map((col) => (
+                    <tr key={col.key}>
+                      <td>{translateLabel(col.label)}</td>
+                      <td><code className="text-muted">{col.key}</code></td>
+                      <td className="text-end">
+                        {requiredFields.includes(col.key) ? (
+                          <span className="badge bg-danger">{t('import.requiredBadge')}</span>
+                        ) : (
+                          <span className="badge bg-secondary">{t('import.optionalBadge')}</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
 
