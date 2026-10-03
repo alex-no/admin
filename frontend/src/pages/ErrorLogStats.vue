@@ -1,5 +1,6 @@
 <template>
   <BaseLayout>
+    <DemoDataNotice />
     <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
       <div class="d-flex align-items-center gap-2">
         <router-link to="/error-logs" class="btn btn-sm btn-outline-secondary">
@@ -140,7 +141,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { authHeaders } from '@/utils/api'
 import BaseLayout from '../layouts/BaseLayout.vue'
-import TrendChart from '../components/TrendChart.vue'
+import TrendChart from '../components/TrendChart.vue'
+import DemoDataNotice from '../components/DemoDataNotice.vue'
 
 const { t } = useI18n({ useScope: 'global' })
 const stats = ref(null)

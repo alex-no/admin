@@ -1,3 +1,4 @@
+import DemoDataNotice from '@/components/DemoDataNotice'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
@@ -258,6 +259,7 @@ export default function Analytics() {
 
   return (
     <div>
+      <DemoDataNotice />
       <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
         <div className="d-flex align-items-center gap-2">
           <h5 className="mb-0">{t('analytics.title')}</h5>

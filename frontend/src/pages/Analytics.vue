@@ -3,6 +3,7 @@
   <ChangeClientTypeModal />
   <ListPageWrapper>
     <div>
+    <DemoDataNotice />
     <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
       <div class="d-flex align-items-center gap-2">
         <h5 class="mb-0">{{ t('analytics.title') }}</h5>
@@ -300,7 +301,8 @@ import ListPageWrapper from '../components/ListPageWrapper.vue'
 import SortIcon from '../components/SortIcon.vue'
 import Pagination from '../components/Pagination.vue'
 import AnalyticsDetailsModal from '../components/AnalyticsDetailsModal.vue'
-import ChangeClientTypeModal from '../components/ChangeClientTypeModal.vue'
+import ChangeClientTypeModal from '../components/ChangeClientTypeModal.vue'
+import DemoDataNotice from '../components/DemoDataNotice.vue'
 
 const { t } = useI18n({ useScope: 'global' })
 const { notify } = useNotify()

@@ -314,6 +314,7 @@
     "loadError": "Failed to load metrics"
   },
   "analytics": {
+    "demoNotice": "Demo data: every record in this section is randomly generated when the backend starts (data/fake_analytics.php) — these are not real site visits. IP addresses come from the ranges reserved for documentation (192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24).",
     "title": "Visit Analytics",
     "statsLink": "Stats",
     "chartsLink": "Charts",

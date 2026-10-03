@@ -1,3 +1,4 @@
+import DemoDataNotice from '@/components/DemoDataNotice'
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -64,6 +65,7 @@ export default function ErrorLogStats() {
 
   return (
     <div>
+      <DemoDataNotice />
       <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
         <div className="d-flex align-items-center gap-2">
           <Link to="/error-logs" className="btn btn-sm btn-outline-secondary">

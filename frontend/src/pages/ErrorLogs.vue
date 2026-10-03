@@ -3,6 +3,7 @@
   <ErrorLogCleanupModal />
   <ListPageWrapper>
     <div>
+      <DemoDataNotice />
       <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
         <div class="d-flex align-items-center gap-2">
           <h5 class="mb-0">{{ t('errorLogs.title') }}</h5>
@@ -128,7 +129,8 @@ import Pagination from '../components/Pagination.vue'
 import ErrorLogDetailModal from '../components/ErrorLogDetailModal.vue'
 import ErrorLogCleanupModal from '../components/ErrorLogCleanupModal.vue'
 import { useUrlFilters } from '../composables/useUrlFilters'
-import { formatDate } from '../utils/date'
+import { formatDate } from '../utils/date'
+import DemoDataNotice from '../components/DemoDataNotice.vue'
 
 const { t } = useI18n({ useScope: 'global' })
 const items = ref([])
