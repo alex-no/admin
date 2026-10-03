@@ -1,0 +1,1 @@
+import{K as e,N as t,U as n,d as r,w as i,x as a}from"./index-RNHmgqW6.js";var o={class:`alert alert-warning d-flex align-items-start gap-2 py-2 small mb-3`,role:`note`},s={__name:`DemoDataNotice`,setup(s){let{t:c}=r();return(r,s)=>(t(),i(`div`,o,[s[0]||=a(`i`,{class:`bi bi-info-circle mt-1`},null,-1),a(`span`,null,e(n(c)(`analytics.demoNotice`)),1)]))}};export{s as t};
